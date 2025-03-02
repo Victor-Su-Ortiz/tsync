@@ -13,24 +13,14 @@ import {
 import { describe, it, jest, expect, beforeEach } from '@jest/globals';
 
 // Create ticket mock
+const mockVerifyIdToken = jest.fn();
 const mockGetPayload = jest.fn();
 const mockTicket = {
   getPayload: mockGetPayload
 };
 
 // Mock the verifyIdToken method
-const mockVerifyIdToken = jest.fn().mockResolvedValue(mockTicket as never);
-
-// Create a manual mock for google-auth-library
-jest.mock('google-auth-library', () => {
-  return {
-    OAuth2Client: jest.fn().mockImplementation(() => {
-      return {
-        verifyIdToken: mockVerifyIdToken
-      };
-    })
-  };
-});
+mockVerifyIdToken.mockResolvedValue(mockTicket as never);
 
 Object.defineProperty(AuthService, 'googleClient', {
   configurable: true,

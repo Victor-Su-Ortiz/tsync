@@ -1,7 +1,7 @@
 import express from "express";
 import { UserController } from "../controllers/user.controller";
 import { protect, restrictTo } from "../middleware/auth.middleware";
-import { validateRequest } from "../middleware/validate.middleware";
+import { validateRequest } from "../middleware/validation.middleware";
 import { userValidation } from "../validations/user.validation";
 import { upload } from "../middleware/upload.middleware";
 import { cache } from "../middleware/cache.middleware";
