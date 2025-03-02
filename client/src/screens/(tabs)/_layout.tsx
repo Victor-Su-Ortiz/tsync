@@ -58,6 +58,16 @@ export default function TabsLayout() {
       />
 
       <Tabs.Screen
+        name="meme"
+        options={{
+          title: "meme",
+          tabBarIcon: ({ focused }) => (
+            <Ionicons name="help" size={24} color={focused ? "#00cc99" : "#748c94"} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
         name="add-event"
         options={{
           title: "Add Event",

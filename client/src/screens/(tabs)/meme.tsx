@@ -6,8 +6,6 @@ import axios from 'axios';
 import { GOOGLE_PLACES_API } from '@env';
 import { router, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Ionicons } from '@expo/vector-icons';
-import UserSearch from '../../components/UserSearch';
 
 type Place = {
   place_id: string;
@@ -26,7 +24,6 @@ export default function Home() {
   const [location, setLocation] = useState<Location.LocationObjectCoords | null>(null);
   const [shops, setShops] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [searchModalVisible, setSearchModalVisible] = useState(false);
 
   useEffect(() => {
     const checkNavigationMode = async () => {
@@ -120,22 +117,6 @@ export default function Home() {
         <Text style={styles.headerTitle}>Nearby Tea Shops 🍵</Text>
       </View>
 
-      {/* Search Button */}
-      <TouchableOpacity
-        style={styles.searchButton}
-        onPress={() => setSearchModalVisible(true)}
-      >
-        <Ionicons name="search" size={20} color="#fff" />
-        <Text style={styles.searchButtonText}>Search nearby users</Text>
-      </TouchableOpacity>
-
-      {/* User Search Modal Component */}
-      <UserSearch
-        visible={searchModalVisible}
-        onClose={() => setSearchModalVisible(false)}
-        location={location}
-      />
-
       {loading ? (
         <View style={{ flex: 1, justifyContent: "center" }}>
           <ActivityIndicator size="large" color="#00cc99" />
@@ -179,22 +160,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold'
   },
-  searchButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#00cc99',
-    borderRadius: 20,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    marginBottom: 16,
-    justifyContent: 'center',
-  },
-  searchButtonText: {
-    color: 'white',
-    marginLeft: 10,
-    fontSize: 16,
-    fontWeight: '500',
-  },
   itemContainer: {
     height: 150,
     borderRadius: 10,
@@ -223,3 +188,4 @@ const styles = StyleSheet.create({
     color: "white",
   },
 });
+
