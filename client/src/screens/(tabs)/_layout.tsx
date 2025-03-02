@@ -1,11 +1,14 @@
 import React from 'react';
 import { Tabs, router } from "expo-router";
-import { View, TouchableOpacity, StyleSheet, GestureResponderEvent } from "react-native";
+import { View, TouchableOpacity, StyleSheet, GestureResponderEvent, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import images from "../../constants/images";
+import { useAuth } from '../../context/AuthContext';
 
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
+  const { userInfo } = useAuth();
 
   const CustomTabBarButton = ({ children, onPress }: { children: React.ReactNode; onPress?: (event: GestureResponderEvent) => void }) => (
     <TouchableOpacity
@@ -45,7 +48,7 @@ export default function TabsLayout() {
       }}
     >
       <Tabs.Screen
-        name="index"
+        name="home"
         options={{
           title: "Home",
           tabBarIcon: ({ focused }) => (
@@ -54,6 +57,15 @@ export default function TabsLayout() {
         }}
       />
 
+      <Tabs.Screen
+        name="meme"
+        options={{
+          title: "meme",
+          tabBarIcon: ({ focused }) => (
+            <Ionicons name="help" size={24} color={focused ? "#00cc99" : "#748c94"} />
+          ),
+        }}
+      />
 
       <Tabs.Screen
         name="add-event"
@@ -68,8 +80,6 @@ export default function TabsLayout() {
         }}
       />
 
-
-
       <Tabs.Screen
         name="events"
         options={{
@@ -80,6 +90,26 @@ export default function TabsLayout() {
         }}
       />
 
+      <Tabs.Screen
+        name="profileScreen"
+        options={{
+          title: "Profile",
+          tabBarIcon: ({ focused }) => (
+            <Image
+              source={userInfo?.picture ? { uri: userInfo.picture } : images.defaultpfp}
+              style={{
+                width: 34,
+                height: 33,
+                borderRadius: 22,
+                borderWidth: 1.5,
+                borderColor: focused ? "#00cc99" : "#748c94",
+                opacity: focused ? 1 : 0.85,
+                backgroundColor: focused ? undefined : "#f5f5f5"
+              }}
+            />
+          ),
+        }}
+      />
     </Tabs>
   );
 }
