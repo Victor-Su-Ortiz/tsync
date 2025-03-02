@@ -49,6 +49,7 @@ export default function Index() {
 
 
       // Send the ID token to your backend
+
       await sendTokenToBackend(tokens.idToken);
 
       // Store Google user info in context for profile display
@@ -60,8 +61,10 @@ export default function Index() {
         bio: "Let's meet!" // Default bio
       };
 
-      // Update context with user info for UI display
+      // Update context with user info and access token for UI display and fetching events
       setUserInfo(formattedUserInfo);
+      setAccessToken(tokens.accessToken);
+
 
     } catch (error: any) {
       console.error('Google Sign-In Error:', error);
@@ -93,13 +96,13 @@ export default function Index() {
         throw new Error("Invalid response from server");
       }
 
-      // Store the JWT token from your backend
-      await AsyncStorage.setItem("authToken", authToken);
+      // // Store the JWT token from your backend
+      // await AsyncStorage.setItem("authToken", authToken);
 
       // Store the access token in context
-      setAccessToken(authToken);
+      // setAccessToken(authToken);
 
-      // Store user info in AsyncStorage as a string
+      // Store user info in AsyncStosrage as a string
       await AsyncStorage.setItem("userInfo", JSON.stringify({
         id: user.id,
         name: user.name,
