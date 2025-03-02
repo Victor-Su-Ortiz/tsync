@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { AuthService } from "../services/auth.service";
-import { AuthRequest } from "../middleware/auth.middleware";
+import User from "../models/user.model";
+// import { AuthRequest } from "../middleware/auth.middleware";
 
 export class AuthController {
   // Register new user
@@ -84,13 +85,13 @@ export class AuthController {
 
   // Get current user
   static async getCurrentUser(
-    req: AuthRequest,
+    req: Request,
     res: Response,
     next: NextFunction
   ) {
     try {
-      const user = req.user;
-      res.status(200).json({ user: user.getPublicProfile() });
+      const user = await User.findById(req.userId);
+      res.status(200).json({ user: user!.getPublicProfile() });
     } catch (error) {
       next(error);
     }

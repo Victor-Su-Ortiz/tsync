@@ -1,8 +1,8 @@
 // src/models/User.ts
 import mongoose, { Types, Schema } from "mongoose";
 import bcrypt from "bcryptjs";
-import { IUser, IUserMethods, IUserModel, PublicUser } from "../types/user";
-import { IFriendRequest } from "../types/friendRequest";
+import { IUser, IUserMethods, IUserModel, PublicUser } from "../types/user.types";
+import { IFriendRequest } from "../types/friendRequest.types";
 
 const userSchema = new Schema<IUser, IUserModel, IUserMethods>(
   {
