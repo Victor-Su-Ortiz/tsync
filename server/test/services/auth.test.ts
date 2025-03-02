@@ -10,12 +10,22 @@ import {
 //   NotFoundError,
 } from "../../src/utils/errors";
 
+import { describe, it, jest, expect, beforeEach } from '@jest/globals';
+
+
 // Mock dependencies
 jest.mock("../../src/models/user.model");
 jest.mock("jsonwebtoken");
 jest.mock("crypto");
-jest.mock("google-auth-library");
 jest.mock("../../src/utils/email");
+// Mock dependencies
+jest.mock('google-auth-library', () => {
+  return {
+    OAuth2Client: jest.fn().mockImplementation(() => ({
+      verifyIdToken: jest.fn()
+    }))
+  };
+});
 
 describe("AuthService", () => {
   // Setup common mocks and cleanup
@@ -37,7 +47,7 @@ describe("AuthService", () => {
 
     it("should register a new user successfully", async () => {
       // Mock User.findOne to return null (user doesn't exist)
-      (User.findOne as jest.Mock).mockResolvedValueOnce(null);
+      (User.findOne as jest.Mock).mockResolvedValueOnce(null as never);
 
       // Mock crypto functions
       (crypto.randomBytes as jest.Mock).mockReturnValueOnce({
@@ -61,10 +71,10 @@ describe("AuthService", () => {
           role: "user",
         }),
       };
-      (User.create as jest.Mock).mockResolvedValueOnce(mockUser);
+      (User.create as jest.Mock).mockResolvedValueOnce(mockUser as never);
 
       // Mock sendEmail
-      (sendEmail as jest.Mock).mockResolvedValueOnce(undefined);
+      (sendEmail as jest.Mock).mockResolvedValueOnce(undefined as never);
 
       // Mock JWT sign
       (jwt.sign as jest.Mock).mockReturnValueOnce("test-token");
@@ -111,7 +121,7 @@ describe("AuthService", () => {
       // Mock User.findOne to return an existing user
       (User.findOne as jest.Mock).mockResolvedValueOnce({
         email: registerData.email,
-      });
+      } as never);
 
       // Call and assert
       await expect(AuthService.register(registerData)).rejects.toThrow(
@@ -122,7 +132,7 @@ describe("AuthService", () => {
 
     it("should create user even if sending email fails", async () => {
       // Mock User.findOne to return null
-      (User.findOne as jest.Mock).mockResolvedValueOnce(null);
+      (User.findOne as jest.Mock).mockResolvedValueOnce(null as never);
 
       // Mock crypto functions
       (crypto.randomBytes as jest.Mock).mockReturnValueOnce({
@@ -146,10 +156,10 @@ describe("AuthService", () => {
           role: "user",
         }),
       };
-      (User.create as jest.Mock).mockResolvedValueOnce(mockUser);
+      (User.create as jest.Mock).mockResolvedValueOnce(mockUser as never);
 
       // Mock sendEmail to throw error
-      (sendEmail as jest.Mock).mockRejectedValueOnce(new Error("Email error"));
+      (sendEmail as jest.Mock).mockRejectedValueOnce(new Error("Email error") as never);
 
       // Mock console.error
       const originalConsoleError = console.error;
@@ -187,8 +197,8 @@ describe("AuthService", () => {
         email: loginData.email,
         role: "user",
         lastLogin: null,
-        save: jest.fn().mockResolvedValueOnce(undefined),
-        comparePassword: jest.fn().mockResolvedValueOnce(true),
+        save: jest.fn().mockResolvedValueOnce(undefined as never),
+        comparePassword: jest.fn().mockResolvedValueOnce(true as never),
         getPublicProfile: jest.fn().mockReturnValue({
           _id: "user-id-123",
           email: loginData.email,
@@ -196,7 +206,7 @@ describe("AuthService", () => {
         }),
       };
       (User.findOne as jest.Mock).mockImplementationOnce(() => ({
-        select: jest.fn().mockResolvedValueOnce(mockUser),
+        select: jest.fn().mockResolvedValueOnce(mockUser as never),
       }));
 
       // Mock JWT sign
@@ -227,7 +237,7 @@ describe("AuthService", () => {
     it("should throw AuthenticationError if user not found", async () => {
       // Mock User.findOne to return null
       (User.findOne as jest.Mock).mockImplementationOnce(() => ({
-        select: jest.fn().mockResolvedValueOnce(null),
+        select: jest.fn().mockResolvedValueOnce(null as never),
       }));
 
       // Call and assert
@@ -239,10 +249,10 @@ describe("AuthService", () => {
     it("should throw AuthenticationError if password is invalid", async () => {
       // Mock User.findOne
       const mockUser = {
-        comparePassword: jest.fn().mockResolvedValueOnce(false),
+        comparePassword: jest.fn().mockResolvedValueOnce(false as never),
       };
       (User.findOne as jest.Mock).mockImplementationOnce(() => ({
-        select: jest.fn().mockResolvedValueOnce(mockUser),
+        select: jest.fn().mockResolvedValueOnce(mockUser as never),
       }));
 
       // Call and assert
@@ -260,19 +270,21 @@ describe("AuthService", () => {
       sub: "google-sub-123",
       picture: "https://example.com/profile.jpg",
     };
+    
 
     it("should authenticate with Google and create a new user", async () => {
       // Mock OAuth2Client
       const mockTicket = {
         getPayload: jest.fn().mockReturnValueOnce(googlePayload),
       };
-      const mockVerifyIdToken = jest.fn().mockResolvedValueOnce(mockTicket);
-      (OAuth2Client as jest.Mock).mockImplementation(() => ({
-        verifyIdToken: mockVerifyIdToken,
-      }));
+
+      const mockVerifyIdToken = jest.fn().mockResolvedValueOnce(mockTicket as never);
+
+      const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+      (googleClient.verifyIdToken as jest.Mock).mockResolvedValue(mockVerifyIdToken as never);
 
       // Mock User.findOne to return null (no existing user)
-      (User.findOne as jest.Mock).mockResolvedValueOnce(null);
+      (User.findOne as jest.Mock).mockResolvedValueOnce(null as never);
 
       // Mock crypto for random password
       (crypto.randomBytes as jest.Mock).mockReturnValueOnce({
@@ -291,7 +303,7 @@ describe("AuthService", () => {
           role: "user",
         }),
       };
-      (User.create as jest.Mock).mockResolvedValueOnce(mockUser);
+      (User.create as jest.Mock).mockResolvedValueOnce(mockUser as never);
 
       // Mock JWT sign
       (jwt.sign as jest.Mock).mockReturnValueOnce("test-token");

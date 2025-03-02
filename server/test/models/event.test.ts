@@ -1,6 +1,8 @@
 import mongoose, { Types } from 'mongoose';
 import Event from '../../src/models/event.model';
 import User from '../../src/models/user.model';
+import { describe, it, expect, beforeEach } from '@jest/globals';
+
 
 // Define test user IDs
 const testUser1Id = new Types.ObjectId();
