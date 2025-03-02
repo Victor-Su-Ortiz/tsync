@@ -9,7 +9,7 @@ import { beforeAll, afterAll, jest } from '@jest/globals';
 
 let mongoServer: MongoMemoryServer;
 
-jest.mock('../src/controller/auth.controller');
+jest.mock('../src/controllers/auth.controller');
 jest.mock('../src/middleware/validation.middleware', () => ({
   validateRequest: jest.fn(() => (_req: Request, _res: Response, next: NextFunction) => next())
 }));

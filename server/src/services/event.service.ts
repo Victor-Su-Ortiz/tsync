@@ -1,5 +1,5 @@
 import { Types } from 'mongoose';
-import { IEvent, IAttendee } from '../types/event';
+import { IEvent, IAttendee } from '../types/event.types';
 import Event from '../models/event.model';
 import User from '../models/user.model';
 import { AppError } from '../utils/errors';

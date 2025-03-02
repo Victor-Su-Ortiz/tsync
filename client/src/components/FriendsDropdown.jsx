@@ -12,6 +12,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '../utils/api'; // Import your API utility
+import AsyncStorage from '@react-native-async-storage/async-storage';
+// import { useAuth } from '../context/AuthContext';
 
 const FriendsDropdown = ({ selectedFriends, setSelectedFriends }) => {
   const [modalVisible, setModalVisible] = useState(false);
@@ -52,17 +54,18 @@ const FriendsDropdown = ({ selectedFriends, setSelectedFriends }) => {
 
     try {
       // Use api.get instead of api.post since the controller handles GET requests
-      const response = await api.post('/friends');
-      console.log('Friends API Response:', response);
+      const token = await AsyncStorage.getItem("authToken");
+      const response = await api.get('/friends/friends', {headers: { Authorization: `Bearer ${token}` }});
+      const { success, friends } = response.data;
 
       // Based on your controller, response should have a structure with success and data fields
-      if (!response || !response.success || !Array.isArray(response.data)) {
+      if (!response || !success || !Array.isArray(friends)) {
         throw new Error('Unexpected API response format');
       }
 
       // Your controller already populates friend details, so we can use them directly
-      setFriends(response.data);
-      setFilteredFriends(response.data);
+      setFriends(friends);
+      setFilteredFriends(friends);
     } catch (err) {
       console.error('Error fetching friends:', err);
       setError('Failed to load friends. Please try again.');

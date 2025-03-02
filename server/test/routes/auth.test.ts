@@ -29,8 +29,8 @@ type ControllerFn = (
 // }
 // Create mock controller
 
-import { AuthController } from '../src/controllers/auth.controller';
-import authRoutes from '../src/routes/auth.routes';
+import { AuthController } from '../../src/controllers/auth.controller';
+import authRoutes from '../../src/routes/auth.routes';
 // import { protect } from '../src/middleware/auth.middleware';
 
 // Mock the validation schema

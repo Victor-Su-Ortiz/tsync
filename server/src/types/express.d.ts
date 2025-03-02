@@ -1,11 +1,13 @@
+import { Types, Document } from 'mongoose';
 
-import { Document } from 'mongoose';
-import { IUser, IUserMethods } from './user';
-
+// Correctly extending Express namespace
 declare global {
   namespace Express {
     interface Request {
-      user?: Document &  IUser & IUserMethods;
+      userId?: Types.ObjectId;
     }
   }
 }
+
+// Required for this file to be treated as a module
+export {};

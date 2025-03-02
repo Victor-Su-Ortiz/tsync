@@ -1,5 +1,5 @@
 import { Schema, model, Types } from "mongoose";
-import { IAttendee, IEvent, IEventModel, IEventMethods } from "../types/event";
+import { IAttendee, IEvent, IEventModel, IEventMethods } from "../types/event.types";
 
 // Define the Event schema
 const EventSchema = new Schema<IEvent, IEventModel, IEventMethods>(

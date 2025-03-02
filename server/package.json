@@ -5,8 +5,12 @@
   "main": "index.js",
   "scripts": {
     "test": "jest --detectOpenHandles --forceExit --verbose",
+    "test:controllers": "jest --detectOpenHandles --forceExit --verbose --testPathPattern=controllers",
+    "test:models": "jest --detectOpenHandles --forceExit --verbose --testPathPattern=models",
+    "test:routes": "jest --detectOpenHandles --forceExit --verbose --testPathPattern=routes",
+    "test:services": "jest --detectOpenHandles --forceExit --verbose --testPathPattern=services",
     "test:watch": "jest --watch",
-    "start": "nodemon ./src/server.ts"
+    "start": "nodemon --files ./src/server.ts"
   },
   "keywords": [],
   "author": "",

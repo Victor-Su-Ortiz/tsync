@@ -9,18 +9,6 @@ import { IUser, IUserMethods } from '../../src/types/user';
 
 
 describe('User Model Tests', () => {
-  // Setup in-memory database for testing
-//   beforeAll(async () => {
-//     mongoServer = await MongoMemoryServer.create();
-//     const uri = mongoServer.getUri();
-//     await mongoose.connect(uri);
-//   });
-
-//   // Cleanup after tests
-//   afterAll(async () => {
-//     await mongoose.disconnect();
-//     await mongoServer.stop();
-//   });
 
   // Clear the database between tests
   afterEach(async () => {

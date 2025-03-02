@@ -2,14 +2,12 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { AuthenticationError } from "../utils/errors";
-import User from "../models/user.model";
+// import User from "../models/user.model";
+// import { IUser, IUserMethods } from "../types/user";
 
-export interface AuthRequest extends Request {
-  user?: any;
-}
 
 export const protect = async (
-  req: AuthRequest,
+  req: Request,
   _: Response,
   next: NextFunction
 ) => {
@@ -28,7 +26,8 @@ export const protect = async (
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
-    req.user = await User.findById(decoded.id);
+
+    req.userId = decoded.userId;
 
     next();
   } catch (error) {
