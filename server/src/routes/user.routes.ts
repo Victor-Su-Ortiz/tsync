@@ -47,10 +47,10 @@ router
   .patch(validateRequest(userValidation.updateUser), UserController.updateUser)
   .delete(UserController.deleteUser);
 
-router.patch(
-  "/:id/status",
-  validateRequest(userValidation.updateUserStatus),
-  UserController.updateUserStatus
-);
+// router.patch(
+//   "/:id/status",
+//   validateRequest(userValidation.updateUserStatus),
+//   UserController.updateUserStatus
+// );
 
 export default router;

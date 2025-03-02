@@ -47,10 +47,11 @@ const generateCacheKey = (req: Request): string => {
  * @returns Express middleware function
  */
 export const cache = (duration: string) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
     // Skip cache for non-GET requests
     if (req.method !== 'GET') {
-      return next();
+      next();
+      return;
     }
     
     // Generate cache key
@@ -60,12 +61,13 @@ export const cache = (duration: string) => {
     const cachedResponse = appCache.get(key);
     if (cachedResponse) {
       // Return cached response
-      return res.status(200).json(cachedResponse);
+      res.status(200).json(cachedResponse);
+      return;
     }
     
     // If not in cache, capture the response
     const originalSend = res.json;
-    res.json = function(body) {
+    res.json = function(body): Response {
       // Only cache successful responses
       if (res.statusCode >= 200 && res.statusCode < 300) {
         // Convert duration string to seconds

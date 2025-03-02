@@ -41,7 +41,7 @@ export const protect = async (
  * @param roles Allowed roles for the route
  */
 export const restrictTo = (...roles: string[]) => {
-  return async (req: Request, res: Response, next: NextFunction) => {
+  return async (req: Request, _res: Response, next: NextFunction) => {
     try {
       // Check if userId exists (protect middleware should run first)
       if (!req.userId) {

@@ -3,7 +3,7 @@ import User from "../models/user.model";
 import { AuthService } from "../services/auth.service";
 import { UserService } from "../services/user.service";
 import { cloudUpload, deleteFromCloud } from "../utils/cloudStorage";
-import { NotFoundError, AuthenticationError, ForbiddenError } from "../utils/errors";
+import { NotFoundError, ForbiddenError } from "../utils/errors";
 
 export class UserController {
   /**
@@ -319,33 +319,33 @@ export class UserController {
   /**
    * Admin: Update user status (active/inactive)
    */
-  static async updateUserStatus(req: Request, res: Response, next: NextFunction) {
-    try {
-      const { status } = req.body;
+//   static async updateUserStatus(req: Request, res: Response, next: NextFunction) {
+//     try {
+//       const { status } = req.body;
       
-      const user = await User.findById(req.params.id);
+//       const user = await User.findById(req.params.id);
       
-      if (!user) {
-        throw new NotFoundError("User not found");
-      }
+//       if (!user) {
+//         throw new NotFoundError("User not found");
+//       }
       
-      // Prevent self-status change through admin route
-      if (user._id === req.userId) {
-        throw new ForbiddenError("Cannot change your own status through admin route");
-      }
+//       // Prevent self-status change through admin route
+//       if (user._id === req.userId) {
+//         throw new ForbiddenError("Cannot change your own status through admin route");
+//       }
       
-      // Update user status
-      user.isActive = status;
-      await user.save();
+//       // Update user status
+//       user.isActive = status;
+//       await user.save();
       
-      res.status(200).json({
-        success: true,
-        message: `User ${status ? 'activated' : 'deactivated'} successfully`
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
+//       res.status(200).json({
+//         success: true,
+//         message: `User ${status ? 'activated' : 'deactivated'} successfully`
+//       });
+//     } catch (error) {
+//       next(error);
+//     }
+//   }
 }
 
 export default UserController;
