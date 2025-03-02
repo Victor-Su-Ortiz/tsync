@@ -15,7 +15,7 @@ type Place = {
   photos?: { photo_reference: string }[];
 };
 
-export default function Index() {
+export default function Home() {
 
   const params = useLocalSearchParams();
   const isSelectingTeaShop = params.selectingTeaShop === 'true';

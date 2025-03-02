@@ -4,9 +4,11 @@ import { View, TouchableOpacity, StyleSheet, GestureResponderEvent, Image } from
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import images from "../../constants/images";
+import { useAuth } from '../../context/AuthContext';
 
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
+  const { userInfo } = useAuth();
 
   const CustomTabBarButton = ({ children, onPress }: { children: React.ReactNode; onPress?: (event: GestureResponderEvent) => void }) => (
     <TouchableOpacity
@@ -46,7 +48,7 @@ export default function TabsLayout() {
       }}
     >
       <Tabs.Screen
-        name="index"
+        name="home"
         options={{
           title: "Home",
           tabBarIcon: ({ focused }) => (
@@ -84,10 +86,10 @@ export default function TabsLayout() {
           title: "Profile",
           tabBarIcon: ({ focused }) => (
             <Image
-              source={images.defaultpfp}
+              source={userInfo?.picture ? { uri: userInfo.picture } : images.defaultpfp}
               style={{
                 width: 34,
-                height: 34,
+                height: 33,
                 borderRadius: 22,
                 borderWidth: 1.5,
                 borderColor: focused ? "#00cc99" : "#748c94",

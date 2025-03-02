@@ -24,7 +24,7 @@ export default function ProfileScreen() {
       await logout();
 
       // Navigate to login screen
-      router.replace('./login');
+      router.replace('/');
     } catch (error) {
       console.error('Error signing out:', error);
     }
@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     paddingVertical: 15,
     borderRadius: 10,
-    backgroundColor: '#f8f8f8',
+    // backgroundColor: '#f8f8f8',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,

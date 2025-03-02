@@ -3,11 +3,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface UserInfo {
   id?: string;
-  name?: string;
+  name?: string | null;
   email?: string;
-  picture?: string; // URL to profile picture
+  picture?: string | null; // URL to profile picture
   bio?: string;
 }
+
 
 interface AuthContextType {
   accessToken: string;
