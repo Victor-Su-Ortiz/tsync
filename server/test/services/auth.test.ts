@@ -2,7 +2,7 @@ import { AuthService } from "../../src/services/auth.service";
 import User from "../../src/models/user.model";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
-import { OAuth2Client } from "google-auth-library";
+// import { OAuth2Client } from "google-auth-library";
 import { sendEmail } from "../../src/utils/email";
 import {
   AuthenticationError,
@@ -11,6 +11,33 @@ import {
 } from "../../src/utils/errors";
 
 import { describe, it, jest, expect, beforeEach } from '@jest/globals';
+
+// Create ticket mock
+const mockGetPayload = jest.fn();
+const mockTicket = {
+  getPayload: mockGetPayload
+};
+
+// Mock the verifyIdToken method
+const mockVerifyIdToken = jest.fn().mockResolvedValue(mockTicket as never);
+
+// Create a manual mock for google-auth-library
+jest.mock('google-auth-library', () => {
+  return {
+    OAuth2Client: jest.fn().mockImplementation(() => {
+      return {
+        verifyIdToken: mockVerifyIdToken
+      };
+    })
+  };
+});
+
+Object.defineProperty(AuthService, 'googleClient', {
+  configurable: true,
+  get: () => ({
+    verifyIdToken: mockVerifyIdToken
+  })
+});
 
 
 // Mock dependencies
@@ -274,14 +301,12 @@ describe("AuthService", () => {
 
     it("should authenticate with Google and create a new user", async () => {
       // Mock OAuth2Client
-      const mockTicket = {
-        getPayload: jest.fn().mockReturnValueOnce(googlePayload),
-      };
+      // const mockTicket = {
+      //   getPayload: jest.fn().mockReturnValueOnce(googlePayload),
+      // };
+      mockGetPayload.mockReturnValueOnce(googlePayload);
 
-      const mockVerifyIdToken = jest.fn().mockResolvedValueOnce(mockTicket as never);
-
-      const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-      (googleClient.verifyIdToken as jest.Mock).mockResolvedValue(mockVerifyIdToken as never);
+      // const mockVerifyIdToken = jest.fn().mockResolvedValueOnce(mockTicket as never);
 
       // Mock User.findOne to return null (no existing user)
       (User.findOne as jest.Mock).mockResolvedValueOnce(null as never);
@@ -296,7 +321,7 @@ describe("AuthService", () => {
         _id: "user-id-123",
         email: googlePayload.email,
         role: "user",
-        getPublicProfile: jest.fn().mockReturnValueOnce({
+        getPublicProfile: jest.fn().mockReturnValue({
           _id: "user-id-123",
           email: googlePayload.email,
           name: googlePayload.name,
@@ -332,90 +357,92 @@ describe("AuthService", () => {
       });
     });
 
-//     it("should authenticate with Google and update existing user", async () => {
-//       // Mock OAuth2Client
-//       const mockTicket = {
-//         getPayload: jest.fn().mockReturnValueOnce(googlePayload),
-//       };
-//       const mockVerifyIdToken = jest.fn().mockResolvedValueOnce(mockTicket);
-//       (OAuth2Client as jest.Mock).mockImplementation(() => ({
-//         verifyIdToken: mockVerifyIdToken,
-//       }));
+    it("should authenticate with Google and update existing user", async () => {
+      // Mock OAuth2Client
+      // const mockTicket = {
+      //   getPayload: jest.fn().mockReturnValueOnce(googlePayload),
+      // };
+      // const mockVerifyIdToken = jest.fn().mockResolvedValueOnce(mockTicket);
+      // (OAuth2Client as jest.Mock).mockImplementation(() => ({
+      //   verifyIdToken: mockVerifyIdToken,
+      // }));
+      mockGetPayload.mockReturnValueOnce(googlePayload);
 
-//       // Mock User.findOne to return existing user
-//       const mockUser = {
-//         _id: "user-id-123",
-//         email: googlePayload.email,
-//         role: "user",
-//         googleId: null,
-//         profilePicture: null,
-//         isEmailVerified: false,
-//         save: jest.fn().mockResolvedValueOnce(undefined),
-//         getPublicProfile: jest.fn().mockReturnValueOnce({
-//           _id: "user-id-123",
-//           email: googlePayload.email,
-//           name: "Existing User",
-//           role: "user",
-//         }),
-//       };
-//       (User.findOne as jest.Mock).mockResolvedValueOnce(mockUser);
 
-//       // Mock JWT sign
-//       (jwt.sign as jest.Mock).mockReturnValueOnce("test-token");
+      // Mock User.findOne to return existing user
+      const mockUser = {
+        _id: "user-id-123",
+        email: googlePayload.email,
+        role: "user",
+        googleId: null,
+        profilePicture: null,
+        isEmailVerified: false,
+        save: jest.fn().mockResolvedValueOnce(undefined as never),
+        getPublicProfile: jest.fn().mockReturnValue({
+          _id: "user-id-123",
+          email: googlePayload.email,
+          name: "Existing User",
+          role: "user",
+        }),
+      };
+      (User.findOne as jest.Mock).mockResolvedValueOnce(mockUser as never);
 
-//       // Call the method
-//       const result = await AuthService.googleAuth(idToken);
+      // Mock JWT sign
+      (jwt.sign as jest.Mock).mockReturnValueOnce("test-token");
 
-//       // Assertions
-//       expect(User.create).not.toHaveBeenCalled();
-//       expect(mockUser.googleId).toBe(googlePayload.sub);
-//       expect(mockUser.isEmailVerified).toBe(true);
-//       expect(mockUser.profilePicture).toBe(googlePayload.picture);
-//       expect(mockUser.save).toHaveBeenCalled();
-//       expect(result).toEqual({
-//         user: mockUser.getPublicProfile(),
-//         token: "test-token",
-//       });
-//     });
+      // Call the method
+      const result = await AuthService.googleAuth(idToken);
 
-//     it("should throw AuthenticationError if Google token verification fails", async () => {
-//       // Mock OAuth2Client to throw error
-//       const mockVerifyIdToken = jest.fn().mockRejectedValueOnce(
-//         new Error("Invalid token")
-//       );
-//       (OAuth2Client as jest.Mock).mockImplementation(() => ({
-//         verifyIdToken: mockVerifyIdToken,
-//       }));
+      // Assertions
+      expect(User.create).not.toHaveBeenCalled();
+      expect(mockUser.googleId).toBe(googlePayload.sub);
+      expect(mockUser.isEmailVerified).toBe(true);
+      expect(mockUser.profilePicture).toBe(googlePayload.picture);
+      expect(mockUser.save).toHaveBeenCalled();
+      expect(result).toEqual({
+        user: mockUser.getPublicProfile(),
+        token: "test-token",
+      });
+    });
 
-//       // Mock console.log
-//       const originalConsoleLog = console.log;
-//       console.log = jest.fn();
+  //   it("should throw AuthenticationError if Google token verification fails", async () => {
+  //     // Mock OAuth2Client to throw error
+  //     const mockVerifyIdToken = jest.fn().mockRejectedValueOnce(
+  //       new Error("Invalid token")
+  //     );
+  //     (OAuth2Client as jest.Mock).mockImplementation(() => ({
+  //       verifyIdToken: mockVerifyIdToken,
+  //     }));
 
-//       // Call and assert
-//       await expect(AuthService.googleAuth(idToken)).rejects.toThrow(
-//         AuthenticationError
-//       );
+  //     // Mock console.log
+  //     const originalConsoleLog = console.log;
+  //     console.log = jest.fn();
+
+  //     // Call and assert
+  //     await expect(AuthService.googleAuth(idToken)).rejects.toThrow(
+  //       AuthenticationError
+  //     );
       
-//       // Restore console.log
-//       console.log = originalConsoleLog;
-//     });
+  //     // Restore console.log
+  //     console.log = originalConsoleLog;
+  //   });
 
-//     it("should throw AuthenticationError if Google payload is missing email", async () => {
-//       // Mock OAuth2Client with missing email
-//       const mockTicket = {
-//         getPayload: jest.fn().mockReturnValueOnce({ sub: "123" }), // No email
-//       };
-//       const mockVerifyIdToken = jest.fn().mockResolvedValueOnce(mockTicket);
-//       (OAuth2Client as jest.Mock).mockImplementation(() => ({
-//         verifyIdToken: mockVerifyIdToken,
-//       }));
+  //   it("should throw AuthenticationError if Google payload is missing email", async () => {
+  //     // Mock OAuth2Client with missing email
+  //     const mockTicket = {
+  //       getPayload: jest.fn().mockReturnValueOnce({ sub: "123" }), // No email
+  //     };
+  //     const mockVerifyIdToken = jest.fn().mockResolvedValueOnce(mockTicket);
+  //     (OAuth2Client as jest.Mock).mockImplementation(() => ({
+  //       verifyIdToken: mockVerifyIdToken,
+  //     }));
 
-//       // Call and assert
-//       await expect(AuthService.googleAuth(idToken)).rejects.toThrow(
-//         AuthenticationError
-//       );
-//     });
-//   });
+  //     // Call and assert
+  //     await expect(AuthService.googleAuth(idToken)).rejects.toThrow(
+  //       AuthenticationError
+  //     );
+  //   });
+  // });
 
 //   describe("verifyEmail", () => {
 //     const token = "verification-token";

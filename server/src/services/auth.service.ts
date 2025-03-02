@@ -154,10 +154,10 @@ export class AuthService {
       });
 
       const payload = ticket.getPayload();
+      
       if (!payload || !payload.email) {
         throw new AuthenticationError("Invalid Google token");
       }
-
 
       // Find or create user
       let user = await User.findOne({ email: payload.email });
