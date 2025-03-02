@@ -1,81 +1,143 @@
 import { Text, TouchableOpacity, View, Image, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import * as Google from "expo-auth-session/providers/google";
 import images from '../constants/images';
-import React from "react";
+import React, { useEffect } from "react";
 import { GOOGLE_IOS_ID, GOOGLE_WEB_ID } from "@env"
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { api } from "../utils/api";
 import { useAuth } from "../context/AuthContext";
 import { GoogleSignin, statusCodes } from "@react-native-google-signin/google-signin";
 
+interface UserInfo {
+  id?: string;
+  name?: string | null;
+  email?: string;
+  picture?: string | null; // URL to profile picture
+  bio?: string;
+}
+
 export default function Index() {
   const router = useRouter();
   const handleLogin = () => router.push("./login");
   const handleRegister = () => router.push("./register");
+  const { setAccessToken, setUserInfo } = useAuth();
 
-
-  const { setAccessToken } = useAuth();
-
-  GoogleSignin.configure({
-    webClientId: GOOGLE_WEB_ID,
-    iosClientId: GOOGLE_IOS_ID,
-    offlineAccess: true,
-  });
+  // Configure Google Sign In once when component mounts
+  useEffect(() => {
+    GoogleSignin.configure({
+      webClientId: GOOGLE_WEB_ID,
+      iosClientId: GOOGLE_IOS_ID,
+      offlineAccess: true,
+    });
+  }, []);
 
   // Sign in with Google
   const signInWithGoogle = async () => {
     try {
+      // Clear existing tokens in case they're causing issues
+      await GoogleSignin.signOut();
+
+      // Start the sign-in flow
       await GoogleSignin.hasPlayServices();
       const userInfo = await GoogleSignin.signIn();
-
-      // If we get here, it means the user successfully completed the sign-in
-      // Only then proceed to get tokens and send to backend
       const tokens = await GoogleSignin.getTokens();
+
+      if (!userInfo || !tokens.idToken) {
+        throw new Error("Failed to get ID token from Google");
+      }
+
+
+      // Send the ID token to your backend
+
+      await sendTokenToBackend(tokens.idToken);
+
+      // Store Google user info in context for profile display
+      const formattedUserInfo: UserInfo = {
+        id: userInfo.data?.user.id,
+        name: userInfo.data?.user.name,
+        email: userInfo.data?.user.email,
+        picture: userInfo.data?.user.photo, // Photo URL from Google
+        bio: "Let's meet!" // Default bio
+      };
+
+      // Update context with user info and access token for UI display and fetching events
+      setUserInfo(formattedUserInfo);
       setAccessToken(tokens.accessToken);
-      sendTokenToBackend(tokens.idToken);
+
+
     } catch (error: any) {
-      // Check for specific error types
+      console.error('Google Sign-In Error:', error);
+
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-        console.log("User cancelled the sign-in flow");
-        // Don't proceed further - explicit early return
-        return;
+        console.log('User cancelled the login flow');
       } else if (error.code === statusCodes.IN_PROGRESS) {
-        console.log("Another sign-in operation is in progress");
-        return;
+        console.log('Sign in is in progress');
       } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        Alert.alert("Error", "Play services not available or outdated");
-        return;
+        Alert.alert('Error', 'Play services not available');
       } else {
-        console.error("Google sign-in error:", error);
-        Alert.alert("Sign-In Error", "Failed to sign in with Google");
+        Alert.alert('Sign-In Error', error.message || 'Something went wrong with Google Sign-In');
       }
     }
   };
 
-  const sendTokenToBackend = async (token: string) => {
+  const sendTokenToBackend = async (idToken: string) => {
     try {
-      console.log("Sending token to backend:", token);
+      console.log("Sending token to backend:", idToken);
 
-      const res = await api.post("/auth/google", { token });
+      // Make sure your API is configured with proper error handling
+      const res = await api.post("/auth/google", { token: idToken });
 
       console.log("Backend response:", res.data);
 
-      const { user, token: idToken } = res.data;
-      if (!user) {
-        throw new Error("User missing in backend response.");
+      const { user, token: authToken } = res.data;
+
+      if (!user || !authToken) {
+        throw new Error("Invalid response from server");
       }
 
-      await AsyncStorage.setItem("authToken", idToken);
+      // // Store the JWT token from your backend
+      // await AsyncStorage.setItem("authToken", authToken);
+
+      // Store the access token in context
+      // setAccessToken(authToken);
+
+      // Store user info in AsyncStosrage as a string
+      await AsyncStorage.setItem("userInfo", JSON.stringify({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        picture: user.picture || user.photo,
+        bio: user.bio || "Let's meet!"
+      }));
+
       Alert.alert("Success", `Welcome ${user.name}!`);
-      router.push('./home');
+      router.push('./(tabs)/home');
     } catch (error: any) {
-      console.error("Google Sign-In Error:", error);
-      Alert.alert(
-        "Google Login Failed",
-        error.response?.data?.message || "Something went wrong."
-      );
+      console.error("Backend Auth Error:", error);
+
+      // More detailed error handling
+      if (error.response) {
+        // The server responded with an error status
+        console.error("Server responded with:", error.response.status, error.response.data);
+        Alert.alert(
+          "Authentication Failed",
+          error.response.data?.message || "Server returned an error."
+        );
+      } else if (error.request) {
+        // The request was made but no response was received
+        console.error("No response received:", error.request);
+        Alert.alert(
+          "Connection Error",
+          "Could not connect to the server. Please check your internet connection."
+        );
+      } else {
+        // Something else happened while setting up the request
+        Alert.alert(
+          "Login Error",
+          error.message || "An unexpected error occurred."
+        );
+      }
     }
   };
 
