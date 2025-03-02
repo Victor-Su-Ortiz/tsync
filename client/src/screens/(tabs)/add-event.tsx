@@ -27,6 +27,7 @@ export default function AddEventScreen() {
   const params = useLocalSearchParams();
   const [teaShopInfo, setTeaShopInfo] = useState('');
   const [eventName, setEventName] = useState('');
+  const [description, setDescription] = useState('');
   const [date, setDate] = useState(new Date());
   const [time, setTime] = useState(new Date());
   const [selectedFriends, setSelectedFriends] = useState([]);
@@ -77,6 +78,7 @@ export default function AddEventScreen() {
     const newEvent = {
       teaShopInfo,
       eventName,
+      description,
       date: date.toISOString().split('T')[0],
       time: `${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`,
       attendees: selectedFriends.map((friend) => ({
@@ -131,6 +133,17 @@ export default function AddEventScreen() {
               value={eventName}
               onChangeText={setEventName}
               placeholder="Enter event name"
+            />
+
+            <Text style={styles.label}>Description</Text>
+            <TextInput
+              style={[styles.input, styles.descriptionInput]}
+              value={description}
+              onChangeText={setDescription}
+              placeholder="Enter event description"
+              multiline={true}
+              numberOfLines={4}
+              textAlignVertical="top"
             />
 
             <Text style={styles.label}>Date</Text>
@@ -233,6 +246,10 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 16,
     backgroundColor: '#fafafa',
+  },
+  descriptionInput: {
+    height: 100,
+    paddingTop: 12,
   },
   teaShopButton: {
     flexDirection: 'row',
