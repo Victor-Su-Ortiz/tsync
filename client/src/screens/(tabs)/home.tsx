@@ -8,6 +8,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import UserSearch from '../../components/UserSearch';
+import { useAuth } from '@/src/context/AuthContext';
 
 type Place = {
   place_id: string;
@@ -21,13 +22,13 @@ export default function Home() {
 
   const params = useLocalSearchParams();
   const isSelectingTeaShop = params.selectingTeaShop === 'true';
-
   const [selectionMode, setSelectionMode] = useState<'normal' | 'tea-shop-selection'>('normal');
   const [location, setLocation] = useState<Location.LocationObjectCoords | null>(null);
   const [shops, setShops] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchModalVisible, setSearchModalVisible] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0); // Sample notification count
+  const { idToken } = useAuth();
 
   useEffect(() => {
     const checkNavigationMode = async () => {
@@ -85,6 +86,7 @@ export default function Home() {
       return;
     }
     const location = await Location.getCurrentPositionAsync({});
+    console.log(idToken);
     console.log(location.coords.latitude, location.coords.longitude);
     setLocation(location.coords);
     return location.coords;
@@ -100,7 +102,7 @@ export default function Home() {
     try {
       const response = await axios.get(url);
       setShops(response.data.results);
-      console.log(response.data.results); // List of tea shops
+      // console.log(response.data.results); // List of tea shops
     } catch (error) {
       console.error(error);
     } finally {
@@ -153,6 +155,7 @@ export default function Home() {
       <UserSearch
         visible={searchModalVisible}
         onClose={() => setSearchModalVisible(false)}
+        accessToken={idToken}
       />
 
       {loading ? (

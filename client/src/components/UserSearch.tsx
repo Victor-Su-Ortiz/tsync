@@ -16,7 +16,8 @@ import {
 } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 import UserProfile from './UserProfile';
-import { debounce } from 'lodash'; // You'll need to install this dependency
+import { debounce } from 'lodash';
+import { api } from '../utils/api'; // Import your API utility
 
 type User = {
   id: string;
@@ -31,9 +32,11 @@ type User = {
 type UserSearchProps = {
   visible: boolean;
   onClose: () => void;
+  accessToken: string;
 };
 
-const UserSearch = ({ visible, onClose }: UserSearchProps) => {
+
+const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [users, setUsers] = useState<User[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -54,10 +57,13 @@ const UserSearch = ({ visible, onClose }: UserSearchProps) => {
         setHasSearched(false);
       }
     }, 300), // 300ms delay
-    [] // No dependencies since we're not using location
+    []
   );
 
+  const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2N2JmYzBmNWM0ZDAxZDVhMzdmMDNhM2EiLCJlbWFpbCI6Im5mMjQzQGNvcm5lbGwuZWR1Iiwicm9sZSI6InVzZXIiLCJpYXQiOjE3NDEwNDM1OTcsImV4cCI6MTc0MTEyOTk5N30.x_shP3WMsSTDNs-LwbBJyriIOBjnIWX_ssdcbVRXZss';
+
   useEffect(() => {
+
     // Reset state when modal opens
     if (visible) {
       setSearchQuery('');
@@ -82,86 +88,54 @@ const UserSearch = ({ visible, onClose }: UserSearchProps) => {
     };
   }, [searchQuery, debouncedSearch]);
 
+
+
   const searchUsers = async (query: string = searchQuery) => {
-    if (!query.trim()) return;
+    console.log("🔑 Auth Token Retrieved:", token);
+    console.log("🔎 searchUsers function is being called with query:", query);
+
+    if (!query.trim()) {
+      console.log("⚠️ Empty query, exiting searchUsers");
+      return;
+    }
 
     setIsSearching(true);
     setHasSearched(true);
 
+    if (!accessToken) {
+      console.log("🚨 No access token found! Exiting search.");
+      setIsSearching(false);
+      return;
+    }
+
     try {
-      // Here you would make an API call to your backend to search for users
-      // This is a placeholder implementation
-      // Replace with your actual API endpoint
-
-      const apiUrl = `https://your-backend-api.com/users/search?query=${encodeURIComponent(query)}`;
-
-      // For demonstration purposes, using mock data
-      // In a real app, you would do:
-      // const response = await axios.get(apiUrl);
-      // const searchedUsers = response.data;
-
-      // Mock data for demonstration with additional profile details
-      setTimeout(() => {
-        const mockUsers: User[] = [
-          {
-            id: '1',
-            name: 'Tea Lover Alice',
-            profileImage: 'https://via.placeholder.com/150',
-            bio: 'Tea enthusiast exploring the world one cup at a time. I love finding new tea shops and meeting fellow tea lovers.',
-            favoriteTea: 'Jasmine Green Tea',
-            joinedDate: 'March 2023',
-            friendStatus: 'none' as 'none'
+      console.log("📡 Making API request...");
+      const response = await api.post(
+        '/users/search',
+        { q: query, limit: 10 },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
           },
-          {
-            id: '2',
-            name: 'Matcha Master Bob',
-            profileImage: 'https://via.placeholder.com/150',
-            bio: 'Certified tea specialist with a passion for Japanese tea ceremonies and matcha preparation.',
-            favoriteTea: 'Ceremonial Grade Matcha',
-            joinedDate: 'January 2024',
-            friendStatus: 'pending' as 'pending'
-          },
-          {
-            id: '3',
-            name: 'Chai Charlie',
-            profileImage: 'https://via.placeholder.com/150',
-            bio: 'I travel around searching for the perfect chai blend. Let\'s meet up for a tea session!',
-            favoriteTea: 'Masala Chai',
-            joinedDate: 'November 2023',
-            friendStatus: 'friends' as 'friends'
-          },
-          {
-            id: '4',
-            name: 'Darjeeling Dave',
-            profileImage: 'https://via.placeholder.com/150',
-            bio: 'Tea collector and connoisseur. I host monthly tea tasting events in my local area.',
-            favoriteTea: 'First Flush Darjeeling',
-            joinedDate: 'August 2023',
-            friendStatus: 'none' as 'none'
-          },
-          {
-            id: '5',
-            name: 'Earl Grey Emma',
-            profileImage: 'https://via.placeholder.com/150',
-            bio: 'Tea blogger and photographer. I love capturing the perfect tea moment.',
-            favoriteTea: 'Earl Grey with Lavender',
-            joinedDate: 'February 2024',
-            friendStatus: 'none' as 'none'
-          },
-        ].filter(user =>
-          user.name.toLowerCase().includes(query.toLowerCase())
-        );
+        }
+      );
 
-        setUsers(mockUsers);
-        setIsSearching(false);
-      }, 1000);
+      console.log("✅ API Response:", response.data);
 
-    } catch (error) {
-      console.error("Error searching for users:", error);
-      Alert.alert("Error", "Failed to search for nearby users");
+      const searchedUsers = response.data.users || [];
+      console.log("👥 Users found:", searchedUsers.length);
+
+      setUsers(searchedUsers);
+    } catch (error: any) {
+      console.error("❌ Error searching for users:", error);
+      console.error("⚠️ API Error Response:", error.response?.status, error.response?.data);
+    } finally {
+      console.log("⏳ Finished searching, updating UI...");
       setIsSearching(false);
     }
   };
+
+
 
   const handleUserPress = (user: User) => {
     console.log('User pressed:', user.name); // Debug log
@@ -219,14 +193,6 @@ const UserSearch = ({ visible, onClose }: UserSearchProps) => {
                 clearButtonMode="while-editing"
                 autoFocus={true}
               />
-              {searchQuery.length > 0 && (
-                <TouchableOpacity
-                  style={styles.clearButton}
-                  onPress={() => setSearchQuery('')}
-                >
-                  <Ionicons name="close-circle" size={18} color="#999" />
-                </TouchableOpacity>
-              )}
             </View>
           </View>
 
@@ -234,7 +200,7 @@ const UserSearch = ({ visible, onClose }: UserSearchProps) => {
           {isSearching ? (
             <View style={styles.centered}>
               <ActivityIndicator size="large" color="#00cc99" />
-              <Text style={styles.loadingText}>Searching nearby users...</Text>
+              <Text style={styles.loadingText}>Searching users...</Text>
             </View>
           ) : hasSearched ? (
             users.length > 0 ? (
@@ -252,6 +218,22 @@ const UserSearch = ({ visible, onClose }: UserSearchProps) => {
                     />
                     <View style={styles.userInfo}>
                       <Text style={styles.userName}>{item.name}</Text>
+                      {item.friendStatus === 'pending' && (
+                        <View style={styles.friendStatusPending}>
+                          <Ionicons name="time-outline" size={14} color="#F9A826" />
+                          <Text style={[styles.friendStatusText, { color: '#F9A826' }]}>
+                            Friend Request Pending
+                          </Text>
+                        </View>
+                      )}
+                      {item.friendStatus === 'friends' && (
+                        <View style={styles.friendStatusFriends}>
+                          <Ionicons name="checkmark-circle-outline" size={14} color="#00cc99" />
+                          <Text style={[styles.friendStatusText, { color: '#00cc99' }]}>
+                            Friends
+                          </Text>
+                        </View>
+                      )}
                     </View>
                   </TouchableOpacity>
                 )}
@@ -266,7 +248,7 @@ const UserSearch = ({ visible, onClose }: UserSearchProps) => {
           ) : (
             <View style={styles.centered}>
               <Ionicons name="people-outline" size={70} color="#ddd" />
-              <Text style={styles.instructionText}>Search for nearby tea enthusiasts</Text>
+              <Text style={styles.instructionText}>Search for tea enthusiasts</Text>
             </View>
           )}
 

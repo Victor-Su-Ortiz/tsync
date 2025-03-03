@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, Image, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
 import { Stack, router } from 'expo-router';
 import images from '../../constants/images';
@@ -7,6 +7,7 @@ import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 export default function ProfileScreen() {
   const { userInfo, logout } = useAuth();
+
 
   // Default stats if not available from the API
   const stats = {

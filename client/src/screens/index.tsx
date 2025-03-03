@@ -4,7 +4,6 @@ import { useRouter } from "expo-router";
 import images from '../constants/images';
 import React, { useEffect } from "react";
 import { GOOGLE_IOS_ID, GOOGLE_WEB_ID } from "@env"
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { api } from "../utils/api";
 import { useAuth } from "../context/AuthContext";
 import { GoogleSignin, statusCodes } from "@react-native-google-signin/google-signin";
@@ -21,7 +20,7 @@ export default function Index() {
   const router = useRouter();
   const handleLogin = () => router.push("./login");
   const handleRegister = () => router.push("./register");
-  const { setAccessToken, setUserInfo } = useAuth();
+  const { setAccessToken, setUserInfo, setIdToken } = useAuth();
 
   // Configure Google Sign In once when component mounts
   useEffect(() => {
@@ -64,6 +63,7 @@ export default function Index() {
       // Update context with user info and access token for UI display and fetching events
       setUserInfo(formattedUserInfo);
       setAccessToken(tokens.accessToken);
+      setIdToken(tokens.idToken);
 
 
     } catch (error: any) {
@@ -103,13 +103,13 @@ export default function Index() {
       // setAccessToken(authToken);
 
       // Store user info in AsyncStosrage as a string
-      await AsyncStorage.setItem("userInfo", JSON.stringify({
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        picture: user.picture || user.photo,
-        bio: user.bio || "Let's meet!"
-      }));
+      // await AsyncStorage.setItem("userInfo", JSON.stringify({
+      //   id: user.id,
+      //   name: user.name,
+      //   email: user.email,
+      //   picture: user.picture || user.photo,
+      //   bio: user.bio || "Let's meet!"
+      // }));
 
       Alert.alert("Success", `Welcome ${user.name}!`);
       router.push('./(tabs)/home');
