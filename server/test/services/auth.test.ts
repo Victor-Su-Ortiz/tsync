@@ -35,7 +35,6 @@ jest.mock("../../src/models/user.model");
 jest.mock("jsonwebtoken");
 jest.mock("crypto");
 jest.mock("../../src/utils/email");
-// Mock dependencies
 
 describe("AuthService", () => {
   // Setup common mocks and cleanup
@@ -406,21 +405,21 @@ describe("AuthService", () => {
       console.log = originalConsoleLog;
     });
 
-  //   it("should throw AuthenticationError if Google payload is missing email", async () => {
-  //     // Mock OAuth2Client with missing email
-  //     const mockTicket = {
-  //       getPayload: jest.fn().mockReturnValueOnce({ sub: "123" }), // No email
-  //     };
-  //     const mockVerifyIdToken = jest.fn().mockResolvedValueOnce(mockTicket);
-  //     (OAuth2Client as jest.Mock).mockImplementation(() => ({
-  //       verifyIdToken: mockVerifyIdToken,
-  //     }));
+    it("should throw AuthenticationError if Google payload is missing email", async () => {
+      // Mock OAuth2Client with missing email
+      const mockTicket = {
+        getPayload: jest.fn().mockReturnValueOnce({ sub: "123" }), // No email
+      };
+      const mockVerifyIdToken = jest.fn().mockResolvedValueOnce(mockTicket);
+      (OAuth2Client as jest.Mock).mockImplementation(() => ({
+        verifyIdToken: mockVerifyIdToken,
+      }));
 
-  //     // Call and assert
-  //     await expect(AuthService.googleAuth(idToken)).rejects.toThrow(
-  //       AuthenticationError
-  //     );
-  //   });
+      // Call and assert
+      await expect(AuthService.googleAuth(idToken)).rejects.toThrow(
+        AuthenticationError
+      );
+    });
   // });
 
 //   describe("verifyEmail", () => {
