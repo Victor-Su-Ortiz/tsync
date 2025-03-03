@@ -20,8 +20,6 @@ type User = {
   distance: number;
   profileImage?: string;
   bio?: string;
-  favoriteTea?: string;
-  joinedDate?: string;
   friendStatus?: 'none' | 'pending' | 'friends';
 };
 
@@ -103,8 +101,9 @@ const UserProfile = ({ visible, onClose, user }: UserProfileProps) => {
     <Modal
       visible={visible}
       animationType="slide"
-      transparent={true}
+      transparent={false}
       onRequestClose={onClose}
+      presentationStyle='fullScreen'
     >
       <View style={styles.modalContainer}>
         <View style={styles.container}>
@@ -190,36 +189,11 @@ const UserProfile = ({ visible, onClose, user }: UserProfileProps) => {
 
             {/* Profile Information */}
             <View style={styles.infoContainer}>
-              <View style={styles.infoItem}>
-                <Ionicons name="leaf" size={22} color="#00cc99" style={styles.infoIcon} />
-                <View>
-                  <Text style={styles.infoLabel}>Favorite Tea</Text>
-                  <Text style={styles.infoValue}>{user.favoriteTea || "Not specified"}</Text>
-                </View>
-              </View>
-
-              <View style={styles.infoItem}>
-                <Ionicons name="calendar" size={22} color="#00cc99" style={styles.infoIcon} />
-                <View>
-                  <Text style={styles.infoLabel}>Joined</Text>
-                  <Text style={styles.infoValue}>{user.joinedDate || "Recently"}</Text>
-                </View>
-              </View>
-
               <View style={styles.bioContainer}>
                 <Text style={styles.bioLabel}>About</Text>
                 <Text style={styles.bioText}>
                   {user.bio || "This user hasn't added a bio yet."}
                 </Text>
-              </View>
-            </View>
-
-            {/* Tea Event History - Placeholder */}
-            <View style={styles.eventsContainer}>
-              <Text style={styles.sectionTitle}>Recent Tea Events</Text>
-              <View style={styles.eventPlaceholder}>
-                <Ionicons name="calendar-outline" size={30} color="#ccc" />
-                <Text style={styles.placeholderText}>No recent tea events</Text>
               </View>
             </View>
           </ScrollView>
@@ -336,28 +310,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     marginBottom: 24,
   },
-  infoItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  infoIcon: {
-    marginRight: 12,
-  },
-  infoLabel: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 4,
-  },
-  infoValue: {
-    fontSize: 16,
-    fontWeight: '500',
-  },
   bioContainer: {
     marginTop: 8,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
   },
   bioLabel: {
     fontSize: 16,
@@ -368,28 +322,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 24,
     color: '#333',
-  },
-  eventsContainer: {
-    paddingHorizontal: 24,
-    paddingBottom: 40,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 16,
-  },
-  eventPlaceholder: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 32,
-    backgroundColor: '#f9f9f9',
-    borderRadius: 12,
-  },
-  placeholderText: {
-    marginTop: 8,
-    color: '#888',
-    fontSize: 16,
-  },
+  }
 });
 
 export default UserProfile;
