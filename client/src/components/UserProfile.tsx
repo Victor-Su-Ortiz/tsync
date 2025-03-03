@@ -17,7 +17,6 @@ import { Ionicons } from '@expo/vector-icons';
 type User = {
   id: string;
   name: string;
-  distance: number;
   profileImage?: string;
   bio?: string;
   friendStatus?: 'none' | 'pending' | 'friends';

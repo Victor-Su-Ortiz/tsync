@@ -1,5 +1,5 @@
 // components/UserSearch.tsx
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
   StyleSheet,
   Alert,
@@ -14,14 +14,13 @@ import {
   Platform,
   Modal
 } from "react-native";
-import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 import UserProfile from './UserProfile';
+import { debounce } from 'lodash'; // You'll need to install this dependency
 
 type User = {
   id: string;
   name: string;
-  distance: number; // distance in meters
   profileImage?: string;
   bio?: string;
   favoriteTea?: string;
@@ -32,10 +31,9 @@ type User = {
 type UserSearchProps = {
   visible: boolean;
   onClose: () => void;
-  location: Location.LocationObjectCoords | null;
 };
 
-const UserSearch = ({ visible, onClose, location }: UserSearchProps) => {
+const UserSearch = ({ visible, onClose }: UserSearchProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [users, setUsers] = useState<User[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -43,6 +41,21 @@ const UserSearch = ({ visible, onClose, location }: UserSearchProps) => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [profileVisible, setProfileVisible] = useState(false);
   const inputRef = useRef<TextInput>(null);
+
+  // Create a debounced search function to prevent too many searches as user types
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const debouncedSearch = useCallback(
+    debounce((query: string) => {
+      if (query.trim().length > 0) {
+        searchUsers(query);
+      } else {
+        // Clear results if search query is empty
+        setUsers([]);
+        setHasSearched(false);
+      }
+    }, 300), // 300ms delay
+    [] // No dependencies since we're not using location
+  );
 
   useEffect(() => {
     // Reset state when modal opens
@@ -59,8 +72,18 @@ const UserSearch = ({ visible, onClose, location }: UserSearchProps) => {
     }
   }, [visible]);
 
-  const searchNearbyUsers = async () => {
-    if (!location || !searchQuery.trim()) return;
+  // Trigger the debounced search when searchQuery changes
+  useEffect(() => {
+    debouncedSearch(searchQuery);
+
+    // Cancel any pending debounced searches on cleanup
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [searchQuery, debouncedSearch]);
+
+  const searchUsers = async (query: string = searchQuery) => {
+    if (!query.trim()) return;
 
     setIsSearching(true);
     setHasSearched(true);
@@ -70,12 +93,12 @@ const UserSearch = ({ visible, onClose, location }: UserSearchProps) => {
       // This is a placeholder implementation
       // Replace with your actual API endpoint
 
-      const apiUrl = `https://your-backend-api.com/users/nearby?lat=${location.latitude}&lng=${location.longitude}&query=${encodeURIComponent(searchQuery)}`;
+      const apiUrl = `https://your-backend-api.com/users/search?query=${encodeURIComponent(query)}`;
 
       // For demonstration purposes, using mock data
       // In a real app, you would do:
       // const response = await axios.get(apiUrl);
-      // const nearbyUsers = response.data;
+      // const searchedUsers = response.data;
 
       // Mock data for demonstration with additional profile details
       setTimeout(() => {
@@ -83,7 +106,6 @@ const UserSearch = ({ visible, onClose, location }: UserSearchProps) => {
           {
             id: '1',
             name: 'Tea Lover Alice',
-            distance: 300,
             profileImage: 'https://via.placeholder.com/150',
             bio: 'Tea enthusiast exploring the world one cup at a time. I love finding new tea shops and meeting fellow tea lovers.',
             favoriteTea: 'Jasmine Green Tea',
@@ -93,7 +115,6 @@ const UserSearch = ({ visible, onClose, location }: UserSearchProps) => {
           {
             id: '2',
             name: 'Matcha Master Bob',
-            distance: 750,
             profileImage: 'https://via.placeholder.com/150',
             bio: 'Certified tea specialist with a passion for Japanese tea ceremonies and matcha preparation.',
             favoriteTea: 'Ceremonial Grade Matcha',
@@ -103,7 +124,6 @@ const UserSearch = ({ visible, onClose, location }: UserSearchProps) => {
           {
             id: '3',
             name: 'Chai Charlie',
-            distance: 1200,
             profileImage: 'https://via.placeholder.com/150',
             bio: 'I travel around searching for the perfect chai blend. Let\'s meet up for a tea session!',
             favoriteTea: 'Masala Chai',
@@ -113,7 +133,6 @@ const UserSearch = ({ visible, onClose, location }: UserSearchProps) => {
           {
             id: '4',
             name: 'Darjeeling Dave',
-            distance: 1800,
             profileImage: 'https://via.placeholder.com/150',
             bio: 'Tea collector and connoisseur. I host monthly tea tasting events in my local area.',
             favoriteTea: 'First Flush Darjeeling',
@@ -123,7 +142,6 @@ const UserSearch = ({ visible, onClose, location }: UserSearchProps) => {
           {
             id: '5',
             name: 'Earl Grey Emma',
-            distance: 2500,
             profileImage: 'https://via.placeholder.com/150',
             bio: 'Tea blogger and photographer. I love capturing the perfect tea moment.',
             favoriteTea: 'Earl Grey with Lavender',
@@ -131,7 +149,7 @@ const UserSearch = ({ visible, onClose, location }: UserSearchProps) => {
             friendStatus: 'none' as 'none'
           },
         ].filter(user =>
-          user.name.toLowerCase().includes(searchQuery.toLowerCase())
+          user.name.toLowerCase().includes(query.toLowerCase())
         );
 
         setUsers(mockUsers);
@@ -159,6 +177,12 @@ const UserSearch = ({ visible, onClose, location }: UserSearchProps) => {
     setProfileVisible(false);
     // Delay clearing the selected user to prevent visual glitches
     setTimeout(() => setSelectedUser(null), 300);
+  };
+
+  // Handle text input changes
+  const handleSearchChange = (text: string) => {
+    setSearchQuery(text);
+    // The search will be triggered by the useEffect that watches searchQuery
   };
 
   return (
@@ -190,12 +214,19 @@ const UserSearch = ({ visible, onClose, location }: UserSearchProps) => {
                 style={styles.searchInput}
                 placeholder="Search for nearby users..."
                 value={searchQuery}
-                onChangeText={setSearchQuery}
-                onSubmitEditing={searchNearbyUsers}
+                onChangeText={handleSearchChange}
                 returnKeyType="search"
                 clearButtonMode="while-editing"
                 autoFocus={true}
               />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity
+                  style={styles.clearButton}
+                  onPress={() => setSearchQuery('')}
+                >
+                  <Ionicons name="close-circle" size={18} color="#999" />
+                </TouchableOpacity>
+              )}
             </View>
           </View>
 
@@ -221,27 +252,7 @@ const UserSearch = ({ visible, onClose, location }: UserSearchProps) => {
                     />
                     <View style={styles.userInfo}>
                       <Text style={styles.userName}>{item.name}</Text>
-                      <Text style={styles.userDistance}>
-                        {item.distance < 1000
-                          ? `${item.distance} m away`
-                          : `${(item.distance / 1000).toFixed(1)} km away`}
-                      </Text>
                     </View>
-
-                    {/* Friend status indicators */}
-                    {item.friendStatus === 'pending' ? (
-                      <View style={styles.friendStatusPending}>
-                        <Ionicons name="time" size={16} color="#f5a623" />
-                        <Text style={[styles.friendStatusText, { color: '#f5a623' }]}>Pending</Text>
-                      </View>
-                    ) : item.friendStatus === 'friends' ? (
-                      <View style={styles.friendStatusFriends}>
-                        <Ionicons name="checkmark-circle" size={16} color="#4a90e2" />
-                        <Text style={[styles.friendStatusText, { color: '#4a90e2' }]}>Friends</Text>
-                      </View>
-                    ) : (
-                      <Ionicons name="chevron-forward" size={20} color="#999" />
-                    )}
                   </TouchableOpacity>
                 )}
                 contentContainerStyle={styles.userList}

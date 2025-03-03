@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 60,
     borderWidth: 3,
-    borderColor: '#e1e1e1',
+    borderColor: '#00cc99',
   },
   bioContainer: {
     alignItems: 'center',
