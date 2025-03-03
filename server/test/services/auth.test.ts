@@ -36,13 +36,6 @@ jest.mock("jsonwebtoken");
 jest.mock("crypto");
 jest.mock("../../src/utils/email");
 // Mock dependencies
-jest.mock('google-auth-library', () => {
-  return {
-    OAuth2Client: jest.fn().mockImplementation(() => ({
-      verifyIdToken: jest.fn()
-    }))
-  };
-});
 
 describe("AuthService", () => {
   // Setup common mocks and cleanup
@@ -98,7 +91,6 @@ describe("AuthService", () => {
 
       // Call the method
       const result = await AuthService.register(registerData);
-      console.log(result);
 
       // Assertions
       expect(User.findOne).toHaveBeenCalledWith({ email: registerData.email });
@@ -395,27 +387,24 @@ describe("AuthService", () => {
       });
     });
 
-  //   it("should throw AuthenticationError if Google token verification fails", async () => {
-  //     // Mock OAuth2Client to throw error
-  //     const mockVerifyIdToken = jest.fn().mockRejectedValueOnce(
-  //       new Error("Invalid token")
-  //     );
-  //     (OAuth2Client as jest.Mock).mockImplementation(() => ({
-  //       verifyIdToken: mockVerifyIdToken,
-  //     }));
+    it("should throw AuthenticationError if Google token verification fails", async () => {
+      // Mock OAuth2Client to throw error
+      mockGetPayload.mockRejectedValueOnce(
+        new Error("Invalid token") as never
+      );
 
-  //     // Mock console.log
-  //     const originalConsoleLog = console.log;
-  //     console.log = jest.fn();
+      // Mock console.log
+      const originalConsoleLog = console.log;
+      console.log = jest.fn();
 
-  //     // Call and assert
-  //     await expect(AuthService.googleAuth(idToken)).rejects.toThrow(
-  //       AuthenticationError
-  //     );
+      // Call and assert
+      await expect(AuthService.googleAuth(idToken)).rejects.toThrow(
+        AuthenticationError
+      );
       
-  //     // Restore console.log
-  //     console.log = originalConsoleLog;
-  //   });
+      // Restore console.log
+      console.log = originalConsoleLog;
+    });
 
   //   it("should throw AuthenticationError if Google payload is missing email", async () => {
   //     // Mock OAuth2Client with missing email

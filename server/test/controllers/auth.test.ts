@@ -3,6 +3,7 @@ import { AuthController } from "../../src/controllers/auth.controller";
 import * as AuthServiceModule from "../../src/services/auth.service";
 import { AuthRequest } from "../../src/middleware/auth.middleware";
 import mongoose from "mongoose";
+import {jest, describe, it, expect, beforeEach} from '@jest/globals';
 // import { AuthenticationError, ValidationError, NotFoundError } from "../../src/utils/errors"
 
 // This approach ensures we're mocking the same module that the controller imports

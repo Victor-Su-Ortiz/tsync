@@ -28,24 +28,24 @@ make_request() {
     local method=$1
     local endpoint=$2
     local data=$3
-    local auth_header=""
+     local auth_header=()
 
     if [ ! -z "$TOKEN" ]; then
-        auth_header="-H \"Authorization: Bearer $TOKEN\""
+        auth_header=(-H "Authorization: Bearer $TOKEN")
     fi
 
     if [ ! -z "$data" ]; then
-        response=$(curl -s -X $method "$API_URL$endpoint" \
+        response=$(curl -s -X "$method" "$API_URL$endpoint" \
             -H "Content-Type: application/json" \
-            $auth_header \
+            "${auth_header[@]}" \
             -d "$data")
     else
-        response=$(curl -s -X $method "$API_URL$endpoint" \
+        response=$(curl -s -X "$method" "$API_URL$endpoint" \
             -H "Content-Type: application/json" \
-            $auth_header)
+            "${auth_header[@]}")
     fi
 
-    echo $response
+    echo "$response"
 }
 
 # Test Registration
@@ -88,54 +88,68 @@ test_login() {
 }
 
 # Test Get Profile
-# test_get_profile() {
-#     print_message "Testing Get Profile"
+test_get_profile() {
+    print_message "Testing Get Profile"
     
-#     local response=$(make_request "GET" "/users/profile")
+    local response=$(make_request "GET" "/users/profile")
+
+    print_message "Response: $response"
     
-#     if echo $response | grep -q "name"; then
-#         print_success "Got profile successfully"
-#     else
-#         print_error "Failed to get profile: $response"
-#     fi
-# }
+    if echo $response | grep -q "name"; then
+        print_success "Got profile successfully"
+    else
+        print_error "Failed to get profile: $response"
+    fi
+}
 
 # Test Update Profile
-# test_update_profile() {
-#     print_message "Testing Update Profile"
+test_update_profile() {
+    print_message "Testing Update Profile"
     
-#     local data='{
-#         "name": "John Updated",
-#         "phoneNumber": "+1234567890"
-#     }'
+    local data='{
+        "name": "John Updated",
+        "phoneNumber": "+1234567890"
+    }'
     
-#     local response=$(make_request "PATCH" "/users/profile" "$data")
+    local response=$(make_request "PATCH" "/users/profile" "$data")
     
-#     if echo $response | grep -q "name"; then
-#         print_success "Profile updated successfully"
-#     else
-#         print_error "Failed to update profile: $response"
-#     fi
-# }
+    if echo $response | grep -q "name"; then
+        print_success "Profile updated successfully"
+    else
+        print_error "Failed to update profile: $response"
+    fi
+}
 
 # Test Change Password
-# test_change_password() {
-#     print_message "Testing Change Password"
+test_change_password() {
+    print_message "Testing Change Password"
     
-#     local data='{
-#         "currentPassword": "Password123!",
-#         "newPassword": "NewPassword123!",
-#         "confirmPassword": "NewPassword123!"
-#     }'
+    local data='{
+        "currentPassword": "Password123!",
+        "newPassword": "NewPassword123!",
+        "confirmPassword": "NewPassword123!"
+    }'
     
-#     local response=$(make_request "PATCH" "/users/change-password" "$data")
+    local response=$(make_request "PATCH" "/users/change-password" "$data")
     
-#     if echo $response | grep -q "success"; then
-#         print_success "Password changed successfully"
-#     else
-#         print_error "Failed to change password: $response"
-#     fi
-# }
+    if echo $response | grep -q "success"; then
+        print_success "Password changed successfully"
+    else
+        print_error "Failed to change password: $response"
+    fi
+}
+
+test_get_users() {
+    print_message "Testing Get Users"
+
+    local response=$(make_request "GET" "/users")
+
+    if echo $response | grep -q "name"; then
+        print_success "Got users successfully"
+    else
+        print_error "Failed to get users: $response"
+    fi
+}
 
 # Main execution
 main() {
@@ -149,18 +163,21 @@ main() {
     test_login
     sleep 1
     
-    # if [ ! -z "$TOKEN" ]; then
-    #     test_get_profile
-    #     sleep 1
+    if [ ! -z "$TOKEN" ]; then
+        test_get_profile
+        sleep 1
         
-    #     test_update_profile
-    #     sleep 1
+        test_update_profile
+        sleep 1
         
-    #     test_change_password
-    #     sleep 1
-    # else
-    #     print_error "Skipping authenticated tests - no token available"
-    # fi
+        test_change_password
+        sleep 1
+
+        test_get_users
+        sleep 1
+    else
+        print_error "Skipping authenticated tests - no token available"
+    fi
     
     echo "===================="
     echo "Tests completed"
