@@ -4,6 +4,7 @@ import { sendEmail } from "../utils/email";
 import { NotFoundError } from "../utils/errors";
 
 export class UserService {
+
   /**
    * Send verification email for updated email address
    */
@@ -85,19 +86,28 @@ export class UserService {
   /**
    * Search users by name or email
    */
-  public static async searchUsers(query: string, limit: number = 10): Promise<any[]> {
+  public static async searchUsers(query: string, limit: number = 10, currentUserId?: string): Promise<any[]> {
     if (!query || query.length < 3) {
       return [];
     }
-
-    const users = await User.find({
-      $or: [
-        { name: { $regex: query, $options: 'i' } },
-        { email: { $regex: query, $options: 'i' } }
-      ]
-    })
-    .select("_id name email profilePicture")
-    .limit(limit);
+    // Create a MongoDB text search query
+    // This requires a text index on name and email fields
+    const searchQuery = {
+        $or: [
+            { name: { $regex: query, $options: 'i' } },
+            { email: { $regex: query, $options: 'i' } }
+        ]
+    };
+    
+    // Exclude current user from results if provided
+    if (currentUserId) {
+        Object.assign(searchQuery, { _id: { $ne: currentUserId } });
+    }
+    
+    const users = await User.find(searchQuery)
+        .limit(limit)
+        .select('_id name email profilePicture')
+        .sort({ name: 1 });
     
     return users;
   }

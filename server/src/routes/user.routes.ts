@@ -11,6 +11,13 @@ const router = express.Router();
 // Protected routes - require authentication
 router.use(protect);
 
+// Search users
+router.get(
+  "/search",
+  validateRequest(userValidation.searchUsers),
+  UserController.searchUsers
+);
+
 // Public user routes
 router
   .route("/profile")

@@ -3,9 +3,30 @@ import User from "../models/user.model";
 import { AuthService } from "../services/auth.service";
 import { UserService } from "../services/user.service";
 import { cloudUpload, deleteFromCloud } from "../utils/cloudStorage";
-import { NotFoundError, ForbiddenError } from "../utils/errors";
+import { NotFoundError, ForbiddenError, BadRequestError } from "../utils/errors";
 
 export class UserController {
+
+    // Search users
+  static async searchUsers(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { q, limit = 10 } = req.query;
+      
+      if (!q || typeof q !== 'string') {
+        throw new BadRequestError('Search query is required');
+      }
+      
+      const users = await UserService.searchUsers(
+        q, 
+        Number(limit),
+        req.userId!.toString()
+      );
+      
+      res.status(200).json({ users });
+    } catch (error) {
+      next(error);
+    }
+  }
   /**
    * Get current user profile
    */
