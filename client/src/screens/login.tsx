@@ -46,7 +46,7 @@ const Login = () => {
       await AsyncStorage.setItem("authToken", token);
 
       Alert.alert("Success", "Login successful!");
-      router.push('./home');
+      router.push('./(tabs)/home');
     } catch (error: any) {
       console.error("Login error:", error);
       Alert.alert("Login Failed", error.response?.data?.message || "Something went wrong.");

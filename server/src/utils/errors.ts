@@ -23,6 +23,13 @@ export class ValidationError extends AppError {
   }
 }
 
+// 400 Bad Request - Use for validation errors or malformed requests
+export class BadRequestError extends AppError {
+  constructor(message: string = 'Bad request') {
+    super(message, 400);
+  }
+}
+
 /**
  * @class AuthenticationError
  * for 401 status code

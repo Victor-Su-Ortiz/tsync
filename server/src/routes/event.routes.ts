@@ -1,11 +1,11 @@
 import { Router } from 'express';
 import eventController from '../controllers/event.controller';
-import { authenticate } from '../middleware/auth.middleware';
+import { protect } from '../middleware/auth.middleware';
 
 const router = Router();
 
 // Protect all routes
-router.use(authenticate);
+router.use(protect);
 
 // Event routes
 router.route('/')
