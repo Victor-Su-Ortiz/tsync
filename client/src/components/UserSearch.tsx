@@ -16,12 +16,17 @@ import {
 } from "react-native";
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
+import UserProfile from './UserProfile';
 
 type User = {
   id: string;
   name: string;
   distance: number; // distance in meters
   profileImage?: string;
+  bio?: string;
+  favoriteTea?: string;
+  joinedDate?: string;
+  friendStatus?: 'none' | 'pending' | 'friends';
 };
 
 type UserSearchProps = {
@@ -35,6 +40,8 @@ const UserSearch = ({ visible, onClose, location }: UserSearchProps) => {
   const [users, setUsers] = useState<User[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [profileVisible, setProfileVisible] = useState(false);
   const inputRef = useRef<TextInput>(null);
 
   useEffect(() => {
@@ -70,14 +77,59 @@ const UserSearch = ({ visible, onClose, location }: UserSearchProps) => {
       // const response = await axios.get(apiUrl);
       // const nearbyUsers = response.data;
 
-      // Mock data for demonstration
+      // Mock data for demonstration with additional profile details
       setTimeout(() => {
         const mockUsers: User[] = [
-          { id: '1', name: 'Tea Lover Alice', distance: 300, profileImage: 'https://via.placeholder.com/100' },
-          { id: '2', name: 'Matcha Master Bob', distance: 750, profileImage: 'https://via.placeholder.com/100' },
-          { id: '3', name: 'Chai Charlie', distance: 1200, profileImage: 'https://via.placeholder.com/100' },
-          { id: '4', name: 'Darjeeling Dave', distance: 1800, profileImage: 'https://via.placeholder.com/100' },
-          { id: '5', name: 'Earl Grey Emma', distance: 2500, profileImage: 'https://via.placeholder.com/100' },
+          {
+            id: '1',
+            name: 'Tea Lover Alice',
+            distance: 300,
+            profileImage: 'https://via.placeholder.com/150',
+            bio: 'Tea enthusiast exploring the world one cup at a time. I love finding new tea shops and meeting fellow tea lovers.',
+            favoriteTea: 'Jasmine Green Tea',
+            joinedDate: 'March 2023',
+            friendStatus: 'none' as 'none'
+          },
+          {
+            id: '2',
+            name: 'Matcha Master Bob',
+            distance: 750,
+            profileImage: 'https://via.placeholder.com/150',
+            bio: 'Certified tea specialist with a passion for Japanese tea ceremonies and matcha preparation.',
+            favoriteTea: 'Ceremonial Grade Matcha',
+            joinedDate: 'January 2024',
+            friendStatus: 'pending' as 'pending'
+          },
+          {
+            id: '3',
+            name: 'Chai Charlie',
+            distance: 1200,
+            profileImage: 'https://via.placeholder.com/150',
+            bio: 'I travel around searching for the perfect chai blend. Let\'s meet up for a tea session!',
+            favoriteTea: 'Masala Chai',
+            joinedDate: 'November 2023',
+            friendStatus: 'friends' as 'friends'
+          },
+          {
+            id: '4',
+            name: 'Darjeeling Dave',
+            distance: 1800,
+            profileImage: 'https://via.placeholder.com/150',
+            bio: 'Tea collector and connoisseur. I host monthly tea tasting events in my local area.',
+            favoriteTea: 'First Flush Darjeeling',
+            joinedDate: 'August 2023',
+            friendStatus: 'none' as 'none'
+          },
+          {
+            id: '5',
+            name: 'Earl Grey Emma',
+            distance: 2500,
+            profileImage: 'https://via.placeholder.com/150',
+            bio: 'Tea blogger and photographer. I love capturing the perfect tea moment.',
+            favoriteTea: 'Earl Grey with Lavender',
+            joinedDate: 'February 2024',
+            friendStatus: 'none' as 'none'
+          },
         ].filter(user =>
           user.name.toLowerCase().includes(searchQuery.toLowerCase())
         );
@@ -94,12 +146,19 @@ const UserSearch = ({ visible, onClose, location }: UserSearchProps) => {
   };
 
   const handleUserPress = (user: User) => {
-    // Navigate to user profile or perform another action
-    console.log("User pressed:", user.name);
-    // Implementation for user interaction - replace with actual navigation
-    Alert.alert("User Selected", `You selected ${user.name}`);
-    // Optionally close the modal after selection
-    // onClose();
+    console.log('User pressed:', user.name); // Debug log
+    // Set the selected user and show their profile
+    setSelectedUser(user);
+    // Add a slight delay to ensure the state updates before showing the profile
+    setTimeout(() => {
+      setProfileVisible(true);
+    }, 50);
+  };
+
+  const handleProfileClose = () => {
+    setProfileVisible(false);
+    // Delay clearing the selected user to prevent visual glitches
+    setTimeout(() => setSelectedUser(null), 300);
   };
 
   return (
@@ -138,7 +197,6 @@ const UserSearch = ({ visible, onClose, location }: UserSearchProps) => {
                 autoFocus={true}
               />
             </View>
-
           </View>
 
           {/* User Results */}
@@ -158,7 +216,7 @@ const UserSearch = ({ visible, onClose, location }: UserSearchProps) => {
                     onPress={() => handleUserPress(item)}
                   >
                     <Image
-                      source={{ uri: item.profileImage || "https://via.placeholder.com/100" }}
+                      source={{ uri: item.profileImage || "https://via.placeholder.com/150" }}
                       style={styles.userAvatar}
                     />
                     <View style={styles.userInfo}>
@@ -169,7 +227,21 @@ const UserSearch = ({ visible, onClose, location }: UserSearchProps) => {
                           : `${(item.distance / 1000).toFixed(1)} km away`}
                       </Text>
                     </View>
-                    <Ionicons name="chevron-forward" size={20} color="#999" />
+
+                    {/* Friend status indicators */}
+                    {item.friendStatus === 'pending' ? (
+                      <View style={styles.friendStatusPending}>
+                        <Ionicons name="time" size={16} color="#f5a623" />
+                        <Text style={[styles.friendStatusText, { color: '#f5a623' }]}>Pending</Text>
+                      </View>
+                    ) : item.friendStatus === 'friends' ? (
+                      <View style={styles.friendStatusFriends}>
+                        <Ionicons name="checkmark-circle" size={16} color="#4a90e2" />
+                        <Text style={[styles.friendStatusText, { color: '#4a90e2' }]}>Friends</Text>
+                      </View>
+                    ) : (
+                      <Ionicons name="chevron-forward" size={20} color="#999" />
+                    )}
                   </TouchableOpacity>
                 )}
                 contentContainerStyle={styles.userList}
@@ -185,6 +257,15 @@ const UserSearch = ({ visible, onClose, location }: UserSearchProps) => {
               <Ionicons name="people-outline" size={70} color="#ddd" />
               <Text style={styles.instructionText}>Search for nearby tea enthusiasts</Text>
             </View>
+          )}
+
+          {/* User Profile Modal - Now rendered inside the search modal */}
+          {selectedUser && (
+            <UserProfile
+              visible={profileVisible}
+              onClose={handleProfileClose}
+              user={selectedUser}
+            />
           )}
         </View>
       </KeyboardAvoidingView>
@@ -268,6 +349,18 @@ const styles = StyleSheet.create({
   userDistance: {
     fontSize: 14,
     color: '#666',
+  },
+  friendStatusPending: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  friendStatusFriends: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  friendStatusText: {
+    fontSize: 12,
+    marginLeft: 4,
   },
   noUsersText: {
     marginTop: 12,
