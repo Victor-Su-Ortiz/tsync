@@ -1,6 +1,6 @@
 import User from '../models/user.model';
-import { Types } from 'mongoose';
-import { NotFoundError, ValidationError, ForbiddenError } from '../utils/errors';
+// import { Types } from 'mongoose';
+import { NotFoundError, ValidationError } from '../utils/errors';
 import { FriendRequestResponse, PublicUser } from '../types/user.types';
 
 export class FriendService {
@@ -49,49 +49,12 @@ export class FriendService {
     senderId: string, 
     receiverId: string
   ): Promise<{ success: boolean; message: string }> {
-    // Validate users
-    if (senderId === receiverId) {
-      throw new ValidationError('Cannot send friend request to yourself');
-    }
-
-    const [sender, receiver] = await Promise.all([
-      User.findById(senderId),
-      User.findById(receiverId)
-    ]);
-
-    if (!sender || !receiver) {
+    
+    const user = await User.findById(senderId);
+    if (!user) {
       throw new NotFoundError('User not found');
     }
-
-    // Check if already friends
-    if (sender.friends.includes(receiver._id)) {
-      throw new ValidationError('Already friends with this user');
-    }
-
-    // Check if request already exists
-    const existingRequest = receiver.friendRequests.find(
-      req => req.from.toString() === senderId && ['pending', 'accepted'].includes(req.status)
-    );
-
-    if (existingRequest) {
-      throw new ValidationError('Friend request already sent');
-    }
-
-    // Check if user is blocked
-    if (receiver.blockedUsers.includes(sender._id)) {
-      throw new ForbiddenError('Cannot send friend request to this user');
-    }
-
-    // Add friend request to target user
-    receiver.friendRequests.push({
-      _id: new Types.ObjectId(),
-      from: sender._id,
-      status: 'pending',
-      createdAt: new Date()
-    });
-
-    await receiver.save();
-
+    user.sendFriendRequest(receiverId);
     return {
       success: true,
       message: 'Friend request sent successfully'
@@ -111,35 +74,7 @@ export class FriendService {
       throw new NotFoundError('User not found');
     }
 
-    // Find the request
-    const requestIndex = user.friendRequests.findIndex(
-      req => req._id.toString() === requestId
-    );
-
-    if (requestIndex === -1) {
-      throw new NotFoundError('Friend request not found');
-    }
-
-    const request = user.friendRequests[requestIndex];
-
-    if (request.status !== 'pending') {
-      throw new ValidationError('This request has already been processed');
-    }
-
-    // Update request status
-    user.friendRequests[requestIndex].status = 'accepted';
-
-    // Add to friends list (for both users)
-    if (!user.friends.includes(request.from)) {
-      user.friends.push(request.from);
-    }
-    
-    // Add current user to the friend's friends list
-    await User.findByIdAndUpdate(request.from, {
-      $addToSet: { friends: user._id }
-    });
-
-    await user.save();
+   user.acceptFriendRequest(requestId);
 
     return {
       success: true,
@@ -160,24 +95,7 @@ export class FriendService {
       throw new NotFoundError('User not found');
     }
 
-    // Find the request
-    const requestIndex = user.friendRequests.findIndex(
-      req => req._id.toString() === requestId
-    );
-
-    if (requestIndex === -1) {
-      throw new NotFoundError('Friend request not found');
-    }
-
-    const request = user.friendRequests[requestIndex];
-
-    if (request.status !== 'pending') {
-      throw new ValidationError('This request has already been processed');
-    }
-
-    // Update request status
-    user.friendRequests[requestIndex].status = 'rejected';
-    await user.save();
+    user.rejectFriendRequest(requestId);
 
     return {
       success: true,
@@ -206,15 +124,7 @@ export class FriendService {
       throw new ValidationError('Not friends with this user');
     }
 
-    // Remove from both users' friend lists
-    await Promise.all([
-      User.findByIdAndUpdate(userId, {
-        $pull: { friends: friendId }
-      }),
-      User.findByIdAndUpdate(friendId, {
-        $pull: { friends: userId }
-      })
-    ]);
+    user.removeFriend(friendId);
 
     return {
       success: true,

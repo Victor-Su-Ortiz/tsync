@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { Request, Response, NextFunction } from 'express';
-import { beforeAll, afterAll, jest } from '@jest/globals';
+import { beforeAll, afterAll, jest, afterEach } from '@jest/globals';
 
 let mongoServer: MongoMemoryServer;
 
