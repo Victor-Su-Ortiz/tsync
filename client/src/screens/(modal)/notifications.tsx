@@ -1,191 +1,183 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, Alert, Text, ActivityIndicator, FlatList, View, Image, ImageBackground, TouchableOpacity } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import * as Location from 'expo-location';
-import axios from 'axios';
-import { GOOGLE_PLACES_API } from '@env';
-import { router, useLocalSearchParams } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 
-type Place = {
-  place_id: string;
-  name: string;
-  vicinity: string;
-  rating?: number;
-  photos?: { photo_reference: string }[];
-};
+// Sample notification data
+const SAMPLE_NOTIFICATIONS = [
+  {
+    id: '1',
+    title: 'New Tea Shop Opening!',
+    message: 'Green Leaf Tea has just opened near you. Check it out!',
+    timestamp: '2 hours ago',
+    read: false,
+    type: 'promotion'
+  },
+  {
+    id: '2',
+    title: 'Your Friend is at Matcha Haven',
+    message: 'Sarah is currently enjoying tea at Matcha Haven',
+    timestamp: '3 hours ago',
+    read: false,
+    type: 'social'
+  },
+  {
+    id: '3',
+    title: 'Weekly Special Deal',
+    message: 'Buy one get one free at Zen Tea Room this weekend!',
+    timestamp: '1 day ago',
+    read: true,
+    type: 'promotion'
+  }
+];
 
-export default function Home() {
+export default function Notifications() {
+  const [notifications, setNotifications] = useState(SAMPLE_NOTIFICATIONS);
 
-  const params = useLocalSearchParams();
-  const isSelectingTeaShop = params.selectingTeaShop === 'true';
-
-  const [selectionMode, setSelectionMode] = useState<'normal' | 'tea-shop-selection'>('normal');
-  const [location, setLocation] = useState<Location.LocationObjectCoords | null>(null);
-  const [shops, setShops] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const checkNavigationMode = async () => {
-      if (params.selectingTeaShop === 'true') {
-        setSelectionMode('tea-shop-selection');
-        // Store that we're in selection mode
-        await AsyncStorage.setItem('navigationMode', 'tea-shop-selection');
-      } else {
-        // Check if we have a stored mode
-        const storedMode = await AsyncStorage.getItem('navigationMode');
-        if (storedMode === 'tea-shop-selection') {
-          setSelectionMode('tea-shop-selection');
-        } else {
-          setSelectionMode('normal');
-          // Clear any stored selection mode
-          await AsyncStorage.removeItem('navigationMode');
-        }
-      }
-    };
-
-    checkNavigationMode();
-  }, [params.selectingTeaShop]);
-
-
-  const handleTeaShopPress = async (teaShop: Place) => {
-    if (selectionMode === 'tea-shop-selection') {
-      // If we're in selection mode, navigate back to add-event with the selected shop
-      // Clear the selection mode for next time
-      await AsyncStorage.removeItem('navigationMode');
-
-      router.push({
-        pathname: './add-event',
-        params: {
-          teaShopName: teaShop.name,
-        }
-      });
-    } else {
-      // Normal tea shop interaction (e.g., view details)
-      console.log("Implement normal tea shop interaction.");
-      // Implement your normal tea shop interaction here
-    }
+  const markAsRead = (id) => {
+    setNotifications(
+      notifications.map(notif =>
+        notif.id === id ? { ...notif, read: true } : notif
+      )
+    );
   };
 
-
-  const GOOGLE_PLACES_API_KEY = GOOGLE_PLACES_API;
-
-  const getUserLocation = async () => {
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert("Permission denied", 'Allow location access to find nearby stores!');
-      return;
-    }
-    const location = await Location.getCurrentPositionAsync({});
-    console.log(location.coords.latitude, location.coords.longitude);
-    setLocation(location.coords);
-    return location.coords;
-  };
-
-  const getNearbyStores = async (latitude: number, longitude: number) => {
-    setLoading(true);
-    const radius = 5000;
-    const type = 'cafe';
-
-    const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${latitude},${longitude}&radius=${radius}&type=${type}&keyword=tea&key=${GOOGLE_PLACES_API_KEY}`;
-
-    try {
-      const response = await axios.get(url);
-      setShops(response.data.results);
-      console.log(response.data.results); // List of tea shops
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
+  const getIconForType = (type) => {
+    switch (type) {
+      case 'promotion':
+        return <Ionicons name="pricetag" size={24} color="#00cc99" />;
+      case 'social':
+        return <Ionicons name="people" size={24} color="#FF9500" />;
+      default:
+        return <Ionicons name="notifications" size={24} color="#00cc99" />;
     }
   };
-
-  useEffect(() => {
-    getUserLocation();
-  }, []);
-
-  useEffect(() => {
-    if (location) {
-      getNearbyStores(location.latitude, location.longitude);
-    }
-  }, [location]);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: 'white', padding: 16 }}>
-      {/* Header */}
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Nearby Tea Shops 🍵</Text>
+        <TouchableOpacity onPress={() => router.dismiss()} style={styles.backButton}>
+          <Ionicons name="close" size={24} color="#00cc99" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Notifications</Text>
+        <TouchableOpacity
+          style={styles.clearAllButton}
+          onPress={() => setNotifications(notifications.map(n => ({ ...n, read: true })))}
+        >
+          <Text style={styles.clearAllText}>Mark all read</Text>
+        </TouchableOpacity>
       </View>
 
-      {loading ? (
-        <View style={{ flex: 1, justifyContent: "center" }}>
-          <ActivityIndicator size="large" color="#00cc99" />
-        </View>
-      ) : (
-        <FlatList
-          data={shops as Place[]}
-          keyExtractor={(item) => item.place_id}
-          renderItem={({ item }) => {
-            const photoRef = item.photos?.[0]?.photo_reference;
-            const imageUrl = photoRef
-              ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photoRef}&key=${GOOGLE_PLACES_API_KEY}`
-              : "https://via.placeholder.com/400";
-
-            return (
-              <TouchableOpacity onPress={() => handleTeaShopPress(item)}>
-                <ImageBackground source={{ uri: imageUrl }} style={styles.itemContainer} imageStyle={styles.image}>
-                  <View style={styles.overlay}>
-                    <Text style={styles.name}>{item.name}</Text>
-                    <Text style={styles.address}>{item.vicinity}</Text>
-                    <Text style={styles.rating}>Rating: ⭐ {item.rating || 'N/A'}</Text>
-                  </View>
-                </ImageBackground>
-              </TouchableOpacity>
-            );
-          }}
-        />
-      )}
+      <FlatList
+        data={notifications}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={[styles.notificationItem, item.read ? styles.readNotification : styles.unreadNotification]}
+            onPress={() => markAsRead(item.id)}
+          >
+            <View style={styles.notificationIcon}>
+              {getIconForType(item.type)}
+            </View>
+            <View style={styles.notificationContent}>
+              <Text style={styles.notificationTitle}>{item.title}</Text>
+              <Text style={styles.notificationMessage}>{item.message}</Text>
+              <Text style={styles.notificationTimestamp}>{item.timestamp}</Text>
+            </View>
+            {!item.read && <View style={styles.unreadDot} />}
+          </TouchableOpacity>
+        )}
+        ListEmptyComponent={
+          <View style={styles.emptyState}>
+            <Ionicons name="notifications-off" size={50} color="#ccc" />
+            <Text style={styles.emptyStateText}>No notifications yet</Text>
+          </View>
+        }
+      />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: 'white',
+  },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16
+    justifyContent: 'space-between',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  backButton: {
+    padding: 5,
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold'
+    fontSize: 20,
+    fontWeight: 'bold',
   },
-  itemContainer: {
-    height: 150,
-    borderRadius: 10,
-    overflow: "hidden",
-    marginBottom: 10,
-    justifyContent: "flex-end",
+  clearAllButton: {
+    padding: 5,
   },
-  image: {
-    borderRadius: 10,
+  clearAllText: {
+    color: '#00cc99',
+    fontWeight: '500',
   },
-  overlay: {
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    padding: 10,
+  notificationItem: {
+    flexDirection: 'row',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+    position: 'relative',
   },
-  name: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "white",
+  unreadNotification: {
+    backgroundColor: '#f8f9fa',
   },
-  address: {
-    color: "#ddd",
+  readNotification: {
+    backgroundColor: 'white',
   },
-  rating: {
-    marginTop: 4,
+  notificationIcon: {
+    marginRight: 16,
+    justifyContent: 'center',
+  },
+  notificationContent: {
+    flex: 1,
+  },
+  notificationTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  notificationMessage: {
     fontSize: 14,
-    color: "white",
+    color: '#666',
+    marginBottom: 4,
+  },
+  notificationTimestamp: {
+    fontSize: 12,
+    color: '#888',
+  },
+  unreadDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#00cc99',
+    position: 'absolute',
+    right: 16,
+    top: 16,
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  emptyStateText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#888',
   },
 });
-
