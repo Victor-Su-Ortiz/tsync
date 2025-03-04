@@ -45,9 +45,7 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [profileVisible, setProfileVisible] = useState(false);
   const inputRef = useRef<TextInput>(null);
-
-  const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2N2JmYzBmNWM0ZDAxZDVhMzdmMDNhM2EiLCJlbWFpbCI6Im5mMjQzQGNvcm5lbGwuZWR1Iiwicm9sZSI6InVzZXIiLCJpYXQiOjE3NDEwNTA0MDYsImV4cCI6MTc0MTEzNjgwNn0.9ADdhJ1ZkMJaQoW0746LyEEcILuIlUc0TjKuw1hA3PQ"
-
+  
   // Create a debounced search function to prevent too many searches as user types
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedSearch = useCallback(
@@ -116,7 +114,7 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
         { q: query, limit: 10 },
         {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${accessToken}`,
           },
         }
       );
