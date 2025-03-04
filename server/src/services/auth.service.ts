@@ -84,19 +84,19 @@ export class AuthService {
 
     // Send verification email
     try {
-      const verificationUrl = `${process.env.CLIENT_URL}/verify-email/${verificationToken}`;
-      await sendEmail({
-        to: user.email,
-        subject: "Please verify your email",
-        text: `Click the link to verify your email: ${verificationUrl}`,
-        html: `
-          <div>
-            <h1>Welcome to ${process.env.APP_NAME}!</h1>
-            <p>Please click the link below to verify your email:</p>
-            <a href="${verificationUrl}">Verify Email</a>
-          </div>
-        `,
-      });
+      // const verificationUrl = `${process.env.CLIENT_URL}/verify-email/${verificationToken}`;
+      // await sendEmail({
+      //   to: user.email,
+      //   subject: "Please verify your email",
+      //   text: `Click the link to verify your email: ${verificationUrl}`,
+      //   html: `
+      //     <div>
+      //       <h1>Welcome to ${process.env.APP_NAME}!</h1>
+      //       <p>Please click the link below to verify your email:</p>
+      //       <a href="${verificationUrl}">Verify Email</a>
+      //     </div>
+      //   `,
+      // });
     } catch (error) {
       // If email fails, still create user but log error
       console.error("Verification email failed:", error);
