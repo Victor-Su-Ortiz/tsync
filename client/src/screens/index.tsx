@@ -7,6 +7,7 @@ import { GOOGLE_IOS_ID, GOOGLE_WEB_ID } from "@env"
 import { api } from "../utils/api";
 import { useAuth } from "../context/AuthContext";
 import { GoogleSignin, statusCodes } from "@react-native-google-signin/google-signin";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface UserInfo {
   id?: string;
@@ -20,9 +21,9 @@ export default function Index() {
   const router = useRouter();
   const handleLogin = () => router.push("./login");
   const handleRegister = () => router.push("./register");
-  const { setAccessToken, setUserInfo, setIdToken } = useAuth();
+  const { setAccessToken, setAuthToken, setUserInfo, setIdToken } = useAuth();
 
-  // Configure Google Sign In once when component mounts
+  // Configure Google Sign once when component mounts
   useEffect(() => {
     GoogleSignin.configure({
       webClientId: GOOGLE_WEB_ID,
@@ -46,10 +47,8 @@ export default function Index() {
         throw new Error("Failed to get ID token from Google");
       }
 
-
-      // Send the ID token to your backend
-
-      await sendTokenToBackend(tokens.idToken);
+      // setAccessToken(tokens.accessToken);
+      setIdToken(tokens.idToken);
 
       // Store Google user info in context for profile display
       const formattedUserInfo: UserInfo = {
@@ -59,11 +58,13 @@ export default function Index() {
         picture: userInfo.data?.user.photo, // Photo URL from Google
         bio: "Let's meet!" // Default bio
       };
-
       // Update context with user info and access token for UI display and fetching events
       setUserInfo(formattedUserInfo);
-      setAccessToken(tokens.accessToken);
-      setIdToken(tokens.idToken);
+
+      // Send the ID token to your backend
+
+      await sendTokenToBackend(tokens.idToken);
+
 
 
     } catch (error: any) {
@@ -85,7 +86,7 @@ export default function Index() {
     try {
       console.log("Sending token to backend:", idToken);
 
-      // Make sure your API is configured with proper error handling
+      // Make sure your API is configured with proper error handlingrr
       const res = await api.post("/auth/google", { token: idToken });
 
       console.log("Backend response:", res.data);
@@ -96,11 +97,11 @@ export default function Index() {
         throw new Error("Invalid response from server");
       }
 
-      // // Store the JWT token from your backend
-      // await AsyncStorage.setItem("authToken", authToken);
+      // Store the JWT token from your backend
+      await AsyncStorage.setItem("authToken", authToken);
 
-      // Store the access token in context
-      // setAccessToken(authToken);
+      // // Store the access token in context
+      // setAuthToken(authToken);
 
       // Store user info in AsyncStosrage as a string
       // await AsyncStorage.setItem("userInfo", JSON.stringify({

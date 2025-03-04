@@ -6,13 +6,15 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import '../../global.css';
 import { ArrowLeft } from "lucide-react-native";
+import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-
   const router = useRouter();
+  const { setAuthToken } = useAuth();
+
   const handleForget = async () => {
 
     if (!email || !password) {
@@ -43,7 +45,8 @@ const Login = () => {
       const { token } = response.data;
 
       // Store JWT token in AsyncStorage for authentication persistence
-      await AsyncStorage.setItem("authToken", token);
+      // await AsyncStorage.setItem("authToken", token);
+      setAuthToken(token);
 
       Alert.alert("Success", "Login successful!");
       router.push('./(tabs)/home');
