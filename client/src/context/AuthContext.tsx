@@ -11,6 +11,8 @@ interface UserInfo {
 
 
 interface AuthContextType {
+  idToken: string;
+  setIdToken: (token: string) => void;
   accessToken: string;
   setAccessToken: (token: string) => void;
   userInfo: UserInfo | null;
@@ -25,6 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [accessToken, setAccessToken] = useState<string>('');
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [idToken, setIdToken] = useState<string>('');
 
   // Load stored auth data when the component mounts
   useEffect(() => {
@@ -36,6 +39,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setAccessToken(storedToken);
         }
 
+        // Load ID token
+        const idToken = await AsyncStorage.getItem('idToken');
+        if (idToken) {
+          setIdToken(idToken);
+        }
         // Load user info
         const storedUserInfo = await AsyncStorage.getItem('userInfo');
         if (storedUserInfo) {
@@ -53,7 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Persist access token when it changes
   useEffect(() => {
-    const storeToken = async () => {
+    const storeAccessToken = async () => {
       try {
         if (accessToken) {
           await AsyncStorage.setItem('accessToken', accessToken);
@@ -65,8 +73,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
-    storeToken();
-  }, [accessToken]);
+    const storeIdToken = async () => {
+      try {
+        if (idToken) {
+          await AsyncStorage.setItem('idToken', idToken);
+        } else {
+          await AsyncStorage.removeItem('idToken');
+        }
+      } catch (error) {
+        console.error('Error storing ID token:', error);
+      }
+    };
+
+    storeAccessToken();
+    storeIdToken();
+  }, [accessToken, idToken]);
 
   // Persist user info when it changes
   useEffect(() => {
@@ -94,6 +115,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUserInfo(null);
       await AsyncStorage.removeItem('accessToken');
       await AsyncStorage.removeItem('userInfo');
+      await AsyncStorage.removeItem('idToken');
     } catch (error) {
       console.error('Error during logout:', error);
     }
@@ -102,6 +124,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return (
     <AuthContext.Provider
       value={{
+        idToken,
+        setIdToken,
         accessToken,
         setAccessToken,
         userInfo,

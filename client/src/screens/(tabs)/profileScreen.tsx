@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, Image, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
 import { Stack, router } from 'expo-router';
 import images from '../../constants/images';
@@ -7,6 +7,7 @@ import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 export default function ProfileScreen() {
   const { userInfo, logout } = useAuth();
+
 
   // Default stats if not available from the API
   const stats = {
@@ -34,8 +35,6 @@ export default function ProfileScreen() {
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
 
-      <Text style={styles.nameText}>{userInfo?.name || 'User'}</Text>
-
       <View style={styles.avatarContainer}>
         <Image
           source={userInfo?.picture ? { uri: userInfo.picture } : images.defaultpfp}
@@ -43,21 +42,17 @@ export default function ProfileScreen() {
         />
       </View>
 
-      <View style={styles.bioContainer}>
-        <Text style={styles.bioText}>{userInfo?.bio || "Let's meet!"}</Text>
-      </View>
+      <Text style={styles.nameText}>{userInfo?.name || 'User'}</Text>
 
       <View style={styles.statsContainer}>
         <View style={styles.statItem}>
           <Text style={styles.statNumber}>{stats.friends}</Text>
           <Text style={styles.statLabel}>Friends</Text>
         </View>
-
         <View style={styles.statItem}>
           <Text style={styles.statNumber}>{stats.eventsAttended}</Text>
           <Text style={styles.statLabel}>Attended</Text>
         </View>
-
         <View style={styles.statItem}>
           <Text style={styles.statNumber}>{stats.eventsHosted}</Text>
           <Text style={styles.statLabel}>Hosted</Text>
@@ -96,7 +91,7 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 60,
     borderWidth: 3,
-    borderColor: '#e1e1e1',
+    borderColor: '#00cc99',
   },
   bioContainer: {
     alignItems: 'center',
@@ -112,23 +107,28 @@ const styles = StyleSheet.create({
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginTop: 20,
-    paddingVertical: 15,
-    borderRadius: 10,
-    // backgroundColor: '#f8f8f8',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 2,
+    alignItems: 'center',
+    paddingVertical: 16,
+    marginHorizontal: 24,
+    marginBottom: 16,
+    marginTop: 10,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 12,
+  },
+  statDivider: {
+    width: 1,
+    height: 30,
+    backgroundColor: '#ddd',
   },
   statItem: {
     alignItems: 'center',
+    flex: 1,
   },
   statNumber: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#00cc99',
+    marginBottom: 4,
   },
   statLabel: {
     fontSize: 14,

@@ -1,5 +1,5 @@
 // components/UserSearch.tsx
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
   StyleSheet,
   Alert,
@@ -14,30 +14,56 @@ import {
   Platform,
   Modal
 } from "react-native";
-import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
+import UserProfile from './UserProfile';
+import { debounce } from 'lodash';
+import { api } from '../utils/api'; // Import your API utility
 
 type User = {
   id: string;
   name: string;
-  distance: number; // distance in meters
   profileImage?: string;
+  bio?: string;
+  favoriteTea?: string;
+  joinedDate?: string;
+  friendStatus?: 'none' | 'pending' | 'friends';
 };
 
 type UserSearchProps = {
   visible: boolean;
   onClose: () => void;
-  location: Location.LocationObjectCoords | null;
+  accessToken: string;
 };
 
-const UserSearch = ({ visible, onClose, location }: UserSearchProps) => {
+
+const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [users, setUsers] = useState<User[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [profileVisible, setProfileVisible] = useState(false);
   const inputRef = useRef<TextInput>(null);
 
+  // Create a debounced search function to prevent too many searches as user types
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const debouncedSearch = useCallback(
+    debounce((query: string) => {
+      if (query.trim().length > 0) {
+        searchUsers(query);
+      } else {
+        // Clear results if search query is empty
+        setUsers([]);
+        setHasSearched(false);
+      }
+    }, 300), // 300ms delay
+    []
+  );
+
+  const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2N2JmYzBmNWM0ZDAxZDVhMzdmMDNhM2EiLCJlbWFpbCI6Im5mMjQzQGNvcm5lbGwuZWR1Iiwicm9sZSI6InVzZXIiLCJpYXQiOjE3NDEwNDM1OTcsImV4cCI6MTc0MTEyOTk5N30.x_shP3WMsSTDNs-LwbBJyriIOBjnIWX_ssdcbVRXZss';
+
   useEffect(() => {
+
     // Reset state when modal opens
     if (visible) {
       setSearchQuery('');
@@ -52,54 +78,85 @@ const UserSearch = ({ visible, onClose, location }: UserSearchProps) => {
     }
   }, [visible]);
 
-  const searchNearbyUsers = async () => {
-    if (!location || !searchQuery.trim()) return;
+  // Trigger the debounced search when searchQuery changes
+  useEffect(() => {
+    debouncedSearch(searchQuery);
+
+    // Cancel any pending debounced searches on cleanup
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [searchQuery, debouncedSearch]);
+
+
+
+  const searchUsers = async (query: string = searchQuery) => {
+    console.log("🔑 Auth Token Retrieved:", token);
+    console.log("🔎 searchUsers function is being called with query:", query);
+
+    if (!query.trim()) {
+      console.log("⚠️ Empty query, exiting searchUsers");
+      return;
+    }
 
     setIsSearching(true);
     setHasSearched(true);
 
+    if (!accessToken) {
+      console.log("🚨 No access token found! Exiting search.");
+      setIsSearching(false);
+      return;
+    }
+
     try {
-      // Here you would make an API call to your backend to search for users
-      // This is a placeholder implementation
-      // Replace with your actual API endpoint
+      console.log("📡 Making API request...");
+      const response = await api.post(
+        '/users/search',
+        { q: query, limit: 10 },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
 
-      const apiUrl = `https://your-backend-api.com/users/nearby?lat=${location.latitude}&lng=${location.longitude}&query=${encodeURIComponent(searchQuery)}`;
+      console.log("✅ API Response:", response.data);
 
-      // For demonstration purposes, using mock data
-      // In a real app, you would do:
-      // const response = await axios.get(apiUrl);
-      // const nearbyUsers = response.data;
+      const searchedUsers = response.data.users || [];
+      console.log("👥 Users found:", searchedUsers.length);
 
-      // Mock data for demonstration
-      setTimeout(() => {
-        const mockUsers: User[] = [
-          { id: '1', name: 'Tea Lover Alice', distance: 300, profileImage: 'https://via.placeholder.com/100' },
-          { id: '2', name: 'Matcha Master Bob', distance: 750, profileImage: 'https://via.placeholder.com/100' },
-          { id: '3', name: 'Chai Charlie', distance: 1200, profileImage: 'https://via.placeholder.com/100' },
-          { id: '4', name: 'Darjeeling Dave', distance: 1800, profileImage: 'https://via.placeholder.com/100' },
-          { id: '5', name: 'Earl Grey Emma', distance: 2500, profileImage: 'https://via.placeholder.com/100' },
-        ].filter(user =>
-          user.name.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-
-        setUsers(mockUsers);
-        setIsSearching(false);
-      }, 1000);
-
-    } catch (error) {
-      console.error("Error searching for users:", error);
-      Alert.alert("Error", "Failed to search for nearby users");
+      setUsers(searchedUsers);
+    } catch (error: any) {
+      console.error("❌ Error searching for users:", error);
+      console.error("⚠️ API Error Response:", error.response?.status, error.response?.data);
+    } finally {
+      console.log("⏳ Finished searching, updating UI...");
       setIsSearching(false);
     }
   };
 
+
+
   const handleUserPress = (user: User) => {
-    // Navigate to user profile or perform another action
-    console.log("User pressed:", user.name);
-    // Implementation for user interaction - replace with actual navigation
-    Alert.alert("User Selected", `You selected ${user.name}`);
-    // Optionally close the modal after selection
-    // onClose();
+    console.log('User pressed:', user.name); // Debug log
+    // Set the selected user and show their profile
+    setSelectedUser(user);
+    // Add a slight delay to ensure the state updates before showing the profile
+    setTimeout(() => {
+      setProfileVisible(true);
+    }, 50);
+  };
+
+  const handleProfileClose = () => {
+    setProfileVisible(false);
+    // Delay clearing the selected user to prevent visual glitches
+    setTimeout(() => setSelectedUser(null), 300);
+  };
+
+  // Handle text input changes
+  const handleSearchChange = (text: string) => {
+    setSearchQuery(text);
+    // The search will be triggered by the useEffect that watches searchQuery
   };
 
   return (
@@ -131,21 +188,19 @@ const UserSearch = ({ visible, onClose, location }: UserSearchProps) => {
                 style={styles.searchInput}
                 placeholder="Search for nearby users..."
                 value={searchQuery}
-                onChangeText={setSearchQuery}
-                onSubmitEditing={searchNearbyUsers}
+                onChangeText={handleSearchChange}
                 returnKeyType="search"
                 clearButtonMode="while-editing"
                 autoFocus={true}
               />
             </View>
-
           </View>
 
           {/* User Results */}
           {isSearching ? (
             <View style={styles.centered}>
               <ActivityIndicator size="large" color="#00cc99" />
-              <Text style={styles.loadingText}>Searching nearby users...</Text>
+              <Text style={styles.loadingText}>Searching users...</Text>
             </View>
           ) : hasSearched ? (
             users.length > 0 ? (
@@ -158,18 +213,28 @@ const UserSearch = ({ visible, onClose, location }: UserSearchProps) => {
                     onPress={() => handleUserPress(item)}
                   >
                     <Image
-                      source={{ uri: item.profileImage || "https://via.placeholder.com/100" }}
+                      source={{ uri: item.profileImage || "https://via.placeholder.com/150" }}
                       style={styles.userAvatar}
                     />
                     <View style={styles.userInfo}>
                       <Text style={styles.userName}>{item.name}</Text>
-                      <Text style={styles.userDistance}>
-                        {item.distance < 1000
-                          ? `${item.distance} m away`
-                          : `${(item.distance / 1000).toFixed(1)} km away`}
-                      </Text>
+                      {item.friendStatus === 'pending' && (
+                        <View style={styles.friendStatusPending}>
+                          <Ionicons name="time-outline" size={14} color="#F9A826" />
+                          <Text style={[styles.friendStatusText, { color: '#F9A826' }]}>
+                            Friend Request Pending
+                          </Text>
+                        </View>
+                      )}
+                      {item.friendStatus === 'friends' && (
+                        <View style={styles.friendStatusFriends}>
+                          <Ionicons name="checkmark-circle-outline" size={14} color="#00cc99" />
+                          <Text style={[styles.friendStatusText, { color: '#00cc99' }]}>
+                            Friends
+                          </Text>
+                        </View>
+                      )}
                     </View>
-                    <Ionicons name="chevron-forward" size={20} color="#999" />
                   </TouchableOpacity>
                 )}
                 contentContainerStyle={styles.userList}
@@ -183,8 +248,17 @@ const UserSearch = ({ visible, onClose, location }: UserSearchProps) => {
           ) : (
             <View style={styles.centered}>
               <Ionicons name="people-outline" size={70} color="#ddd" />
-              <Text style={styles.instructionText}>Search for nearby tea enthusiasts</Text>
+              <Text style={styles.instructionText}>Search for tea enthusiasts</Text>
             </View>
+          )}
+
+          {/* User Profile Modal - Now rendered inside the search modal */}
+          {selectedUser && (
+            <UserProfile
+              visible={profileVisible}
+              onClose={handleProfileClose}
+              user={selectedUser}
+            />
           )}
         </View>
       </KeyboardAvoidingView>
@@ -268,6 +342,18 @@ const styles = StyleSheet.create({
   userDistance: {
     fontSize: 14,
     color: '#666',
+  },
+  friendStatusPending: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  friendStatusFriends: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  friendStatusText: {
+    fontSize: 12,
+    marginLeft: 4,
   },
   noUsersText: {
     marginTop: 12,

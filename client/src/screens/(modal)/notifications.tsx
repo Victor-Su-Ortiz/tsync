@@ -6,9 +6,6 @@ import axios from 'axios';
 import { GOOGLE_PLACES_API } from '@env';
 import { router, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Ionicons } from '@expo/vector-icons';
-import UserSearch from '../../components/UserSearch';
-import { useAuth } from '@/src/context/AuthContext';
 
 type Place = {
   place_id: string;
@@ -22,13 +19,11 @@ export default function Home() {
 
   const params = useLocalSearchParams();
   const isSelectingTeaShop = params.selectingTeaShop === 'true';
+
   const [selectionMode, setSelectionMode] = useState<'normal' | 'tea-shop-selection'>('normal');
   const [location, setLocation] = useState<Location.LocationObjectCoords | null>(null);
   const [shops, setShops] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [searchModalVisible, setSearchModalVisible] = useState(false);
-  const [notificationCount, setNotificationCount] = useState(0); // Sample notification count
-  const { idToken } = useAuth();
 
   useEffect(() => {
     const checkNavigationMode = async () => {
@@ -72,10 +67,6 @@ export default function Home() {
     }
   };
 
-  const handleNotificationPress = () => {
-    // Navigate to the notifications screen using the modal route
-    router.push('./../(modal)/notifications');
-  };
 
   const GOOGLE_PLACES_API_KEY = GOOGLE_PLACES_API;
 
@@ -86,7 +77,6 @@ export default function Home() {
       return;
     }
     const location = await Location.getCurrentPositionAsync({});
-    console.log(idToken);
     console.log(location.coords.latitude, location.coords.longitude);
     setLocation(location.coords);
     return location.coords;
@@ -102,7 +92,7 @@ export default function Home() {
     try {
       const response = await axios.get(url);
       setShops(response.data.results);
-      // console.log(response.data.results); // List of tea shops
+      console.log(response.data.results); // List of tea shops
     } catch (error) {
       console.error(error);
     } finally {
@@ -125,38 +115,7 @@ export default function Home() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Nearby Tea Shops 🍵</Text>
-
-        {/* Notification Icon */}
-        <TouchableOpacity
-          style={styles.notificationButton}
-          onPress={handleNotificationPress}
-        >
-          <Ionicons name="notifications" size={24} color="#00cc99" />
-          {notificationCount > 0 && (
-            <View style={styles.notificationBadge}>
-              <Text style={styles.notificationBadgeText}>
-                {notificationCount > 9 ? '9+' : notificationCount}
-              </Text>
-            </View>
-          )}
-        </TouchableOpacity>
       </View>
-
-      {/* Search Button */}
-      <TouchableOpacity
-        style={styles.searchButton}
-        onPress={() => setSearchModalVisible(true)}
-      >
-        <Ionicons name="search" size={20} color="#fff" />
-        <Text style={styles.searchButtonText}>Search nearby users</Text>
-      </TouchableOpacity>
-
-      {/* User Search Modal Component */}
-      <UserSearch
-        visible={searchModalVisible}
-        onClose={() => setSearchModalVisible(false)}
-        accessToken={idToken}
-      />
 
       {loading ? (
         <View style={{ flex: 1, justifyContent: "center" }}>
@@ -201,42 +160,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold'
   },
-  notificationButton: {
-    position: 'relative',
-    padding: 5,
-  },
-  notificationBadge: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    backgroundColor: '#FF4B4B',
-    borderRadius: 10,
-    width: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  notificationBadgeText: {
-    color: 'white',
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
-  searchButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#00cc99',
-    borderRadius: 20,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    marginBottom: 16,
-    justifyContent: 'center',
-  },
-  searchButtonText: {
-    color: 'white',
-    marginLeft: 10,
-    fontSize: 16,
-    fontWeight: '500',
-  },
   itemContainer: {
     height: 150,
     borderRadius: 10,
@@ -265,3 +188,4 @@ const styles = StyleSheet.create({
     color: "white",
   },
 });
+
