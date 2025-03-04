@@ -139,17 +139,24 @@ test_change_password() {
     fi
 }
 
-test_get_users() {
-    print_message "Testing Get Users"
+# User search test cases
+test_search_users_success() {
+    print_message "Testing user search with valid query"
 
-    local response=$(make_request "GET" "/users")
+    local response=$(make_request "GET" "/users/search" "q=test")
 
-    if echo $response | grep -q "name"; then
-        print_success "Got users successfully"
+    if echo "$response" | grep -q '"users":'; then
+        # Check if any users were returned
+        if echo "$response" | grep -q '"_id"'; then
+            print_success "Search returned user results as expected"
+        else
+            print_success "Search successful but no matching users found (expected for a fresh test database)"
+        fi
     else
-        print_error "Failed to get users: $response"
+        print_error "Failed to search users: $response"
     fi
 }
+
 
 # Main execution
 main() {
@@ -173,7 +180,7 @@ main() {
         test_change_password
         sleep 1
 
-        test_get_users
+        test_search_users_success  
         sleep 1
     else
         print_error "Skipping authenticated tests - no token available"
