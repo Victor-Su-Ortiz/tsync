@@ -13,9 +13,11 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '../utils/api'; // Import your API utility
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '../context/AuthContext';
 // import { useAuth } from '../context/AuthContext';
 
 const FriendsDropdown = ({ selectedFriends, setSelectedFriends }) => {
+  const { authToken } = useAuth();
   const [modalVisible, setModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [friends, setFriends] = useState([]);
@@ -26,6 +28,7 @@ const FriendsDropdown = ({ selectedFriends, setSelectedFriends }) => {
 
   // Animate overlay when modal visibility changes
   useEffect(() => {
+    console.log(authToken);
     if (modalVisible) {
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -54,8 +57,8 @@ const FriendsDropdown = ({ selectedFriends, setSelectedFriends }) => {
 
     try {
       // Use api.get instead of api.post since the controller handles GET requests
-      const token = await AsyncStorage.getItem("authToken");
-      const response = await api.get('/friends/friends', {headers: { Authorization: `Bearer ${token}` }});
+      // const token = await AsyncStorage.getItem("authToken");
+      const response = await api.get('/friends/friends', { headers: { Authorization: `Bearer ${authToken}` } });
       const { success, friends } = response.data;
 
       // Based on your controller, response should have a structure with success and data fields

@@ -28,48 +28,49 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [searchModalVisible, setSearchModalVisible] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0); // Sample notification count
-  const { idToken } = useAuth();
+  const { authToken } = useAuth();
 
-  useEffect(() => {
-    const checkNavigationMode = async () => {
-      if (params.selectingTeaShop === 'true') {
-        setSelectionMode('tea-shop-selection');
-        // Store that we're in selection mode
-        await AsyncStorage.setItem('navigationMode', 'tea-shop-selection');
-      } else {
-        // Check if we have a stored mode
-        const storedMode = await AsyncStorage.getItem('navigationMode');
-        if (storedMode === 'tea-shop-selection') {
-          setSelectionMode('tea-shop-selection');
-        } else {
-          setSelectionMode('normal');
-          // Clear any stored selection mode
-          await AsyncStorage.removeItem('navigationMode');
-        }
-      }
-    };
+  // useEffect(() => {
+  //   const checkNavigationMode = async () => {
+  //     if (params.selectingTeaShop === 'true') {
+  //       setSelectionMode('tea-shop-selection');
+  //       // Store that we're in selection mode
+  //       await AsyncStorage.setItem('navigationMode', 'tea-shop-selection');
+  //     } else {
+  //       // Check if we have a stored mode
+  //       const storedMode = await AsyncStorage.getItem('navigationMode');
+  //       if (storedMode === 'tea-shop-selection') {
+  //         setSelectionMode('tea-shop-selection');
+  //       } else {
+  //         setSelectionMode('normal');
+  //         // Clear any stored selection mode
+  //         await AsyncStorage.removeItem('navigationMode');
+  //       }
+  //     }
+  //   };
 
-    checkNavigationMode();
-  }, [params.selectingTeaShop]);
+  //   checkNavigationMode();
+  // }, [params.selectingTeaShop]);
 
 
   const handleTeaShopPress = async (teaShop: Place) => {
-    if (selectionMode === 'tea-shop-selection') {
-      // If we're in selection mode, navigate back to add-event with the selected shop
-      // Clear the selection mode for next time
-      await AsyncStorage.removeItem('navigationMode');
+    return;
+    // if (selectionMode === 'tea-shop-selection') {
+    //   // If we're in selection mode, navigate back to add-event with the selected shop
+    //   // Clear the selection mode for next time
+    //   await AsyncStorage.removeItem('navigationMode');
 
-      router.push({
-        pathname: './add-event',
-        params: {
-          teaShopName: teaShop.name,
-        }
-      });
-    } else {
-      // Normal tea shop interaction (e.g., view details)
-      console.log("Implement normal tea shop interaction.");
-      // Implement your normal tea shop interaction here
-    }
+    //   router.push({
+    //     pathname: './add-event',
+    //     params: {
+    //       teaShopName: teaShop.name,
+    //     }
+    //   });
+    // } else {
+    //   // Normal tea shop interaction (e.g., view details)
+    //   console.log("Implement normal tea shop interaction.");
+    //   // Implement your normal tea shop interaction here
+    // }
   };
 
   const handleNotificationPress = () => {
@@ -86,8 +87,10 @@ export default function Home() {
       return;
     }
     const location = await Location.getCurrentPositionAsync({});
-    console.log(idToken);
-    console.log(location.coords.latitude, location.coords.longitude);
+
+    console.log(authToken);
+
+    // console.log(location.coords.latitude, location.coords.longitude);
     setLocation(location.coords);
     return location.coords;
   };
@@ -155,7 +158,7 @@ export default function Home() {
       <UserSearch
         visible={searchModalVisible}
         onClose={() => setSearchModalVisible(false)}
-        accessToken={idToken}
+        accessToken={authToken}
       />
 
       {loading ? (
