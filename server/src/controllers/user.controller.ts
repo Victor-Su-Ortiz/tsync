@@ -11,7 +11,6 @@ export class UserController {
   static async searchUsers(req: Request, res: Response, next: NextFunction) {
     try {
       const { q, limit = 10 } = req.query;
-      console.log("hfodfdhodfdhfklhjdfhskfn", q)
       
       if (!q || typeof q !== 'string') {
         throw new BadRequestError('Search query is required');

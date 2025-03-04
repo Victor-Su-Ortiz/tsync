@@ -7,13 +7,22 @@ const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d
 const objectIdPattern = /^[0-9a-fA-F]{24}$/;
 
 export const userValidation = {
-    // Search users validation
+  /**
+   * Search users validation schema
+   */
   searchUsers: Joi.object({
+    query: Joi.object({
     q: Joi.string().min(2).required().messages({
       'string.min': 'Search query must be at least 2 characters long',
       'any.required': 'Search query is required'
     }),
-    limit: Joi.number().integer().min(1).max(50).default(10)
+    limit: Joi.number().integer().min(1).max(50).default(10).messages({
+      'number.base': 'Limit must be a number',
+      'number.integer': 'Limit must be an integer',
+      'number.min': 'Limit must be at least 1',
+      'number.max': 'Limit cannot exceed 50'
+    })
+  })
   }),
   /**
    * Update profile validation schema
