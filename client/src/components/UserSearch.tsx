@@ -45,7 +45,7 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [profileVisible, setProfileVisible] = useState(false);
   const inputRef = useRef<TextInput>(null);
-  
+
   // Create a debounced search function to prevent too many searches as user types
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedSearch = useCallback(
@@ -109,15 +109,17 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
 
     try {
       console.log("📡 Making API request...");
-      const response = await api.post(
+      const response = await api.get(
         '/users/search',
-        { q: query, limit: 10 },
         {
+          params: { q: query, limit: 10 },
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
         }
       );
+
+
 
       console.log("✅ API Response:", response.data);
 
