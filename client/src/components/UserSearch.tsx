@@ -37,6 +37,7 @@ type UserSearchProps = {
 
 
 const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
+
   const [searchQuery, setSearchQuery] = useState('');
   const [users, setUsers] = useState<User[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -44,6 +45,8 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [profileVisible, setProfileVisible] = useState(false);
   const inputRef = useRef<TextInput>(null);
+
+  const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2N2JmYzBmNWM0ZDAxZDVhMzdmMDNhM2EiLCJlbWFpbCI6Im5mMjQzQGNvcm5lbGwuZWR1Iiwicm9sZSI6InVzZXIiLCJpYXQiOjE3NDEwNTA0MDYsImV4cCI6MTc0MTEzNjgwNn0.9ADdhJ1ZkMJaQoW0746LyEEcILuIlUc0TjKuw1hA3PQ"
 
   // Create a debounced search function to prevent too many searches as user types
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -59,8 +62,6 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
     }, 300), // 300ms delay
     []
   );
-
-  const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2N2JmYzBmNWM0ZDAxZDVhMzdmMDNhM2EiLCJlbWFpbCI6Im5mMjQzQGNvcm5lbGwuZWR1Iiwicm9sZSI6InVzZXIiLCJpYXQiOjE3NDEwNDM1OTcsImV4cCI6MTc0MTEyOTk5N30.x_shP3WMsSTDNs-LwbBJyriIOBjnIWX_ssdcbVRXZss';
 
   useEffect(() => {
 
@@ -91,7 +92,7 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
 
 
   const searchUsers = async (query: string = searchQuery) => {
-    console.log("🔑 Auth Token Retrieved:", token);
+    console.log("🔑 Auth Token Retrieved:", accessToken);
     console.log("🔎 searchUsers function is being called with query:", query);
 
     if (!query.trim()) {
@@ -115,7 +116,7 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
         { q: query, limit: 10 },
         {
           headers: {
-            Authorization: `Bearer ${accessToken}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
