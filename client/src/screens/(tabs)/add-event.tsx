@@ -17,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import FriendsDropdown from '../../components/FriendsDropdown';
 import TeaShopSelectionModal from '../../components/SelectTeaShop';
 import DateTimePickerModal, { DateTimeRange } from '../../components/DateTimePickerModal';
+import { api } from '@/src/utils/api';
 
 type Friend = {
   id: string;
@@ -33,6 +34,7 @@ type Place = {
 
 export default function AddEventScreen() {
   const params = useLocalSearchParams();
+  const [isLoading, setIsLoading] = useState(false);
   const [teaShopInfo, setTeaShopInfo] = useState('');
   const [teaShopAddress, setTeaShopAddress] = useState('');
   const [eventName, setEventName] = useState('');
@@ -115,7 +117,7 @@ export default function AddEventScreen() {
     }
   };
 
-  const handleAddEvent = () => {
+  const handleAddEvent = async () => {
     // Validate form data
     if (!teaShopInfo || !eventName) {
       Alert.alert('Missing Information', 'Please fill in the tea shop info and event name');
@@ -145,18 +147,36 @@ export default function AddEventScreen() {
       }))
     };
 
-    // Here you would typically save the event to your state/database
-    console.log('New Event:', newEvent);
+    try {
+      setIsLoading(true);
 
-    // Reset form dirty state since we're saving
-    setFormDirty(false);
+      // Call the API to create the event
+      const response = await api.post('/events/', newEvent);
 
-    // Show success message and navigate back to events tab
-    Alert.alert(
-      'Success!',
-      'Event has been created successfully.',
-      [{ text: 'OK', onPress: () => router.push('./events') }]
-    );
+      console.log('Event created successfully:', response.data);
+
+      // Reset form dirty state since we're saving
+      setFormDirty(false);
+
+      // Show success message and navigate back to events tab
+      Alert.alert(
+        'Success!',
+        'Event has been created successfully.',
+        [{ text: 'OK', onPress: () => router.push('./events') }]
+      );
+    } catch (error) {
+      console.error('Error creating event:', error);
+
+      // Show error message
+      Alert.alert(
+        'Error',
+        'Failed to create the event. Please try again.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setIsLoading(false);
+    }
+
   };
 
   // Clear all form fields
