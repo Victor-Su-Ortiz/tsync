@@ -4,13 +4,16 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "node dist/server.js",
+    "dev": "nodemon --files ./src/server.ts",
+    "build": "tsc",
+    "postinstall": "npm run build",
     "test": "jest --detectOpenHandles --forceExit --verbose",
     "test:controllers": "jest --detectOpenHandles --forceExit --verbose --testPathPattern=controllers",
     "test:models": "jest --detectOpenHandles --forceExit --verbose --testPathPattern=models",
     "test:routes": "jest --detectOpenHandles --forceExit --verbose --testPathPattern=routes",
     "test:services": "jest --detectOpenHandles --forceExit --verbose --testPathPattern=services",
-    "test:watch": "jest --watch",
-    "start": "nodemon --files ./src/server.ts"
+    "test:watch": "jest --watch"
   },
   "keywords": [],
   "author": "",
