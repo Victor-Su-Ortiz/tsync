@@ -9,7 +9,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
-  Alert
+  Alert,
+  ActivityIndicator
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -17,6 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import FriendsDropdown from '../../components/FriendsDropdown';
 import TeaShopSelectionModal from '../../components/SelectTeaShop';
 import DateTimePickerModal, { DateTimeRange } from '../../components/DateTimePickerModal';
+import { useAuth } from '@/src/context/AuthContext'; // Import your auth context
 import { api } from '@/src/utils/api';
 
 type Friend = {
@@ -34,7 +36,8 @@ type Place = {
 
 export default function AddEventScreen() {
   const params = useLocalSearchParams();
-  const [isLoading, setIsLoading] = useState(false);
+  const { authToken } = useAuth(); // Get the auth token from context
+
   const [teaShopInfo, setTeaShopInfo] = useState('');
   const [teaShopAddress, setTeaShopAddress] = useState('');
   const [eventName, setEventName] = useState('');
@@ -49,6 +52,9 @@ export default function AddEventScreen() {
 
   // Track if form is dirty (has unsaved changes)
   const [formDirty, setFormDirty] = useState(false);
+
+  // Track loading state during API calls
+  const [isLoading, setIsLoading] = useState(false);
 
   // Check if tea shop info was passed via URL params
   useEffect(() => {
@@ -129,20 +135,25 @@ export default function AddEventScreen() {
       return;
     }
 
-    // Create the event object with multiple date time ranges
+    // Create the event object matching the server's expectations based on error messages
     const newEvent = {
-      teaShopInfo,
-      teaShopAddress,
-      eventName,
+      title: eventName,
       description,
-      dateTimeRanges: dateTimeRanges.map(range => ({
-        startDate: range.startDate.toISOString(),
-        endDate: range.endDate.toISOString(),
-        startTime: `${range.startTime.getHours().toString().padStart(2, '0')}:${range.startTime.getMinutes().toString().padStart(2, '0')}`,
-        endTime: `${range.endTime.getHours().toString().padStart(2, '0')}:${range.endTime.getMinutes().toString().padStart(2, '0')}`,
-      })),
+
+      // Location should be a string, not an object
+      location: teaShopInfo,
+
+      // These fields are specifically required according to the error message
+      startTime: dateTimeRanges[0].startTime.toISOString(),
+      endTime: dateTimeRanges[0].endTime.toISOString(),
+
+      // Use ISO strings for dates
+      startDate: dateTimeRanges[0].startDate.toISOString(),
+      endDate: dateTimeRanges[0].endDate.toISOString(),
+
+      // Include other fields that might be required
       attendees: selectedFriends.map((friend) => ({
-        id: (friend as Friend).id,
+        userId: (friend as Friend).id,
         name: (friend as Friend).name,
       }))
     };
@@ -150,8 +161,15 @@ export default function AddEventScreen() {
     try {
       setIsLoading(true);
 
-      // Call the API to create the event
-      const response = await api.post('/events/', newEvent);
+      // Log the event data for debugging
+      console.log('Sending event data:', JSON.stringify(newEvent, null, 2));
+
+      // Call the API to create the event, with explicit auth header
+      const response = await api.post('/events', newEvent, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
 
       console.log('Event created successfully:', response.data);
 
@@ -164,19 +182,36 @@ export default function AddEventScreen() {
         'Event has been created successfully.',
         [{ text: 'OK', onPress: () => router.push('./events') }]
       );
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating event:', error);
 
-      // Show error message
+      // Show more detailed error message if possible
+      let errorMessage = 'Failed to create the event. Please try again.';
+
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        console.log('Error response:', error.response.data);
+        console.log('Error status:', error.response.status);
+
+        if (error.response.status === 401) {
+          errorMessage = 'Authentication failed. Please log in again.';
+        } else if (error.response.data && error.response.data.message) {
+          errorMessage = error.response.data.message;
+        }
+      } else if (error.request) {
+        // The request was made but no response was received
+        errorMessage = 'No response from server. Please check your internet connection.';
+      }
+
       Alert.alert(
         'Error',
-        'Failed to create the event. Please try again.',
+        errorMessage,
         [{ text: 'OK' }]
       );
     } finally {
       setIsLoading(false);
     }
-
   };
 
   // Clear all form fields
@@ -340,8 +375,13 @@ export default function AddEventScreen() {
             <TouchableOpacity
               style={styles.addButton}
               onPress={handleAddEvent}
+              disabled={isLoading}
             >
-              <Text style={styles.addButtonText}>Create Event</Text>
+              {isLoading ? (
+                <ActivityIndicator color="white" size="small" />
+              ) : (
+                <Text style={styles.addButtonText}>Create Event</Text>
+              )}
             </TouchableOpacity>
           </View>
         </ScrollView>
