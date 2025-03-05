@@ -202,6 +202,17 @@ userSchema.methods.sendFriendRequest = async function(friendId: string) {
       }
     }
   });
+
+  // Create notification
+  const { default: NotificationService } = await import('../services/notification.service');
+  await NotificationService.createNotification({
+    recipientId: friendId,
+    senderId: this._id.toString(),
+    type: 'FRIEND_REQUEST',
+    message: `${this.name} sent you a friend request`,
+    relatedId: this._id.toString(),
+    onModel: 'User'
+  });
 };
 
 userSchema.methods.acceptFriendRequest = async function(requestId: string) {
@@ -220,6 +231,17 @@ userSchema.methods.acceptFriendRequest = async function(requestId: string) {
   });
 
   await this.save();
+
+  // Create notification for the request sender
+  const { default: NotificationService } = await import('../services/notification.service');
+  await NotificationService.createNotification({
+    recipientId: request.from.toString(),
+    senderId: this._id.toString(),
+    type: 'FRIEND_ACCEPTED',
+    message: `${this.name} accepted your friend request`,
+    relatedId: this._id.toString(),
+    onModel: 'User'
+  });
 };
 
 userSchema.methods.rejectFriendRequest = async function(requestId: string) {
