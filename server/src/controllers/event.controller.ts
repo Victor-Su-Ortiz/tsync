@@ -1,31 +1,30 @@
 import { Request, Response, NextFunction } from 'express';
 import eventService from '../services/event.service';
 
-class EventController {
+export class EventController {
   /**
    * Create a new event
    * @route POST /api/events
    */
-  public createEvent(req: Request, res: Response, next: NextFunction) {
+  static async createEvent(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = req.userId;
       if (!userId) {
-        return res.status(401).json({
+        res.status(401).json({
           status: 'fail',
           message: 'Not authenticated'
         });
+        return;
       }
 
-      eventService.createEvent(req.body, userId.toString())
-        .then(event => {
-          res.status(201).json({
-            status: 'success',
-            data: {
-              event,
-            },
-          });
-        })
-        .catch(error => next(error));
+      const event = await eventService.createEvent(req.body, userId.toString())
+      res.status(201).json({
+        status: 'success',
+        data: {
+          event,
+        },
+      });
+
     } catch (error) {
       next(error);
     }
@@ -35,26 +34,24 @@ class EventController {
    * Get an event by ID
    * @route GET /api/events/:id
    */
-  public getEvent(req: Request, res: Response, next: NextFunction) {
+  static async getEvent(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = req.userId;
       if (!userId) {
-        return res.status(401).json({
+        res.status(401).json({
           status: 'fail',
           message: 'Not authenticated'
         });
+        return;
       }
 
-      eventService.getEventById(req.params.id, userId.toString())
-        .then(event => {
-          res.status(200).json({
-            status: 'success',
-            data: {
-              event,
-            },
-          });
-        })
-        .catch(error => next(error));
+     const event = await eventService.getEventById(req.params.id, userId.toString())
+    res.status(200).json({
+      status: 'success',
+      data: {
+        event,
+      },
+    });
     } catch (error) {
       next(error);
     }
@@ -64,26 +61,25 @@ class EventController {
    * Update an event
    * @route PATCH /api/events/:id
    */
-  public updateEvent(req: Request, res: Response, next: NextFunction) {
+  static async updateEvent(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = req.userId;
       if (!userId) {
-        return res.status(401).json({
+        res.status(401).json({
           status: 'fail',
           message: 'Not authenticated'
         });
+        return;
       }
 
-      eventService.updateEvent(req.params.id, req.body, userId.toString())
-        .then(event => {
-          res.status(200).json({
-            status: 'success',
-            data: {
-              event,
-            },
-          });
-        })
-        .catch(error => next(error));
+      const event = await eventService.updateEvent(req.params.id, req.body, userId.toString())
+
+      res.status(200).json({
+        status: 'success',
+        data: {
+          event,
+        },
+      });
     } catch (error) {
       next(error);
     }
@@ -93,24 +89,22 @@ class EventController {
    * Delete an event
    * @route DELETE /api/events/:id
    */
-  public deleteEvent(req: Request, res: Response, next: NextFunction) {
+  static async deleteEvent(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = req.userId;
       if (!userId) {
-        return res.status(401).json({
+        res.status(401).json({
           status: 'fail',
           message: 'Not authenticated'
         });
+        return;
       }
 
-      eventService.deleteEvent(req.params.id, userId.toString())
-        .then(() => {
-          res.status(204).json({
-            status: 'success',
-            data: null,
-          });
-        })
-        .catch(error => next(error));
+      await eventService.deleteEvent(req.params.id, userId.toString())
+      res.status(204).json({
+        status: 'success',
+        data: null,
+      });
     } catch (error) {
       next(error);
     }
@@ -120,27 +114,25 @@ class EventController {
    * Get all events for the authenticated user
    * @route GET /api/events
    */
-  public getUserEvents(req: Request, res: Response, next: NextFunction) {
+  static async getUserEvents(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = req.userId;
       if (!userId) {
-        return res.status(401).json({
+        res.status(401).json({
           status: 'fail',
           message: 'Not authenticated'
         });
+        return;
       }
 
-      eventService.getUserEvents(userId.toString(), req.query)
-        .then(events => {
-          res.status(200).json({
-            status: 'success',
-            results: events.length,
-            data: {
-              events,
-            },
-          });
-        })
-        .catch(error => next(error));
+     const events = await eventService.getUserEvents(userId.toString(), req.query)
+    res.status(200).json({
+      status: 'success',
+      results: events.length,
+      data: {
+        events,
+      },
+    });
     } catch (error) {
       next(error);
     }
@@ -150,32 +142,30 @@ class EventController {
    * Add an attendee to an event
    * @route POST /api/events/:id/attendees
    */
-  public addAttendee(req: Request, res: Response, next: NextFunction) {
+  static async addAttendee(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = req.userId;
       if (!userId) {
-        return res.status(401).json({
+        res.status(401).json({
           status: 'fail',
           message: 'Not authenticated'
         });
+        return;
       }
 
       const { attendeeId, email } = req.body;
       
-      eventService.addAttendee(
+      const event = await eventService.addAttendee(
         req.params.id,
         { userId: attendeeId, email },
         userId.toString()
       )
-        .then(event => {
-          res.status(200).json({
-            status: 'success',
-            data: {
-              event,
-            },
-          });
-        })
-        .catch(error => next(error));
+      res.status(200).json({
+        status: 'success',
+        data: {
+          event,
+        },
+      });
     } catch (error) {
       next(error);
     }
@@ -185,28 +175,27 @@ class EventController {
    * Update attendee status
    * @route PATCH /api/events/:id/attendees/status
    */
-  public updateAttendeeStatus(req: Request, res: Response, next: NextFunction) {
+  static async updateAttendeeStatus(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = req.userId;
       if (!userId) {
-        return res.status(401).json({
+        res.status(401).json({
           status: 'fail',
           message: 'Not authenticated'
         });
+        return;
       }
 
       const { status } = req.body;
       
-      eventService.updateAttendeeStatus(req.params.id, status, userId.toString())
-        .then(event => {
-          res.status(200).json({
-            status: 'success',
-            data: {
-              event,
-            },
-          });
-        })
-        .catch(error => next(error));
+      const event = await eventService.updateAttendeeStatus(req.params.id, status, userId.toString())
+
+      res.status(200).json({
+        status: 'success',
+        data: {
+          event,
+        },
+      });
     } catch (error) {
       next(error);
     }
@@ -216,29 +205,29 @@ class EventController {
    * Get upcoming events
    * @route GET /api/events/upcoming
    */
-  public getUpcomingEvents(req: Request, res: Response, next: NextFunction) {
+  static async getUpcomingEvents(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = req.userId;
       if (!userId) {
-        return res.status(401).json({
+        res.status(401).json({
           status: 'fail',
           message: 'Not authenticated'
         });
+        return;
       }
 
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 5;
       
-      eventService.getUpcomingEvents(userId.toString(), limit)
-        .then(events => {
-          res.status(200).json({
-            status: 'success',
-            results: events.length,
-            data: {
-              events,
-            },
-          });
-        })
-        .catch(error => next(error));
+      const events = await eventService.getUpcomingEvents(userId.toString(), limit)
+
+      res.status(200).json({
+        status: 'success',
+        results: events.length,
+        data: {
+          events,
+        },
+      });
+
     } catch (error) {
       next(error);
     }
@@ -248,30 +237,28 @@ class EventController {
    * Sync event with Google Calendar
    * @route POST /api/events/:id/sync-google
    */
-  public syncWithGoogleCalendar(req: Request, res: Response, next: NextFunction) {
+  static async syncWithGoogleCalendar(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = req.userId;
       if (!userId) {
-        return res.status(401).json({
+        res.status(401).json({
           status: 'fail',
           message: 'Not authenticated'
         });
+        return;
       }
 
-      eventService.syncWithGoogleCalendar(req.params.id, userId.toString())
-        .then(event => {
-          res.status(200).json({
-            status: 'success',
-            data: {
-              event,
-            },
-          });
-        })
-        .catch(error => next(error));
+      const event = await eventService.syncWithGoogleCalendar(req.params.id, userId.toString())
+
+      res.status(200).json({
+        status: 'success',
+        data: {
+          event,
+        },
+      });
+
     } catch (error) {
       next(error);
     }
   }
 }
-
-export default new EventController();
