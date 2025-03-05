@@ -47,7 +47,7 @@ export default function Index() {
         throw new Error("Failed to get ID token from Google");
       }
 
-      // setAccessToken(tokens.accessToken);
+      setAccessToken(tokens.accessToken);
       setIdToken(tokens.idToken);
 
       // Store Google user info in context for profile display

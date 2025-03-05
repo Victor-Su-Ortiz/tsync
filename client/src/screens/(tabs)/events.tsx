@@ -25,7 +25,7 @@ interface CalendarEvent {
 
 export default function Events() {
 
-  const { accessToken } = useAuth();
+  const { accessToken, idToken, authToken } = useAuth();
   const [selectedDay, setSelectedDay] = useState(moment().format("YYYY-MM-DD"));
   const [loading, setLoading] = useState(false);
 
@@ -77,6 +77,8 @@ export default function Events() {
   };
 
   useEffect(() => {
+    console.log(authToken);
+
     if (accessToken) {
       fetchAllEvents();  // ✅ Fetch events after token is set
     }

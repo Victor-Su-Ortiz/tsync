@@ -16,7 +16,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import FriendsDropdown from '../../components/FriendsDropdown';
 import TeaShopSelectionModal from '../../components/SelectTeaShop';
-import DateTimePickerModal from '../../components/DateTimePickerModal';
+import DateTimePickerModal, { DateTimeRange } from '../../components/DateTimePickerModal';
 
 type Friend = {
   id: string;
@@ -37,12 +37,13 @@ export default function AddEventScreen() {
   const [teaShopAddress, setTeaShopAddress] = useState('');
   const [eventName, setEventName] = useState('');
   const [description, setDescription] = useState('');
-  const [date, setDate] = useState(new Date());
-  const [time, setTime] = useState(new Date());
+
+  // Replace single date/time with array of date/time ranges
+  const [dateTimeRanges, setDateTimeRanges] = useState<DateTimeRange[]>([]);
+
   const [selectedFriends, setSelectedFriends] = useState([]);
   const [teaShopModalVisible, setTeaShopModalVisible] = useState(false);
-  const [datePickerVisible, setDatePickerVisible] = useState(false);
-  const [timePickerVisible, setTimePickerVisible] = useState(false);
+  const [dateTimeModalVisible, setDateTimeModalVisible] = useState(false);
 
   // Check if tea shop info was passed via URL params
   useEffect(() => {
@@ -64,23 +65,6 @@ export default function AddEventScreen() {
     router.push('./events');
   };
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
-  };
-
-  const formatTime = (time: Date) => {
-    return time.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    });
-  };
-
   const handleAddEvent = () => {
     // Validate form data
     if (!teaShopInfo || !eventName) {
@@ -88,14 +72,23 @@ export default function AddEventScreen() {
       return;
     }
 
-    // Create the event object
+    if (dateTimeRanges.length === 0) {
+      Alert.alert('Missing Date & Time', 'Please add at least one date and time for this event');
+      return;
+    }
+
+    // Create the event object with multiple date time ranges
     const newEvent = {
       teaShopInfo,
       teaShopAddress,
       eventName,
       description,
-      date: date.toISOString().split('T')[0],
-      time: `${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`,
+      dateTimeRanges: dateTimeRanges.map(range => ({
+        startDate: range.startDate.toISOString(),
+        endDate: range.endDate.toISOString(),
+        startTime: `${range.startTime.getHours().toString().padStart(2, '0')}:${range.startTime.getMinutes().toString().padStart(2, '0')}`,
+        endTime: `${range.endTime.getHours().toString().padStart(2, '0')}:${range.endTime.getMinutes().toString().padStart(2, '0')}`,
+      })),
       attendees: selectedFriends.map((friend) => ({
         id: (friend as Friend).id,
         name: (friend as Friend).name,
@@ -111,6 +104,43 @@ export default function AddEventScreen() {
       'Event has been created successfully.',
       [{ text: 'OK', onPress: () => router.push('./events') }]
     );
+  };
+
+  const formatDateTimeRangeSummary = () => {
+    if (dateTimeRanges.length === 0) {
+      return "Tap to add dates and times";
+    }
+
+    if (dateTimeRanges.length === 1) {
+      const range = dateTimeRanges[0];
+      const startDateStr = range.startDate.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric'
+      });
+      const endDateStr = range.endDate.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric'
+      });
+
+      const startTimeStr = range.startTime.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+      const endTimeStr = range.endTime.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+
+      if (range.startDate.toDateString() === range.endDate.toDateString()) {
+        return `${startDateStr}, ${startTimeStr}—${endTimeStr}`;
+      } else {
+        return `${startDateStr}—${endDateStr}, ${startTimeStr}—${endTimeStr}`;
+      }
+    }
+
+    return `${dateTimeRanges.length} date/time ranges selected`;
   };
 
   return (
@@ -165,23 +195,52 @@ export default function AddEventScreen() {
               textAlignVertical="top"
             />
 
-            <Text style={styles.label}>Date</Text>
+            <Text style={styles.label}>Date & Time</Text>
             <TouchableOpacity
-              style={styles.dateTimeButton}
-              onPress={() => setDatePickerVisible(true)}
+              style={[styles.dateTimeButton, dateTimeRanges.length > 0 && styles.dateTimeButtonActive]}
+              onPress={() => setDateTimeModalVisible(true)}
             >
-              <Text style={styles.dateTimeText}>{formatDate(date)}</Text>
+              <Text
+                style={dateTimeRanges.length > 0 ? styles.dateTimeText : styles.placeholderText}
+              >
+                {formatDateTimeRangeSummary()}
+              </Text>
               <Ionicons name="calendar-outline" size={20} color="#666" />
             </TouchableOpacity>
 
-            <Text style={styles.label}>Time</Text>
-            <TouchableOpacity
-              style={styles.dateTimeButton}
-              onPress={() => setTimePickerVisible(true)}
-            >
-              <Text style={styles.dateTimeText}>{formatTime(time)}</Text>
-              <Ionicons name="time-outline" size={20} color="#666" />
-            </TouchableOpacity>
+            {dateTimeRanges.length > 0 && (
+              <View style={styles.rangesPreview}>
+                {dateTimeRanges.map((range, index) => (
+                  <View key={range.id} style={styles.rangePreviewItem}>
+                    <Ionicons name="time-outline" size={16} color="#00cc99" style={styles.rangeIcon} />
+                    <Text style={styles.rangePreviewText}>
+                      {range.startDate.toLocaleDateString('en-US', {
+                        weekday: 'short',
+                        month: 'short',
+                        day: 'numeric'
+                      })}
+                      {range.startDate.toDateString() !== range.endDate.toDateString() ?
+                        ` — ${range.endDate.toLocaleDateString('en-US', {
+                          weekday: 'short',
+                          month: 'short',
+                          day: 'numeric'
+                        })}` :
+                        ''}
+                      {', '}
+                      {range.startTime.toLocaleTimeString('en-US', {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true
+                      })} — {range.endTime.toLocaleTimeString('en-US', {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true
+                      })}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
 
             <Text style={styles.label}>Invite Friends</Text>
             <FriendsDropdown
@@ -206,24 +265,13 @@ export default function AddEventScreen() {
         onSelectTeaShop={handleTeaShopSelection}
       />
 
-      {/* Date Picker Modal */}
+      {/* Date & Time Range Modal */}
       <DateTimePickerModal
-        isVisible={datePickerVisible}
-        onClose={() => setDatePickerVisible(false)}
-        onConfirm={(selectedDate) => setDate(selectedDate)}
-        currentValue={date}
-        mode="date"
-        title="Select Date"
-      />
-
-      {/* Time Picker Modal */}
-      <DateTimePickerModal
-        isVisible={timePickerVisible}
-        onClose={() => setTimePickerVisible(false)}
-        onConfirm={(selectedTime) => setTime(selectedTime)}
-        currentValue={time}
-        mode="time"
-        title="Select Time"
+        isVisible={dateTimeModalVisible}
+        onClose={() => setDateTimeModalVisible(false)}
+        onConfirm={(selectedRanges) => setDateTimeRanges(selectedRanges)}
+        existingRanges={dateTimeRanges}
+        title="Select Dates"
       />
     </SafeAreaView>
   );
@@ -307,9 +355,27 @@ const styles = StyleSheet.create({
     padding: 12,
     backgroundColor: '#fafafa',
   },
+  dateTimeButtonActive: {
+    borderColor: '#00cc99',
+  },
   dateTimeText: {
     fontSize: 16,
     color: '#000',
+  },
+  rangesPreview: {
+    marginTop: 8,
+  },
+  rangePreviewItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  rangeIcon: {
+    marginRight: 6,
+  },
+  rangePreviewText: {
+    fontSize: 14,
+    color: '#555',
   },
   addButton: {
     backgroundColor: '#00cc99',
