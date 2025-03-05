@@ -180,17 +180,25 @@ const DateTimePickerModal = ({
       if (currentMode === 'startDate') {
         updated.startDate = updateDate(prev.startDate, selectedDate);
 
-        // If no end date yet or start date is after end date, also update end date
-        if (!prev.endDate || (prev.endDate && updated.startDate > prev.endDate)) {
-          updated.endDate = new Date(updated.startDate);
+        // If end date exists and is now before the new start date, update end date to match start date
+        if (prev.endDate && selectedDate > prev.endDate) {
+          updated.endDate = new Date(selectedDate);
+          if (prev.endDate) {
+            // Preserve end time
+            updated.endDate.setHours(prev.endDate.getHours(), prev.endDate.getMinutes());
+          }
         }
       } else if (currentMode === 'endDate') {
-        // Check if end date is before start date
-        if (selectedDate < prev.startDate!) {
-          Alert.alert('Invalid Date Range', 'End date cannot be before start date.');
-          return prev; // Return previous state without changes
-        }
         updated.endDate = updateDate(prev.endDate, selectedDate);
+
+        // If end date is before start date, update start date to match end date
+        if (selectedDate < prev.startDate!) {
+          updated.startDate = new Date(selectedDate);
+          if (prev.startDate) {
+            // Preserve start time
+            updated.startDate.setHours(prev.startDate.getHours(), prev.startDate.getMinutes());
+          }
+        }
       }
 
       return updated;
