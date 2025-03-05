@@ -1,4 +1,5 @@
 // src/services/notification.service.ts
+// import { read } from 'fs';
 import Notification from '../models/notification.model';
 // import User from '../models/user.model';
 import socketService from './socket.service';
@@ -63,7 +64,7 @@ export class NotificationService {
     const { page = 1, limit = 20, unreadOnly = false } = options;
     const skip = (page - 1) * limit;
 
-    const query = { recipient: new Types.ObjectId(userId) };
+    const query = { recipient: new Types.ObjectId(userId), read: true };
     if (unreadOnly) {
       query['read'] = false;
     }

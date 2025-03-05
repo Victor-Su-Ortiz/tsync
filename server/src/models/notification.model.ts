@@ -7,6 +7,7 @@ export interface INotification {
   type: string;
   message: string;
   relatedId?: Types.ObjectId; // ID of related entity (friend request, etc.)
+  onModel?: string; // Model of related entity
   read: boolean;
   createdAt: Date;
 }

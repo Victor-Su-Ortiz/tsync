@@ -1,5 +1,5 @@
 import { Document, Model, Types } from "mongoose";
-import { IFriendRequest } from "./friendRequest";
+import { IFriendRequest } from "./friendRequest.types";
 
 // Interface to define the User document structure
 export interface IUser extends Document {
