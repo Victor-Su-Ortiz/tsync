@@ -14,9 +14,9 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import FriendsDropdown from '../../components/FriendsDropdown';
 import TeaShopSelectionModal from '../../components/SelectTeaShop';
+import DateTimePickerModal from '../../components/DateTimePickerModal';
 
 type Friend = {
   id: string;
@@ -40,9 +40,9 @@ export default function AddEventScreen() {
   const [date, setDate] = useState(new Date());
   const [time, setTime] = useState(new Date());
   const [selectedFriends, setSelectedFriends] = useState([]);
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showTimePicker, setShowTimePicker] = useState(false);
   const [teaShopModalVisible, setTeaShopModalVisible] = useState(false);
+  const [datePickerVisible, setDatePickerVisible] = useState(false);
+  const [timePickerVisible, setTimePickerVisible] = useState(false);
 
   // Check if tea shop info was passed via URL params
   useEffect(() => {
@@ -51,20 +51,7 @@ export default function AddEventScreen() {
     }
   }, [params.teaShopName]);
 
-  const onDateChange = (event: any, selectedDate?: Date) => {
-    const currentDate = selectedDate || date;
-    setShowDatePicker(Platform.OS === 'ios');
-    setDate(currentDate);
-  };
-
-  const onTimeChange = (event: any, selectedTime?: Date) => {
-    const currentTime = selectedTime || time;
-    setShowTimePicker(Platform.OS === 'ios');
-    setTime(currentTime);
-  };
-
   const handleSelectTeaShop = () => {
-    // Show the tea shop selection modal instead of navigating to another screen
     setTeaShopModalVisible(true);
   };
 
@@ -74,8 +61,24 @@ export default function AddEventScreen() {
   };
 
   const handleBackButton = () => {
-    // Always go to events when pressing back from add-event
     router.push('./events');
+  };
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
+  const formatTime = (time: Date) => {
+    return time.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
   };
 
   const handleAddEvent = () => {
@@ -165,37 +168,20 @@ export default function AddEventScreen() {
             <Text style={styles.label}>Date</Text>
             <TouchableOpacity
               style={styles.dateTimeButton}
-              onPress={() => setShowDatePicker(true)}
+              onPress={() => setDatePickerVisible(true)}
             >
-              <Text>{date.toDateString()}</Text>
+              <Text style={styles.dateTimeText}>{formatDate(date)}</Text>
+              <Ionicons name="calendar-outline" size={20} color="#666" />
             </TouchableOpacity>
-            {showDatePicker && (
-              <DateTimePicker
-                value={date}
-                mode="date"
-                display="default"
-                onChange={onDateChange}
-              />
-            )}
 
             <Text style={styles.label}>Time</Text>
             <TouchableOpacity
               style={styles.dateTimeButton}
-              onPress={() => setShowTimePicker(true)}
+              onPress={() => setTimePickerVisible(true)}
             >
-              <Text>
-                {time.getHours().toString().padStart(2, '0')}:
-                {time.getMinutes().toString().padStart(2, '0')}
-              </Text>
+              <Text style={styles.dateTimeText}>{formatTime(time)}</Text>
+              <Ionicons name="time-outline" size={20} color="#666" />
             </TouchableOpacity>
-            {showTimePicker && (
-              <DateTimePicker
-                value={time}
-                mode="time"
-                display="default"
-                onChange={onTimeChange}
-              />
-            )}
 
             <Text style={styles.label}>Invite Friends</Text>
             <FriendsDropdown
@@ -218,6 +204,26 @@ export default function AddEventScreen() {
         isVisible={teaShopModalVisible}
         onClose={() => setTeaShopModalVisible(false)}
         onSelectTeaShop={handleTeaShopSelection}
+      />
+
+      {/* Date Picker Modal */}
+      <DateTimePickerModal
+        isVisible={datePickerVisible}
+        onClose={() => setDatePickerVisible(false)}
+        onConfirm={(selectedDate) => setDate(selectedDate)}
+        currentValue={date}
+        mode="date"
+        title="Select Date"
+      />
+
+      {/* Time Picker Modal */}
+      <DateTimePickerModal
+        isVisible={timePickerVisible}
+        onClose={() => setTimePickerVisible(false)}
+        onConfirm={(selectedTime) => setTime(selectedTime)}
+        currentValue={time}
+        mode="time"
+        title="Select Time"
       />
     </SafeAreaView>
   );
@@ -292,12 +298,18 @@ const styles = StyleSheet.create({
     marginLeft: 2,
   },
   dateTimeButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 8,
     padding: 12,
-    fontSize: 16,
     backgroundColor: '#fafafa',
+  },
+  dateTimeText: {
+    fontSize: 16,
+    color: '#000',
   },
   addButton: {
     backgroundColor: '#00cc99',
