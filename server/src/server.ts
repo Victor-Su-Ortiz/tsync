@@ -1,6 +1,8 @@
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import app from "./app";
+import http from "http";
+import socketService from "./services/socket.service";
 
 // Load environment variables
 dotenv.config();
@@ -43,7 +45,13 @@ const startServer = async (): Promise<void> => {
   try {
     await connectDB();
 
-    const server = app.listen(PORT, () => {
+    // Create HTTP server
+    const server = http.createServer(app);
+    
+    // Initialize socket.io
+    socketService.initialize(server);
+
+    server.listen(PORT, () => {
       console.log(`
         ################################################
         🛡️  Server listening on port: ${PORT} 🛡️

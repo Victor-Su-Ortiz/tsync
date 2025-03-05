@@ -18,6 +18,7 @@ import path from "path";
 import authRoutes from "./routes/auth.routes";
 import friendRoutes from "./routes/friends.routes";
 import userRoutes from "./routes/user.routes";
+import notificationRoutes from "./routes/notification.routes";
 
 // Middleware
 import { errorHandler } from "./middleware/error.middleware";
@@ -88,6 +89,7 @@ class App {
     this.app.use("/api/v1/auth", authRoutes);
     this.app.use("/api/v1/friends", friendRoutes);
     this.app.use("/api/v1/users", userRoutes);
+    this.app.use("/api/v1/notifications", notificationRoutes);
 
     // Handle undefined routes
     this.app.all("*", (req: Request, _: Response, next: NextFunction) => {
