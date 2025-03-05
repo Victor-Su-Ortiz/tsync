@@ -45,12 +45,30 @@ export default function AddEventScreen() {
   const [teaShopModalVisible, setTeaShopModalVisible] = useState(false);
   const [dateTimeModalVisible, setDateTimeModalVisible] = useState(false);
 
+  // Track if form is dirty (has unsaved changes)
+  const [formDirty, setFormDirty] = useState(false);
+
   // Check if tea shop info was passed via URL params
   useEffect(() => {
     if (params.teaShopName) {
       setTeaShopInfo(params.teaShopName as string);
+      setFormDirty(true);
     }
   }, [params.teaShopName]);
+
+  // Update formDirty state whenever any form field changes
+  useEffect(() => {
+    // We need to check if ANY of the fields have values to determine if form is dirty
+    const hasChanges =
+      teaShopInfo !== '' ||
+      teaShopAddress !== '' ||
+      eventName !== '' ||
+      description !== '' ||
+      dateTimeRanges.length > 0 ||
+      selectedFriends.length > 0;
+
+    setFormDirty(hasChanges);
+  }, [teaShopInfo, teaShopAddress, eventName, description, dateTimeRanges, selectedFriends]);
 
   const handleSelectTeaShop = () => {
     setTeaShopModalVisible(true);
@@ -62,7 +80,39 @@ export default function AddEventScreen() {
   };
 
   const handleBackButton = () => {
-    router.push('./events');
+    if (formDirty) {
+      // Show confirmation dialog if there are unsaved changes
+      Alert.alert(
+        'Discard Changes',
+        'You have unsaved changes. Are you sure you want to go back?',
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel'
+          },
+          {
+            text: 'Discard',
+            style: 'destructive',
+            onPress: () => {
+              // Clear all form fields first
+              setTeaShopInfo('');
+              setTeaShopAddress('');
+              setEventName('');
+              setDescription('');
+              setDateTimeRanges([]);
+              setSelectedFriends([]);
+              setFormDirty(false);
+
+              // Navigate back to events screen, discarding all changes
+              router.push('./events');
+            }
+          }
+        ]
+      );
+    } else {
+      // No changes to discard, just navigate back
+      router.push('./events');
+    }
   };
 
   const handleAddEvent = () => {
@@ -98,12 +148,26 @@ export default function AddEventScreen() {
     // Here you would typically save the event to your state/database
     console.log('New Event:', newEvent);
 
+    // Reset form dirty state since we're saving
+    setFormDirty(false);
+
     // Show success message and navigate back to events tab
     Alert.alert(
       'Success!',
       'Event has been created successfully.',
       [{ text: 'OK', onPress: () => router.push('./events') }]
     );
+  };
+
+  // Clear all form fields
+  const resetForm = () => {
+    setTeaShopInfo('');
+    setTeaShopAddress('');
+    setEventName('');
+    setDescription('');
+    setDateTimeRanges([]);
+    setSelectedFriends([]);
+    setFormDirty(false);
   };
 
   const formatDateTimeRangeSummary = () => {
@@ -152,7 +216,12 @@ export default function AddEventScreen() {
           <Ionicons name="arrow-back" size={24} color="#00cc99" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Add New Event</Text>
-        <View style={styles.placeholder} />
+        {formDirty && (
+          <TouchableOpacity onPress={resetForm} style={styles.resetButton}>
+            <Text style={styles.resetButtonText}>Reset</Text>
+          </TouchableOpacity>
+        )}
+        {!formDirty && <View style={styles.placeholder} />}
       </View>
 
       <KeyboardAvoidingView
@@ -300,6 +369,13 @@ const styles = StyleSheet.create({
   },
   placeholder: {
     width: 40,
+  },
+  resetButton: {
+    padding: 8,
+  },
+  resetButtonText: {
+    color: '#00cc99',
+    fontWeight: '600',
   },
   scrollView: {
     flex: 1,
