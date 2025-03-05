@@ -28,7 +28,6 @@ const FriendsDropdown = ({ selectedFriends, setSelectedFriends }) => {
 
   // Animate overlay when modal visibility changes
   useEffect(() => {
-    console.log(authToken);
     if (modalVisible) {
       Animated.timing(fadeAnim, {
         toValue: 1,

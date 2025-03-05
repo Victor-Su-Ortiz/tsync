@@ -9,93 +9,257 @@ import {
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
-  Alert
+  Alert,
+  ActivityIndicator
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import FriendsDropdown from '../../components/FriendsDropdown'
-
+import FriendsDropdown from '../../components/FriendsDropdown';
+import TeaShopSelectionModal from '../../components/SelectTeaShop';
+import DateTimePickerModal, { DateTimeRange } from '../../components/DateTimePickerModal';
+import { useAuth } from '@/src/context/AuthContext'; // Import your auth context
+import { api } from '@/src/utils/api';
 
 type Friend = {
   id: string;
   name: string;
 };
 
+type Place = {
+  place_id: string;
+  name: string;
+  vicinity: string;
+  rating?: number;
+  photos?: { photo_reference: string }[];
+};
+
 export default function AddEventScreen() {
   const params = useLocalSearchParams();
+  const { authToken } = useAuth(); // Get the auth token from context
+
   const [teaShopInfo, setTeaShopInfo] = useState('');
+  const [teaShopAddress, setTeaShopAddress] = useState('');
   const [eventName, setEventName] = useState('');
   const [description, setDescription] = useState('');
-  const [date, setDate] = useState(new Date());
-  const [time, setTime] = useState(new Date());
+
+  // Replace single date/time with array of date/time ranges
+  const [dateTimeRanges, setDateTimeRanges] = useState<DateTimeRange[]>([]);
+
   const [selectedFriends, setSelectedFriends] = useState([]);
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [teaShopModalVisible, setTeaShopModalVisible] = useState(false);
+  const [dateTimeModalVisible, setDateTimeModalVisible] = useState(false);
+
+  // Track if form is dirty (has unsaved changes)
+  const [formDirty, setFormDirty] = useState(false);
+
+  // Track loading state during API calls
+  const [isLoading, setIsLoading] = useState(false);
 
   // Check if tea shop info was passed via URL params
   useEffect(() => {
     if (params.teaShopName) {
       setTeaShopInfo(params.teaShopName as string);
+      setFormDirty(true);
     }
   }, [params.teaShopName]);
 
-  const onDateChange = (event: any, selectedDate?: Date) => {
-    const currentDate = selectedDate || date;
-    setShowDatePicker(Platform.OS === 'ios');
-    setDate(currentDate);
-  };
+  // Update formDirty state whenever any form field changes
+  useEffect(() => {
+    // We need to check if ANY of the fields have values to determine if form is dirty
+    const hasChanges =
+      teaShopInfo !== '' ||
+      teaShopAddress !== '' ||
+      eventName !== '' ||
+      description !== '' ||
+      dateTimeRanges.length > 0 ||
+      selectedFriends.length > 0;
 
-  const onTimeChange = (event: any, selectedTime?: Date) => {
-    const currentTime = selectedTime || time;
-    setShowTimePicker(Platform.OS === 'ios');
-    setTime(currentTime);
-  };
+    setFormDirty(hasChanges);
+  }, [teaShopInfo, teaShopAddress, eventName, description, dateTimeRanges, selectedFriends]);
 
   const handleSelectTeaShop = () => {
-    // Navigate to home screen with a flag indicating we're selecting a tea shop for an event
-    router.push({
-      pathname: './',
-      params: {
-        selectingTeaShop: 'true',
-      }
-    });
-  };
-  const handleBackButton = () => {
-    // Always go to events when pressing back from add-event
-    router.push('./');
+    setTeaShopModalVisible(true);
   };
 
-  const handleAddEvent = () => {
+  const handleTeaShopSelection = (teaShop: Place) => {
+    setTeaShopInfo(teaShop.name);
+    setTeaShopAddress(teaShop.vicinity);
+  };
+
+  const handleBackButton = () => {
+    if (formDirty) {
+      // Show confirmation dialog if there are unsaved changes
+      Alert.alert(
+        'Discard Changes',
+        'You have unsaved changes. Are you sure you want to go back?',
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel'
+          },
+          {
+            text: 'Discard',
+            style: 'destructive',
+            onPress: () => {
+              // Clear all form fields first
+              setTeaShopInfo('');
+              setTeaShopAddress('');
+              setEventName('');
+              setDescription('');
+              setDateTimeRanges([]);
+              setSelectedFriends([]);
+              setFormDirty(false);
+
+              // Navigate back to events screen, discarding all changes
+              router.push('./events');
+            }
+          }
+        ]
+      );
+    } else {
+      // No changes to discard, just navigate back
+      router.push('./events');
+    }
+  };
+
+  const handleAddEvent = async () => {
     // Validate form data
     if (!teaShopInfo || !eventName) {
       Alert.alert('Missing Information', 'Please fill in the tea shop info and event name');
       return;
     }
 
-    // Create the event object
+    if (dateTimeRanges.length === 0) {
+      Alert.alert('Missing Date & Time', 'Please add at least one date and time for this event');
+      return;
+    }
+
+    // Create the event object matching the server's expectations based on error messages
     const newEvent = {
-      teaShopInfo,
-      eventName,
+      title: eventName,
       description,
-      date: date.toISOString().split('T')[0],
-      time: `${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`,
+
+      // Location should be a string, not an object
+      location: teaShopInfo,
+
+      // These fields are specifically required according to the error message
+      startTime: dateTimeRanges[0].startTime.toISOString(),
+      endTime: dateTimeRanges[0].endTime.toISOString(),
+
+      // Use ISO strings for dates
+      startDate: dateTimeRanges[0].startDate.toISOString(),
+      endDate: dateTimeRanges[0].endDate.toISOString(),
+
+      // Include other fields that might be required
       attendees: selectedFriends.map((friend) => ({
-        id: (friend as Friend).id,
+        userId: (friend as Friend).id,
         name: (friend as Friend).name,
       }))
     };
 
-    // Here you would typically save the event to your state/database
-    console.log('New Event:', newEvent);
+    try {
+      setIsLoading(true);
 
-    // Show success message and navigate back to events tab
-    Alert.alert(
-      'Success!',
-      'Event has been created successfully.',
-      [{ text: 'OK', onPress: () => router.push('./events') }]
-    );
+      // Log the event data for debugging
+      console.log('Sending event data:', JSON.stringify(newEvent, null, 2));
+
+      // Call the API to create the event, with explicit auth header
+      const response = await api.post('/events', newEvent, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+
+      console.log('Event created successfully:', response.data);
+
+      // Reset form dirty state since we're saving
+      setFormDirty(false);
+
+      // Show success message and navigate back to events tab
+      Alert.alert(
+        'Success!',
+        'Event has been created successfully.',
+        [{ text: 'OK', onPress: () => router.push('./events') }]
+      );
+    } catch (error: any) {
+      console.error('Error creating event:', error);
+
+      // Show more detailed error message if possible
+      let errorMessage = 'Failed to create the event. Please try again.';
+
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        console.log('Error response:', error.response.data);
+        console.log('Error status:', error.response.status);
+
+        if (error.response.status === 401) {
+          errorMessage = 'Authentication failed. Please log in again.';
+        } else if (error.response.data && error.response.data.message) {
+          errorMessage = error.response.data.message;
+        }
+      } else if (error.request) {
+        // The request was made but no response was received
+        errorMessage = 'No response from server. Please check your internet connection.';
+      }
+
+      Alert.alert(
+        'Error',
+        errorMessage,
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Clear all form fields
+  const resetForm = () => {
+    setTeaShopInfo('');
+    setTeaShopAddress('');
+    setEventName('');
+    setDescription('');
+    setDateTimeRanges([]);
+    setSelectedFriends([]);
+    setFormDirty(false);
+  };
+
+  const formatDateTimeRangeSummary = () => {
+    if (dateTimeRanges.length === 0) {
+      return "Tap to add dates and times";
+    }
+
+    if (dateTimeRanges.length === 1) {
+      const range = dateTimeRanges[0];
+      const startDateStr = range.startDate.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric'
+      });
+      const endDateStr = range.endDate.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric'
+      });
+
+      const startTimeStr = range.startTime.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+      const endTimeStr = range.endTime.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+
+      if (range.startDate.toDateString() === range.endDate.toDateString()) {
+        return `${startDateStr}, ${startTimeStr}—${endTimeStr}`;
+      } else {
+        return `${startDateStr}—${endDateStr}, ${startTimeStr}—${endTimeStr}`;
+      }
+    }
+
+    return `${dateTimeRanges.length} date/time ranges selected`;
   };
 
   return (
@@ -107,7 +271,12 @@ export default function AddEventScreen() {
           <Ionicons name="arrow-back" size={24} color="#00cc99" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Add New Event</Text>
-        <View style={styles.placeholder} />
+        {formDirty && (
+          <TouchableOpacity onPress={resetForm} style={styles.resetButton}>
+            <Text style={styles.resetButtonText}>Reset</Text>
+          </TouchableOpacity>
+        )}
+        {!formDirty && <View style={styles.placeholder} />}
       </View>
 
       <KeyboardAvoidingView
@@ -126,6 +295,10 @@ export default function AddEventScreen() {
               </Text>
               <Ionicons name="chevron-forward" size={20} color="#aaa" />
             </TouchableOpacity>
+
+            {teaShopAddress ? (
+              <Text style={styles.addressText}>{teaShopAddress}</Text>
+            ) : null}
 
             <Text style={styles.label}>Event Name</Text>
             <TextInput
@@ -146,58 +319,89 @@ export default function AddEventScreen() {
               textAlignVertical="top"
             />
 
-            <Text style={styles.label}>Date</Text>
+            <Text style={styles.label}>Date & Time</Text>
             <TouchableOpacity
-              style={styles.dateTimeButton}
-              onPress={() => setShowDatePicker(true)}
+              style={[styles.dateTimeButton, dateTimeRanges.length > 0 && styles.dateTimeButtonActive]}
+              onPress={() => setDateTimeModalVisible(true)}
             >
-              <Text>{date.toDateString()}</Text>
-            </TouchableOpacity>
-            {showDatePicker && (
-              <DateTimePicker
-                value={date}
-                mode="date"
-                display="default"
-                onChange={onDateChange}
-              />
-            )}
-
-            <Text style={styles.label}>Time</Text>
-            <TouchableOpacity
-              style={styles.dateTimeButton}
-              onPress={() => setShowTimePicker(true)}
-            >
-              <Text>
-                {time.getHours().toString().padStart(2, '0')}:
-                {time.getMinutes().toString().padStart(2, '0')}
+              <Text
+                style={dateTimeRanges.length > 0 ? styles.dateTimeText : styles.placeholderText}
+              >
+                {formatDateTimeRangeSummary()}
               </Text>
+              <Ionicons name="calendar-outline" size={20} color="#666" />
             </TouchableOpacity>
-            {showTimePicker && (
-              <DateTimePicker
-                value={time}
-                mode="time"
-                display="default"
-                onChange={onTimeChange}
-              />
+
+            {dateTimeRanges.length > 0 && (
+              <View style={styles.rangesPreview}>
+                {dateTimeRanges.map((range, index) => (
+                  <View key={range.id} style={styles.rangePreviewItem}>
+                    <Ionicons name="time-outline" size={16} color="#00cc99" style={styles.rangeIcon} />
+                    <Text style={styles.rangePreviewText}>
+                      {range.startDate.toLocaleDateString('en-US', {
+                        weekday: 'short',
+                        month: 'short',
+                        day: 'numeric'
+                      })}
+                      {range.startDate.toDateString() !== range.endDate.toDateString() ?
+                        ` — ${range.endDate.toLocaleDateString('en-US', {
+                          weekday: 'short',
+                          month: 'short',
+                          day: 'numeric'
+                        })}` :
+                        ''}
+                      {', '}
+                      {range.startTime.toLocaleTimeString('en-US', {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true
+                      })} — {range.endTime.toLocaleTimeString('en-US', {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true
+                      })}
+                    </Text>
+                  </View>
+                ))}
+              </View>
             )}
 
             <Text style={styles.label}>Invite Friends</Text>
-            {/* Replace TextInput with our new FriendsDropdown component */}
             <FriendsDropdown
               selectedFriends={selectedFriends}
               setSelectedFriends={setSelectedFriends}
             />
 
-
             <TouchableOpacity
               style={styles.addButton}
               onPress={handleAddEvent}
+              disabled={isLoading}
             >
-              <Text style={styles.addButtonText}>Create Event</Text>
+              {isLoading ? (
+                <ActivityIndicator color="white" size="small" />
+              ) : (
+                <Text style={styles.addButtonText}>Create Event</Text>
+              )}
             </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Tea Shop Selection Modal */}
+      <TeaShopSelectionModal
+        isVisible={teaShopModalVisible}
+        onClose={() => setTeaShopModalVisible(false)}
+        onSelectTeaShop={handleTeaShopSelection}
+      />
+
+      {/* Date & Time Range Modal */}
+      <DateTimePickerModal
+        isVisible={dateTimeModalVisible}
+        onClose={() => setDateTimeModalVisible(false)}
+        onConfirm={(selectedRanges) => setDateTimeRanges(selectedRanges)}
+        existingRanges={dateTimeRanges}
+        title="Select Dates"
+      />
     </SafeAreaView>
   );
 }
@@ -225,6 +429,13 @@ const styles = StyleSheet.create({
   },
   placeholder: {
     width: 40,
+  },
+  resetButton: {
+    padding: 8,
+  },
+  resetButtonText: {
+    color: '#00cc99',
+    fontWeight: '600',
   },
   scrollView: {
     flex: 1,
@@ -264,13 +475,43 @@ const styles = StyleSheet.create({
     color: '#aaa',
     fontSize: 16,
   },
+  addressText: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 4,
+    marginLeft: 2,
+  },
   dateTimeButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 8,
     padding: 12,
-    fontSize: 16,
     backgroundColor: '#fafafa',
+  },
+  dateTimeButtonActive: {
+    borderColor: '#00cc99',
+  },
+  dateTimeText: {
+    fontSize: 16,
+    color: '#000',
+  },
+  rangesPreview: {
+    marginTop: 8,
+  },
+  rangePreviewItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  rangeIcon: {
+    marginRight: 6,
+  },
+  rangePreviewText: {
+    fontSize: 14,
+    color: '#555',
   },
   addButton: {
     backgroundColor: '#00cc99',

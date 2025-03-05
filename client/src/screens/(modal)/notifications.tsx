@@ -35,7 +35,7 @@ const SAMPLE_NOTIFICATIONS = [
 export default function Notifications() {
   const [notifications, setNotifications] = useState(SAMPLE_NOTIFICATIONS);
 
-  const markAsRead = (id) => {
+  const markAsRead = (id: any) => {
     setNotifications(
       notifications.map(notif =>
         notif.id === id ? { ...notif, read: true } : notif
@@ -43,7 +43,7 @@ export default function Notifications() {
     );
   };
 
-  const getIconForType = (type) => {
+  const getIconForType = (type: any) => {
     switch (type) {
       case 'promotion':
         return <Ionicons name="pricetag" size={24} color="#00cc99" />;

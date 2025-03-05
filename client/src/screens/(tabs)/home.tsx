@@ -88,8 +88,6 @@ export default function Home() {
     }
     const location = await Location.getCurrentPositionAsync({});
 
-    console.log(authToken);
-
     // console.log(location.coords.latitude, location.coords.longitude);
     setLocation(location.coords);
     return location.coords;
