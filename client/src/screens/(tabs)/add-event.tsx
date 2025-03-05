@@ -15,17 +15,26 @@ import { StatusBar } from 'expo-status-bar';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import FriendsDropdown from '../../components/FriendsDropdown'
-
+import FriendsDropdown from '../../components/FriendsDropdown';
+import TeaShopSelectionModal from '../../components/SelectTeaShop';
 
 type Friend = {
   id: string;
   name: string;
 };
 
+type Place = {
+  place_id: string;
+  name: string;
+  vicinity: string;
+  rating?: number;
+  photos?: { photo_reference: string }[];
+};
+
 export default function AddEventScreen() {
   const params = useLocalSearchParams();
   const [teaShopInfo, setTeaShopInfo] = useState('');
+  const [teaShopAddress, setTeaShopAddress] = useState('');
   const [eventName, setEventName] = useState('');
   const [description, setDescription] = useState('');
   const [date, setDate] = useState(new Date());
@@ -33,6 +42,7 @@ export default function AddEventScreen() {
   const [selectedFriends, setSelectedFriends] = useState([]);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [teaShopModalVisible, setTeaShopModalVisible] = useState(false);
 
   // Check if tea shop info was passed via URL params
   useEffect(() => {
@@ -54,17 +64,18 @@ export default function AddEventScreen() {
   };
 
   const handleSelectTeaShop = () => {
-    // Navigate to home screen with a flag indicating we're selecting a tea shop for an event
-    router.push({
-      pathname: './',
-      params: {
-        selectingTeaShop: 'true',
-      }
-    });
+    // Show the tea shop selection modal instead of navigating to another screen
+    setTeaShopModalVisible(true);
   };
+
+  const handleTeaShopSelection = (teaShop: Place) => {
+    setTeaShopInfo(teaShop.name);
+    setTeaShopAddress(teaShop.vicinity);
+  };
+
   const handleBackButton = () => {
     // Always go to events when pressing back from add-event
-    router.push('./');
+    router.push('./events');
   };
 
   const handleAddEvent = () => {
@@ -77,6 +88,7 @@ export default function AddEventScreen() {
     // Create the event object
     const newEvent = {
       teaShopInfo,
+      teaShopAddress,
       eventName,
       description,
       date: date.toISOString().split('T')[0],
@@ -126,6 +138,10 @@ export default function AddEventScreen() {
               </Text>
               <Ionicons name="chevron-forward" size={20} color="#aaa" />
             </TouchableOpacity>
+
+            {teaShopAddress ? (
+              <Text style={styles.addressText}>{teaShopAddress}</Text>
+            ) : null}
 
             <Text style={styles.label}>Event Name</Text>
             <TextInput
@@ -182,12 +198,10 @@ export default function AddEventScreen() {
             )}
 
             <Text style={styles.label}>Invite Friends</Text>
-            {/* Replace TextInput with our new FriendsDropdown component */}
             <FriendsDropdown
               selectedFriends={selectedFriends}
               setSelectedFriends={setSelectedFriends}
             />
-
 
             <TouchableOpacity
               style={styles.addButton}
@@ -198,6 +212,13 @@ export default function AddEventScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Tea Shop Selection Modal */}
+      <TeaShopSelectionModal
+        isVisible={teaShopModalVisible}
+        onClose={() => setTeaShopModalVisible(false)}
+        onSelectTeaShop={handleTeaShopSelection}
+      />
     </SafeAreaView>
   );
 }
@@ -263,6 +284,12 @@ const styles = StyleSheet.create({
   placeholderText: {
     color: '#aaa',
     fontSize: 16,
+  },
+  addressText: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 4,
+    marginLeft: 2,
   },
   dateTimeButton: {
     borderWidth: 1,
