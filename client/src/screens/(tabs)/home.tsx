@@ -30,47 +30,8 @@ export default function Home() {
   const [notificationCount, setNotificationCount] = useState(0); // Sample notification count
   const { authToken } = useAuth();
 
-  // useEffect(() => {
-  //   const checkNavigationMode = async () => {
-  //     if (params.selectingTeaShop === 'true') {
-  //       setSelectionMode('tea-shop-selection');
-  //       // Store that we're in selection mode
-  //       await AsyncStorage.setItem('navigationMode', 'tea-shop-selection');
-  //     } else {
-  //       // Check if we have a stored mode
-  //       const storedMode = await AsyncStorage.getItem('navigationMode');
-  //       if (storedMode === 'tea-shop-selection') {
-  //         setSelectionMode('tea-shop-selection');
-  //       } else {
-  //         setSelectionMode('normal');
-  //         // Clear any stored selection mode
-  //         await AsyncStorage.removeItem('navigationMode');
-  //       }
-  //     }
-  //   };
-
-  //   checkNavigationMode();
-  // }, [params.selectingTeaShop]);
-
-
   const handleTeaShopPress = async (teaShop: Place) => {
     return;
-    // if (selectionMode === 'tea-shop-selection') {
-    //   // If we're in selection mode, navigate back to add-event with the selected shop
-    //   // Clear the selection mode for next time
-    //   await AsyncStorage.removeItem('navigationMode');
-
-    //   router.push({
-    //     pathname: './add-event',
-    //     params: {
-    //       teaShopName: teaShop.name,
-    //     }
-    //   });
-    // } else {
-    //   // Normal tea shop interaction (e.g., view details)
-    //   console.log("Implement normal tea shop interaction.");
-    //   // Implement your normal tea shop interaction here
-    // }
   };
 
   const handleNotificationPress = () => {
@@ -88,6 +49,7 @@ export default function Home() {
     }
     const location = await Location.getCurrentPositionAsync({});
 
+    console.log("jwt token", authToken);
     // console.log(location.coords.latitude, location.coords.longitude);
     setLocation(location.coords);
     return location.coords;

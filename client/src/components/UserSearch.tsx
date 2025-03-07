@@ -46,6 +46,9 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
   const [profileVisible, setProfileVisible] = useState(false);
   const inputRef = useRef<TextInput>(null);
 
+  // Keep track of friend statuses
+  const [friendStatuses, setFriendStatuses] = useState<Record<string, 'none' | 'pending' | 'friends'>>({});
+
   // Create a debounced search function to prevent too many searches as user types
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedSearch = useCallback(
@@ -119,14 +122,18 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
         }
       );
 
-
-
       console.log("✅ API Response:", response.data);
 
       const searchedUsers = response.data.users || [];
       console.log("👥 Users found:", searchedUsers.length);
 
-      setUsers(searchedUsers);
+      // Apply any known friend statuses to the search results
+      const updatedUsers = searchedUsers.map((user: User) => ({
+        ...user,
+        friendStatus: friendStatuses[user.id] || user.friendStatus || 'none'
+      }));
+
+      setUsers(updatedUsers);
     } catch (error: any) {
       console.error("❌ Error searching for users:", error);
       console.error("⚠️ API Error Response:", error.response?.status, error.response?.data);
@@ -136,12 +143,43 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
     }
   };
 
+  // Handle friend status changes from the UserProfile component
+  const handleFriendStatusChange = (userId: string, newStatus: 'none' | 'pending' | 'friends') => {
+    // Update our local state to remember this status
+    setFriendStatuses(prev => ({
+      ...prev,
+      [userId]: newStatus
+    }));
 
+    // Also update the search results list if this user is in it
+    setUsers(prev =>
+      prev.map(user =>
+        user.id === userId
+          ? { ...user, friendStatus: newStatus }
+          : user
+      )
+    );
+
+    // Update the selected user if it's the one we're viewing
+    if (selectedUser && selectedUser.id === userId) {
+      setSelectedUser({
+        ...selectedUser,
+        friendStatus: newStatus
+      });
+    }
+  };
 
   const handleUserPress = (user: User) => {
     console.log('User pressed:', user.name); // Debug log
+
+    // Apply any known friend status before opening the profile
+    const updatedUser = {
+      ...user,
+      friendStatus: friendStatuses[user.id] || user.friendStatus || 'none'
+    };
+
     // Set the selected user and show their profile
-    setSelectedUser(user);
+    setSelectedUser(updatedUser);
     // Add a slight delay to ensure the state updates before showing the profile
     setTimeout(() => {
       setProfileVisible(true);
@@ -259,6 +297,7 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
               visible={profileVisible}
               onClose={handleProfileClose}
               user={selectedUser}
+              onFriendStatusChange={handleFriendStatusChange}
             />
           )}
         </View>

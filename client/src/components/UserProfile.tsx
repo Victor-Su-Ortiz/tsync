@@ -13,6 +13,9 @@ import {
   ActivityIndicator
 } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
+import { api } from '../utils/api';
+import { useAuth } from '../context/AuthContext';
+import { AxiosError } from 'axios';
 
 type User = {
   id: string;
@@ -26,21 +29,32 @@ type UserProfileProps = {
   visible: boolean;
   onClose: () => void;
   user: User | null;
+  onFriendStatusChange?: (userId: string, newStatus: 'none' | 'pending' | 'friends') => void;
 };
 
-const UserProfile = ({ visible, onClose, user }: UserProfileProps) => {
+const UserProfile = ({ visible, onClose, user, onFriendStatusChange }: UserProfileProps) => {
   const [friendRequestStatus, setFriendRequestStatus] = useState<'none' | 'pending' | 'friends'>(
     user?.friendStatus || 'none'
   );
   const [isLoading, setIsLoading] = useState(false);
 
+  const { authToken } = useAuth();
+
   // Update friend status when user changes
   useEffect(() => {
     if (user) {
-      console.log('User profile loaded:', user.name); // Debug log
+      console.log('User profile loaded:', user.name, 'with status:', user.friendStatus); // Debug log
       setFriendRequestStatus(user.friendStatus || 'none');
     }
   }, [user]);
+
+  // This function updates both the local state and calls the parent callback
+  const updateFriendStatus = (userId: string, newStatus: 'none' | 'pending' | 'friends') => {
+    setFriendRequestStatus(newStatus);
+    if (onFriendStatusChange) {
+      onFriendStatusChange(userId, newStatus);
+    }
+  };
 
   const handleSendFriendRequest = async () => {
     if (!user) return;
@@ -48,20 +62,20 @@ const UserProfile = ({ visible, onClose, user }: UserProfileProps) => {
     setIsLoading(true);
 
     try {
-      // Here you would make an API call to your backend to send a friend request
-      // For example:
-      // await axios.post('https://your-api.com/friend-requests', { userId: user.id });
-
-      // Simulating API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Make API call to send a friend request
+      const response = await api.post(`/friends/requests/${user.id}`, {}, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
 
       // Update the friend status to pending
-      setFriendRequestStatus('pending');
+      updateFriendStatus(user.id, 'pending');
 
       // Show success message
       Alert.alert("Friend Request Sent", `Your friend request to ${user.name} has been sent.`);
-    } catch (error) {
-      console.error("Error sending friend request:", error);
+    } catch (error: any) {
+      console.error("Error sending friend request:", error.response?.data || error);
       Alert.alert("Error", "Failed to send friend request. Please try again.");
     } finally {
       setIsLoading(false);
@@ -74,15 +88,15 @@ const UserProfile = ({ visible, onClose, user }: UserProfileProps) => {
     setIsLoading(true);
 
     try {
-      // Here you would make an API call to your backend to cancel the friend request
-      // For example:
-      // await axios.delete(`https://your-api.com/friend-requests/${user.id}`);
-
-      // Simulating API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Cancel the friend request
+      await api.delete(`/friends/requests/${user.id}`, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
 
       // Update the friend status to none
-      setFriendRequestStatus('none');
+      updateFriendStatus(user.id, 'none');
 
       // Show success message
       Alert.alert("Request Cancelled", `Your friend request to ${user.name} has been cancelled.`);
