@@ -23,28 +23,9 @@ type Notification = {
   };
 };
 
-// Sample notification data
-const SAMPLE_NOTIFICATIONS: Notification[] = [
-  {
-    id: '1',
-    title: 'New Tea Shop Opening!',
-    message: 'Green Leaf Tea has just opened near you. Check it out!',
-    timestamp: '2 hours ago',
-    read: false,
-    type: 'promotion'
-  },
-  {
-    id: '3',
-    title: 'Weekly Special Deal',
-    message: 'Buy one get one free at Zen Tea Room this weekend!',
-    timestamp: '1 day ago',
-    read: true,
-    type: 'promotion'
-  }
-];
 
 export default function Notifications() {
-  const [notifications, setNotifications] = useState<Notification[]>(SAMPLE_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
   const { authToken } = useAuth(); // Get auth token from context
 
@@ -99,7 +80,7 @@ export default function Notifications() {
       }).filter(Boolean); // Remove any null items
 
       // Combine with existing notifications
-      setNotifications([...friendRequestNotifications, ...SAMPLE_NOTIFICATIONS]);
+      setNotifications([...friendRequestNotifications]);
     } catch (error) {
       console.error('Error fetching friend requests:', error);
       // Continue with just sample notifications
@@ -248,13 +229,11 @@ export default function Notifications() {
           <Ionicons name="close" size={24} color="#00cc99" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Notifications</Text>
-        <TouchableOpacity
-          style={styles.clearAllButton}
-          onPress={() => setNotifications(notifications.map(n => ({ ...n, read: true })))}
-        >
-          <Text style={styles.clearAllText}>Mark all read</Text>
+        <TouchableOpacity style={styles.clearAllButton}>
+          <Text style={styles.clearAllText}>Clear</Text>
         </TouchableOpacity>
       </View>
+
 
       {loading ? (
         <View style={styles.loadingContainer}>
@@ -308,13 +287,17 @@ const styles = StyleSheet.create({
   },
   backButton: {
     padding: 5,
+    width: 60, // Give it a fixed width
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
+    flex: 1,
+    textAlign: 'center', // Center the text
   },
   clearAllButton: {
     padding: 5,
+    width: 60, // Give it a fixed width to balance with back button
   },
   clearAllText: {
     color: '#00cc99',
