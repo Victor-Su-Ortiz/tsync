@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useAuth } from '@/src/context/AuthContext';
 import { api } from '@/src/utils/api';
-
+import UserProfile from '@/src/components/UserProfile'; // Import UserProfile component
 
 // Define notification types
 type NotificationType = 'promotion' | 'social' | 'friend_request';
@@ -20,14 +20,28 @@ type Notification = {
   userData?: {
     id: string;
     name: string;
+    profilePicture?: string | null;
   };
 };
 
+// Define User type to match the UserProfile component
+type User = {
+  id: string;
+  name: string;
+  profilePicture?: string;
+  bio?: string;
+  friendStatus?: 'none' | 'pending' | 'friends' | 'incoming_request';
+};
 
 export default function Notifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
   const { authToken } = useAuth(); // Get auth token from context
+
+  // State for User Profile modal
+  const [userProfileVisible, setUserProfileVisible] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedRequestId, setSelectedRequestId] = useState<string | undefined>(undefined);
 
   // Fetch friend requests when component mounts
   useEffect(() => {
@@ -74,8 +88,10 @@ export default function Notifications() {
           type: 'friend_request' as NotificationType,
           userData: {
             id: request.from._id || request.from.id,
-            name: request.from.name || 'User'
-          }
+            name: request.from.name || 'User',
+            profilePicture: request.from.profilePicture,
+          },
+          requestId: request._id // Save the original request ID
         };
       }).filter(Boolean); // Remove any null items
 
@@ -122,39 +138,52 @@ export default function Notifications() {
     );
   };
 
+  // Show user profile from notification
+  const showUserProfile = async (notification: Notification) => {
+    if (!notification.userData) return;
+
+    try {
+      // Mark notification as read
+      markAsRead(notification.id);
+
+      // Extract the request ID (remove the 'fr_' prefix)
+      const requestId = notification.id.replace('fr_', '');
+
+      // Set up the user object for the profile
+      const user: User = {
+        id: notification.userData.id,
+        name: notification.userData.name,
+        profilePicture: notification.userData.profilePicture || "",
+        friendStatus: 'incoming_request' // This user sent a request to us
+      };
+
+      // Set selected user and open modal
+      setSelectedUser(user);
+      setSelectedRequestId(requestId);
+      setUserProfileVisible(true);
+    } catch (error) {
+      console.error('Error setting up user profile:', error);
+      Alert.alert('Error', 'Failed to open user profile. Please try again.');
+    }
+  };
+
   const handleNotificationPress = async (notification: Notification) => {
     // Mark the notification as read
     markAsRead(notification.id);
 
-    // If it's a friend request, handle differently
+    // If it's a friend request, directly show the user profile
     if (notification.type === 'friend_request' && notification.userData) {
-      // You could navigate to user profile or show an action sheet
-      Alert.alert(
-        'Friend Request',
-        `${notification.userData.name} wants to be your friend`,
-        [
-          {
-            text: 'View Profile',
-            onPress: () => {
-              // Navigate to user profile
-              // You'll need to implement this navigation
-              console.log('Navigate to profile for user:', notification.userData?.id);
-            }
-          },
-          {
-            text: 'Accept',
-            onPress: () => acceptFriendRequest(notification)
-          },
-          {
-            text: 'Decline',
-            style: 'destructive',
-            onPress: () => declineFriendRequest(notification)
-          },
-          {
-            text: 'Cancel',
-            style: 'cancel'
-          }
-        ]
+      showUserProfile(notification);
+    }
+  };
+
+  const handleFriendStatusChange = (userId: string, newStatus: 'none' | 'pending' | 'friends') => {
+    // If status changed to friends, remove the corresponding notification
+    if (newStatus === 'friends') {
+      setNotifications(prevNotifications =>
+        prevNotifications.filter(notif =>
+          !(notif.type === 'friend_request' && notif.userData?.id === userId)
+        )
       );
     }
   };
@@ -228,12 +257,11 @@ export default function Notifications() {
         <TouchableOpacity onPress={() => router.dismiss()} style={styles.backButton}>
           <Ionicons name="close" size={24} color="#00cc99" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Notifications</Text>
-        <TouchableOpacity style={styles.clearAllButton}>
-          <Text style={styles.clearAllText}>Clear</Text>
-        </TouchableOpacity>
+        <View style={styles.headerTitleContainer}>
+          <Text style={styles.headerTitle}>Notifications</Text>
+        </View>
+        <View style={styles.emptySpace} />
       </View>
-
 
       {loading ? (
         <View style={styles.loadingContainer}>
@@ -268,6 +296,19 @@ export default function Notifications() {
           }
         />
       )}
+
+      {/* User Profile Modal */}
+      <UserProfile
+        visible={userProfileVisible}
+        onClose={() => {
+          setUserProfileVisible(false);
+          setSelectedUser(null);
+        }}
+        user={selectedUser}
+        onFriendStatusChange={handleFriendStatusChange}
+        fromNotification={true}
+        requestId={selectedRequestId}
+      />
     </SafeAreaView>
   );
 }
@@ -280,28 +321,24 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
   },
   backButton: {
     padding: 5,
-    width: 60, // Give it a fixed width
+    width: 30, // Give it a fixed width
+  },
+  headerTitleContainer: {
+    flex: 1,
+    alignItems: 'center', // Center the title within this container
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    flex: 1,
-    textAlign: 'center', // Center the text
   },
-  clearAllButton: {
-    padding: 5,
-    width: 60, // Give it a fixed width to balance with back button
-  },
-  clearAllText: {
-    color: '#00cc99',
-    fontWeight: '500',
+  emptySpace: {
+    width: 30, // Match the width of backButton for balance
   },
   loadingContainer: {
     flex: 1,

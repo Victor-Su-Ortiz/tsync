@@ -20,9 +20,9 @@ import { AxiosError } from 'axios';
 type User = {
   id: string;
   name: string;
-  profileImage?: string;
+  profilePicture?: string;
   bio?: string;
-  friendStatus?: 'none' | 'pending' | 'friends';
+  friendStatus?: 'none' | 'pending' | 'friends' | 'incoming_request';
 };
 
 type UserProfileProps = {
@@ -30,10 +30,19 @@ type UserProfileProps = {
   onClose: () => void;
   user: User | null;
   onFriendStatusChange?: (userId: string, newStatus: 'none' | 'pending' | 'friends') => void;
+  fromNotification?: boolean;
+  requestId?: string;
 };
 
-const UserProfile = ({ visible, onClose, user, onFriendStatusChange }: UserProfileProps) => {
-  const [friendRequestStatus, setFriendRequestStatus] = useState<'none' | 'pending' | 'friends'>(
+const UserProfile = ({
+  visible,
+  onClose,
+  user,
+  onFriendStatusChange,
+  fromNotification = false,
+  requestId
+}: UserProfileProps) => {
+  const [friendRequestStatus, setFriendRequestStatus] = useState<'none' | 'pending' | 'friends' | 'incoming_request'>(
     user?.friendStatus || 'none'
   );
   const [isLoading, setIsLoading] = useState(false);
@@ -108,6 +117,64 @@ const UserProfile = ({ visible, onClose, user, onFriendStatusChange }: UserProfi
     }
   };
 
+  const handleAcceptFriendRequest = async () => {
+    if (!user || !requestId) return;
+
+    setIsLoading(true);
+
+    try {
+      // Call API to accept the friend request
+      await api.post(`/friends/requests/${requestId}/accept`, {}, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+
+      // Update the friend status to friends
+      updateFriendStatus(user.id, 'friends');
+
+      // Show success message
+      Alert.alert("Friend Request Accepted", `You are now friends with ${user.name}.`);
+
+      // Close the profile after accepting
+      setTimeout(() => onClose(), 1500);
+    } catch (error) {
+      console.error("Error accepting friend request:", error);
+      Alert.alert("Error", "Failed to accept friend request. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeclineFriendRequest = async () => {
+    if (!user || !requestId) return;
+
+    setIsLoading(true);
+
+    try {
+      // Call API to decline the friend request
+      await api.post(`/friends/requests/${requestId}/reject`, {}, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+
+      // Update the friend status to none
+      updateFriendStatus(user.id, 'none');
+
+      // Show success message
+      Alert.alert("Friend Request Declined", `Friend request from ${user.name} has been declined.`);
+
+      // Close the profile after declining
+      setTimeout(() => onClose(), 1500);
+    } catch (error) {
+      console.error("Error declining friend request:", error);
+      Alert.alert("Error", "Failed to decline friend request. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (!user) return null;
 
   return (
@@ -136,7 +203,7 @@ const UserProfile = ({ visible, onClose, user, onFriendStatusChange }: UserProfi
             {/* Profile Header */}
             <View style={styles.profileHeader}>
               <Image
-                source={{ uri: user.profileImage || "https://via.placeholder.com/150" }}
+                source={{ uri: user.profilePicture || "https://via.placeholder.com/150" }}
                 style={styles.profileImage}
               />
               <Text style={styles.userName}>{user.name}</Text>
@@ -144,7 +211,39 @@ const UserProfile = ({ visible, onClose, user, onFriendStatusChange }: UserProfi
 
             {/* Friend Request Button */}
             <View style={styles.actionButtonContainer}>
-              {friendRequestStatus === 'none' ? (
+              {fromNotification || friendRequestStatus === 'incoming_request' ? (
+                <View style={styles.requestButtonsContainer}>
+                  <TouchableOpacity
+                    style={styles.acceptButton}
+                    onPress={handleAcceptFriendRequest}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                      <>
+                        <Ionicons name="checkmark" size={20} color="#fff" />
+                        <Text style={styles.buttonText}>Accept</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.declineButton}
+                    onPress={handleDeclineFriendRequest}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                      <>
+                        <Ionicons name="close" size={20} color="#fff" />
+                        <Text style={styles.buttonText}>Decline</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              ) : friendRequestStatus === 'none' ? (
                 <TouchableOpacity
                   style={styles.friendRequestButton}
                   onPress={handleSendFriendRequest}
@@ -299,6 +398,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     marginBottom: 24,
   },
+  requestButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
   friendRequestButton: {
     backgroundColor: '#00cc99',
     flexDirection: 'row',
@@ -306,6 +409,26 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 12,
     borderRadius: 25,
+  },
+  acceptButton: {
+    backgroundColor: '#00cc99',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    borderRadius: 25,
+    flex: 1,
+    marginRight: 8,
+  },
+  declineButton: {
+    backgroundColor: '#ff3b30',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    borderRadius: 25,
+    flex: 1,
+    marginLeft: 8,
   },
   pendingButton: {
     backgroundColor: '#f5a623',

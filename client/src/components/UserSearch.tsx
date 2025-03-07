@@ -22,7 +22,7 @@ import { api } from '../utils/api'; // Import your API utility
 type User = {
   id: string;
   name: string;
-  profileImage?: string;
+  profilePicture?: string;
   bio?: string;
   favoriteTea?: string;
   joinedDate?: string;
@@ -252,7 +252,7 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
                     onPress={() => handleUserPress(item)}
                   >
                     <Image
-                      source={{ uri: item.profileImage || "https://via.placeholder.com/150" }}
+                      source={{ uri: item.profilePicture || "https://via.placeholder.com/150" }}
                       style={styles.userAvatar}
                     />
                     <View style={styles.userInfo}>
