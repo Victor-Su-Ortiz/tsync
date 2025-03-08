@@ -1,526 +1,417 @@
-import { Request, Response, NextFunction } from "express";
-import { AuthController } from "../../src/controllers/auth.controller";
-import * as AuthServiceModule from "../../src/services/auth.service";
-import { AuthRequest } from "../../src/middleware/auth.middleware";
-import mongoose from "mongoose";
-import {jest, describe, it, expect, beforeEach} from '@jest/globals';
-// import { AuthenticationError, ValidationError, NotFoundError } from "../../src/utils/errors"
+// src/tests/controllers/auth.controller.test.ts
+import { Request, Response, CookieOptions } from 'express';
+import { AuthController } from '../../src/controllers/auth.controller';
+import { AuthService } from '../../src/services/auth.service';
+import User from '../../src/models/user.model';
+import { AuthenticationError, ValidationError } from '../../src/utils/errors';
+// src/tests/helpers/express-mocks.ts
+import {jest, describe, it, expect, beforeEach, afterEach} from '@jest/globals';
 
-// This approach ensures we're mocking the same module that the controller imports
-jest.mock("../../src/services/auth.service");
+// src/tests/helpers/express-mocks.ts
+// import { Request, Response, CookieOptions } from 'express';
 
-describe("AuthController", () => {
-  let mockRequest: Partial<Request>;
-  let mockResponse: Partial<Response>;
-  let mockAuthRequest: Partial<AuthRequest>;
-  let mockNext: NextFunction;
-  let mockUserId: string;
-  
-  // Get a reference to the mocked AuthService
-  const AuthService = AuthServiceModule.AuthService;
+// Mock dependencies
+jest.mock('../../src/services/auth.service');
+jest.mock('../../src/models/user.model');
+
+describe('AuthController', () => {
+  let req: Partial<Request>;
+  let res: Partial<Response>;
+  let next: jest.Mock;
 
   beforeEach(() => {
-    // Reset all mocks
+    // Reset mocks
     jest.clearAllMocks();
-
-    // Create a valid MongoDB ObjectId for testing
-    mockUserId = new mongoose.Types.ObjectId().toString();
     
-    // Setup mock request, response and next function
-    mockRequest = {
-      body: {},
-      params: {}
-    };
-    
-    mockResponse = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn()
-    };
-    
-    mockAuthRequest = {
-      ...mockRequest,
-      user: {
-        _id: mockUserId,
-        email: "test@example.com",
-        name: "Test User",
-        role: "user",
-        isEmailVerified: true,
-        getPublicProfile: jest.fn().mockReturnValue({
-          _id: mockUserId,
-          name: "Test User",
-          email: "test@example.com",
-          role: "user",
-          isEmailVerified: true
-        })
-      }
-    };
-    
-    mockNext = jest.fn();
+    // Setup request, response, and next function
+    req = mockRequest();
+    res = mockResponse();
+    next = jest.fn();
   });
 
-  describe("register", () => {
-    it("should register a new user successfully", async () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  describe('register', () => {
+    it('should successfully register a user', async () => {
       // Arrange
-      const registerData = {
-        name: "New User",
-        email: "newuser@example.com",
-        password: "Password123!"
+      const userData = {
+        name: 'Test User',
+        email: 'test@example.com',
+        password: 'Password123!'
       };
-      mockRequest.body = registerData;
       
-      const mockResult = {
-        user: {
-          _id: mockUserId,
-          name: "New User",
-          email: "newuser@example.com",
-          role: "user",
-          isEmailVerified: false
+      const serviceResponse = {
+        user: { 
+          _id: 'user_id',
+          name: 'Test User',
+          email: 'test@example.com'
         },
-        token: "jwt-token-for-new-user"
+        token: 'jwt_token'
       };
       
-      // Setup the mock to return our result
-      jest.spyOn(AuthService, 'register').mockResolvedValueOnce(mockResult);
-
+      req.body = userData;
+      
+      // Mock service call
+      jest.spyOn(AuthService, 'register').mockResolvedValue(serviceResponse);
+      
       // Act
-      await AuthController.register(
-        mockRequest as Request,
-        mockResponse as Response,
-        mockNext
-      );
-
+      await AuthController.register(req as Request, res as Response, next);
+      
       // Assert
-      expect(AuthService.register).toHaveBeenCalledWith(registerData);
-      expect(mockResponse.status).toHaveBeenCalledWith(201);
-      expect(mockResponse.json).toHaveBeenCalledWith(mockResult);
+      expect(AuthService.register).toHaveBeenCalledWith(userData);
+      expect(res.status).toHaveBeenCalledWith(201);
+      expect(res.json).toHaveBeenCalledWith(serviceResponse);
+      expect(next).not.toHaveBeenCalled();
     });
 
-//     it("should handle email already registered error", async () => {
-//       // Arrange
-//       const registerData = {
-//         name: "Existing User",
-//         email: "existing@example.com",
-//         password: "Password123!"
-//       };
-//       mockRequest.body = registerData;
+    it('should pass errors to next middleware', async () => {
+      // Arrange
+      const error = new ValidationError('Email already registered');
+      jest.spyOn(AuthService, 'register').mockRejectedValue(error);
       
-//       const error = new ValidationError("Email already registered");
-//       jest.spyOn(AuthService, 'register').mockRejectedValueOnce(error);
-
-//       // Act
-//       await AuthController.register(
-//         mockRequest as Request,
-//         mockResponse as Response,
-//         mockNext
-//       );
-
-//       // Assert
-//       expect(AuthService.register).toHaveBeenCalledWith(registerData);
-//       expect(mockNext).toHaveBeenCalledWith(error);
-//     });
-//   });
-
-//   describe("login", () => {
-//     it("should login a user successfully", async () => {
-//       // Arrange
-//       const loginData = {
-//         email: "user@example.com",
-//         password: "Password123!"
-//       };
-//       mockRequest.body = loginData;
+      // Act
+      await AuthController.register(req as Request, res as Response, next);
       
-//       const mockResult = {
-//         user: {
-//           _id: mockUserId,
-//           name: "Test User",
-//           email: "user@example.com",
-//           role: "user",
-//           isEmailVerified: true
-//         },
-//         token: "jwt-token-for-login"
-//       };
+      // Assert
+      expect(next).toHaveBeenCalledWith(error);
+      expect(res.status).not.toHaveBeenCalled();
+      expect(res.json).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('login', () => {
+    it('should successfully login a user', async () => {
+      // Arrange
+      const loginData = {
+        email: 'test@example.com',
+        password: 'Password123!'
+      };
       
-//       jest.spyOn(AuthService, 'login').mockResolvedValueOnce(mockResult);
-
-//       // Act
-//       await AuthController.login(
-//         mockRequest as Request,
-//         mockResponse as Response,
-//         mockNext
-//       );
-
-//       // Assert
-//       expect(AuthService.login).toHaveBeenCalledWith(loginData);
-//       expect(mockResponse.status).toHaveBeenCalledWith(200);
-//       expect(mockResponse.json).toHaveBeenCalledWith(mockResult);
-//     });
-
-//     it("should handle invalid credentials error", async () => {
-//       // Arrange
-//       const loginData = {
-//         email: "user@example.com",
-//         password: "WrongPassword"
-//       };
-//       mockRequest.body = loginData;
+      const serviceResponse = {
+        user: { 
+          _id: 'user_id',
+          name: 'Test User',
+          email: 'test@example.com'
+        },
+        token: 'jwt_token'
+      };
       
-//       const error = new AuthenticationError("Invalid credentials");
-//       jest.spyOn(AuthService, 'login').mockRejectedValueOnce(error);
-
-//       // Act
-//       await AuthController.login(
-//         mockRequest as Request,
-//         mockResponse as Response,
-//         mockNext
-//       );
-
-//       // Assert
-//       expect(AuthService.login).toHaveBeenCalledWith(loginData);
-//       expect(mockNext).toHaveBeenCalledWith(error);
-//     });
-//   });
-
-//   describe("googleAuth", () => {
-//     it("should authenticate with Google successfully", async () => {
-//       // Arrange
-//       const googleToken = "valid-google-id-token";
-//       mockRequest.body = { token: googleToken };
+      req.body = loginData;
       
-//       const mockResult = {
-//         user: {
-//           _id: mockUserId,
-//           name: "Google User",
-//           email: "google@example.com",
-//           role: "user",
-//           isEmailVerified: true,
-//           googleId: "google-sub-12345"
-//         },
-//         token: "jwt-token-for-google-auth"
-//       };
+      // Mock service call
+      jest.spyOn(AuthService, 'login').mockResolvedValue(serviceResponse);
       
-//       jest.spyOn(AuthService, 'googleAuth').mockResolvedValueOnce(mockResult);
-
-//       // Act
-//       await AuthController.googleAuth(
-//         mockRequest as Request,
-//         mockResponse as Response,
-//         mockNext
-//       );
-
-//       // Assert
-//       expect(AuthService.googleAuth).toHaveBeenCalledWith(googleToken);
-//       expect(mockResponse.status).toHaveBeenCalledWith(200);
-//       expect(mockResponse.json).toHaveBeenCalledWith(mockResult);
-//     });
-
-//     it("should return 400 if Google token is missing", async () => {
-//       // Arrange
-//       mockRequest.body = {}; // No token provided
-
-//       // Act
-//       await AuthController.googleAuth(
-//         mockRequest as Request,
-//         mockResponse as Response,
-//         mockNext
-//       );
-
-//       // Assert
-//       expect(AuthService.googleAuth).not.toHaveBeenCalled();
-//       expect(mockResponse.status).toHaveBeenCalledWith(400);
-//       expect(mockResponse.json).toHaveBeenCalledWith({ message: "Missing ID Token" });
-//     });
-
-//     it("should handle Google authentication error", async () => {
-//       // Arrange
-//       const googleToken = "invalid-google-token";
-//       mockRequest.body = { token: googleToken };
+      // Act
+      await AuthController.login(req as Request, res as Response, next);
       
-//       const error = new AuthenticationError("Google authentication failed");
-//       jest.spyOn(AuthService, 'googleAuth').mockRejectedValueOnce(error);
+      // Assert
+      expect(AuthService.login).toHaveBeenCalledWith(loginData);
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith(serviceResponse);
+      expect(next).not.toHaveBeenCalled();
+    });
 
-//       // Act
-//       await AuthController.googleAuth(
-//         mockRequest as Request,
-//         mockResponse as Response,
-//         mockNext
-//       );
-
-//       // Assert
-//       expect(AuthService.googleAuth).toHaveBeenCalledWith(googleToken);
-//       expect(mockNext).toHaveBeenCalledWith(error);
-//     });
-//   });
-
-//   describe("verifyEmail", () => {
-//     it("should verify email successfully", async () => {
-//       // Arrange
-//       const verificationToken = "valid-verification-token";
-//       mockRequest.params = { token: verificationToken };
+    it('should pass authentication errors to next middleware', async () => {
+      // Arrange
+      const error = new AuthenticationError('Invalid credentials');
+      jest.spyOn(AuthService, 'login').mockRejectedValue(error);
       
-//       const mockResult = { message: "Email verified successfully" };
-//       jest.spyOn(AuthService, 'verifyEmail').mockResolvedValueOnce(mockResult);
-
-//       // Act
-//       await AuthController.verifyEmail(
-//         mockRequest as Request,
-//         mockResponse as Response,
-//         mockNext
-//       );
-
-//       // Assert
-//       expect(AuthService.verifyEmail).toHaveBeenCalledWith(verificationToken);
-//       expect(mockResponse.status).toHaveBeenCalledWith(200);
-//       expect(mockResponse.json).toHaveBeenCalledWith(mockResult);
-//     });
-
-//     it("should handle invalid verification token error", async () => {
-//       // Arrange
-//       const invalidToken = "invalid-verification-token";
-//       mockRequest.params = { token: invalidToken };
+      req.body = {
+        email: 'test@example.com',
+        password: 'WrongPassword'
+      };
       
-//       const error = new ValidationError("Invalid or expired verification token");
-//       jest.spyOn(AuthService, 'verifyEmail').mockRejectedValueOnce(error);
-
-//       // Act
-//       await AuthController.verifyEmail(
-//         mockRequest as Request,
-//         mockResponse as Response,
-//         mockNext
-//       );
-
-//       // Assert
-//       expect(AuthService.verifyEmail).toHaveBeenCalledWith(invalidToken);
-//       expect(mockNext).toHaveBeenCalledWith(error);
-//     });
-//   });
-
-//   describe("requestPasswordReset", () => {
-//     it("should request password reset successfully", async () => {
-//       // Arrange
-//       const email = "user@example.com";
-//       mockRequest.body = { email };
+      // Act
+      await AuthController.login(req as Request, res as Response, next);
       
-//       const mockResult = { message: "Password reset email sent" };
-//       jest.spyOn(AuthService, 'requestPasswordReset').mockResolvedValueOnce(mockResult);
+      // Assert
+      expect(next).toHaveBeenCalledWith(error);
+      expect(res.status).not.toHaveBeenCalled();
+      expect(res.json).not.toHaveBeenCalled();
+    });
+  });
 
-//       // Act
-//       await AuthController.requestPasswordReset(
-//         mockRequest as Request,
-//         mockResponse as Response,
-//         mockNext
-//       );
-
-//       // Assert
-//       expect(AuthService.requestPasswordReset).toHaveBeenCalledWith(email);
-//       expect(mockResponse.status).toHaveBeenCalledWith(200);
-//       expect(mockResponse.json).toHaveBeenCalledWith(mockResult);
-//     });
-
-//     it("should handle user not found error", async () => {
-//       // Arrange
-//       const email = "nonexistent@example.com";
-//       mockRequest.body = { email };
+  describe('googleAuth', () => {
+    it('should successfully authenticate with Google', async () => {
+      // Arrange
+      const googleData = {
+        token: 'google_id_token'
+      };
       
-//       const error = new NotFoundError("No user found with this email");
-//       jest.spyOn(AuthService, 'requestPasswordReset').mockRejectedValueOnce(error);
-
-//       // Act
-//       await AuthController.requestPasswordReset(
-//         mockRequest as Request,
-//         mockResponse as Response,
-//         mockNext
-//       );
-
-//       // Assert
-//       expect(AuthService.requestPasswordReset).toHaveBeenCalledWith(email);
-//       expect(mockNext).toHaveBeenCalledWith(error);
-//     });
-
-//     it("should handle email sending error", async () => {
-//       // Arrange
-//       const email = "user@example.com";
-//       mockRequest.body = { email };
+      const serviceResponse = {
+        user: { 
+          _id: 'user_id',
+          name: 'Google User',
+          email: 'google@example.com',
+          googleId: 'google_id'
+        },
+        token: 'jwt_token'
+      };
       
-//       const error = new Error("Error sending password reset email");
-//       jest.spyOn(AuthService, 'requestPasswordReset').mockRejectedValueOnce(error);
-
-//       // Act
-//       await AuthController.requestPasswordReset(
-//         mockRequest as Request,
-//         mockResponse as Response,
-//         mockNext
-//       );
-
-//       // Assert
-//       expect(AuthService.requestPasswordReset).toHaveBeenCalledWith(email);
-//       expect(mockNext).toHaveBeenCalledWith(error);
-//     });
-//   });
-
-//   describe("resetPassword", () => {
-//     it("should reset password successfully", async () => {
-//       // Arrange
-//       const resetToken = "valid-reset-token";
-//       const newPassword = "NewPassword123!";
+      req.body = googleData;
       
-//       mockRequest.params = { token: resetToken };
-//       mockRequest.body = { password: newPassword };
+      // Mock service call
+      jest.spyOn(AuthService, 'googleAuth').mockResolvedValue(serviceResponse);
       
-//       const mockResult = { message: "Password reset successful" };
-//       jest.spyOn(AuthService, 'resetPassword').mockResolvedValueOnce(mockResult);
-
-//       // Act
-//       await AuthController.resetPassword(
-//         mockRequest as Request,
-//         mockResponse as Response,
-//         mockNext
-//       );
-
-//       // Assert
-//       expect(AuthService.resetPassword).toHaveBeenCalledWith(resetToken, newPassword);
-//       expect(mockResponse.status).toHaveBeenCalledWith(200);
-//       expect(mockResponse.json).toHaveBeenCalledWith(mockResult);
-//     });
-
-//     it("should handle invalid or expired reset token error", async () => {
-//       // Arrange
-//       const invalidToken = "invalid-reset-token";
-//       const newPassword = "NewPassword123!";
+      // Act
+      await AuthController.googleAuth(req as Request, res as Response, next);
       
-//       mockRequest.params = { token: invalidToken };
-//       mockRequest.body = { password: newPassword };
+      // Assert
+      expect(AuthService.googleAuth).toHaveBeenCalledWith(googleData.token);
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith(serviceResponse);
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('should return 400 when ID token is missing', async () => {
+      // Arrange
+      req.body = {}; // Empty body, no token
       
-//       const error = new ValidationError("Invalid or expired reset token");
-//       jest.spyOn(AuthService, 'resetPassword').mockRejectedValueOnce(error);
-
-//       // Act
-//       await AuthController.resetPassword(
-//         mockRequest as Request,
-//         mockResponse as Response,
-//         mockNext
-//       );
-
-//       // Assert
-//       expect(AuthService.resetPassword).toHaveBeenCalledWith(invalidToken, newPassword);
-//       expect(mockNext).toHaveBeenCalledWith(error);
-//     });
-//   });
-
-//   describe("getCurrentUser", () => {
-//     it("should return current user's public profile", async () => {
-//       // Arrange
-//       const userPublicProfile = {
-//         _id: mockUserId,
-//         name: "Test User",
-//         email: "test@example.com",
-//         role: "user", 
-//         isEmailVerified: true
-//       };
+      // Act
+      await AuthController.googleAuth(req as Request, res as Response, next);
       
-//       mockAuthRequest.user!.getPublicProfile = jest.fn().mockReturnValue(userPublicProfile);
+      // Assert
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({ message: "Missing ID Token" });
+      expect(AuthService.googleAuth).not.toHaveBeenCalled();
+      expect(next).not.toHaveBeenCalled();
+    });
 
-//       // Act
-//       await AuthController.getCurrentUser(
-//         mockAuthRequest as AuthRequest,
-//         mockResponse as Response,
-//         mockNext
-//       );
-
-//       // Assert
-//       expect(mockAuthRequest.user!.getPublicProfile).toHaveBeenCalled();
-//       expect(mockResponse.status).toHaveBeenCalledWith(200);
-//       expect(mockResponse.json).toHaveBeenCalledWith({ user: userPublicProfile });
-//     });
-
-//     it("should handle error when getting user profile", async () => {
-//       // Arrange
-//       const error = new Error("Error retrieving user profile");
-//       mockAuthRequest.user!.getPublicProfile = jest.fn().mockImplementation(() => {
-//         throw error;
-//       });
-
-//       // Act
-//       await AuthController.getCurrentUser(
-//         mockAuthRequest as AuthRequest,
-//         mockResponse as Response,
-//         mockNext
-//       );
-
-//       // Assert
-//       expect(mockAuthRequest.user!.getPublicProfile).toHaveBeenCalled();
-//       expect(mockNext).toHaveBeenCalledWith(error);
-//     });
-//   });
-
-//   describe("validateToken", () => {
-//     it("should validate a valid token successfully", async () => {
-//       // Arrange
-//       const token = "valid-jwt-token";
-//       mockRequest.body = { token };
+    it('should pass Google auth errors to next middleware', async () => {
+      // Arrange
+      const error = new AuthenticationError('Google authentication failed');
+      jest.spyOn(AuthService, 'googleAuth').mockRejectedValue(error);
       
-//       const mockResult = {
-//         valid: true,
-//         user: {
-//           _id: mockUserId,
-//           name: "Test User",
-//           email: "test@example.com",
-//           role: "user",
-//           isEmailVerified: true
-//         }
-//       };
-//       jest.spyOn(AuthService, 'validateToken').mockResolvedValueOnce(mockResult);
-
-//       // Act
-//       await AuthController.validateToken(
-//         mockRequest as Request,
-//         mockResponse as Response,
-//         mockNext
-//       );
-
-//       // Assert
-//       expect(AuthService.validateToken).toHaveBeenCalledWith(token);
-//       expect(mockResponse.status).toHaveBeenCalledWith(200);
-//       expect(mockResponse.json).toHaveBeenCalledWith(mockResult);
-//     });
-
-//     it("should handle invalid token validation", async () => {
-//       // Arrange
-//       const invalidToken = "invalid-jwt-token";
-//       mockRequest.body = { token: invalidToken };
+      req.body = {
+        token: 'invalid_google_token'
+      };
       
-//       const mockResult = { valid: false };
-//       jest.spyOn(AuthService, 'validateToken').mockResolvedValueOnce(mockResult);
-
-//       // Act
-//       await AuthController.validateToken(
-//         mockRequest as Request,
-//         mockResponse as Response,
-//         mockNext
-//       );
-
-//       // Assert
-//       expect(AuthService.validateToken).toHaveBeenCalledWith(invalidToken);
-//       expect(mockResponse.status).toHaveBeenCalledWith(200);
-//       expect(mockResponse.json).toHaveBeenCalledWith(mockResult);
-//     });
-
-//     it("should handle unexpected error during token validation", async () => {
-//       // Arrange
-//       const token = "problematic-token";
-//       mockRequest.body = { token };
+      // Act
+      await AuthController.googleAuth(req as Request, res as Response, next);
       
-//       const error = new Error("Unexpected error during token validation");
-//       jest.spyOn(AuthService, 'validateToken').mockRejectedValueOnce(error);
+      // Assert
+      expect(next).toHaveBeenCalledWith(error);
+      expect(res.status).not.toHaveBeenCalled();
+      expect(res.json).not.toHaveBeenCalled();
+    });
+  });
 
-//       // Act
-//       await AuthController.validateToken(
-//         mockRequest as Request,
-//         mockResponse as Response,
-//         mockNext
-//       );
+  describe('verifyEmail', () => {
+    it('should successfully verify email', async () => {
+      // Arrange
+      const verificationToken = 'valid_verification_token';
+      const serviceResponse = { message: 'Email verified successfully' };
+      
+      req.params = { token: verificationToken };
+      
+      // Mock service call
+      jest.spyOn(AuthService, 'verifyEmail').mockResolvedValue(serviceResponse);
+      
+      // Act
+      await AuthController.verifyEmail(req as Request, res as Response, next);
+      
+      // Assert
+      expect(AuthService.verifyEmail).toHaveBeenCalledWith(verificationToken);
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith(serviceResponse);
+      expect(next).not.toHaveBeenCalled();
+    });
 
-//       // Assert
-//       expect(AuthService.validateToken).toHaveBeenCalledWith(token);
-//       expect(mockNext).toHaveBeenCalledWith(error);
-//     });
+    it('should pass verification errors to next middleware', async () => {
+      // Arrange
+      const error = new ValidationError('Invalid or expired verification token');
+      jest.spyOn(AuthService, 'verifyEmail').mockRejectedValue(error);
+      
+      req.params = { token: 'invalid_token' };
+      
+      // Act
+      await AuthController.verifyEmail(req as Request, res as Response, next);
+      
+      // Assert
+      expect(next).toHaveBeenCalledWith(error);
+      expect(res.status).not.toHaveBeenCalled();
+      expect(res.json).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('requestPasswordReset', () => {
+    it('should successfully request password reset', async () => {
+      // Arrange
+      const email = 'test@example.com';
+      const serviceResponse = { message: 'Password reset email sent' };
+      
+      req.body = { email };
+      
+      // Mock service call
+      jest.spyOn(AuthService, 'requestPasswordReset').mockResolvedValue(serviceResponse);
+      
+      // Act
+      await AuthController.requestPasswordReset(req as Request, res as Response, next);
+      
+      // Assert
+      expect(AuthService.requestPasswordReset).toHaveBeenCalledWith(email);
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith(serviceResponse);
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('should pass password reset request errors to next middleware', async () => {
+      // Arrange
+      const error = new Error('Error sending password reset email');
+      jest.spyOn(AuthService, 'requestPasswordReset').mockRejectedValue(error);
+      
+      req.body = { email: 'nonexistent@example.com' };
+      
+      // Act
+      await AuthController.requestPasswordReset(req as Request, res as Response, next);
+      
+      // Assert
+      expect(next).toHaveBeenCalledWith(error);
+      expect(res.status).not.toHaveBeenCalled();
+      expect(res.json).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('resetPassword', () => {
+    it('should successfully reset password', async () => {
+      // Arrange
+      const token = 'valid_reset_token';
+      const password = 'NewPassword123!';
+      const serviceResponse = { message: 'Password reset successful' };
+      
+      req.params = { token };
+      req.body = { password };
+      
+      // Mock service call
+      jest.spyOn(AuthService, 'resetPassword').mockResolvedValue(serviceResponse);
+      
+      // Act
+      await AuthController.resetPassword(req as Request, res as Response, next);
+      
+      // Assert
+      expect(AuthService.resetPassword).toHaveBeenCalledWith(token, password);
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith(serviceResponse);
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('should pass password reset errors to next middleware', async () => {
+      // Arrange
+      const error = new ValidationError('Invalid or expired reset token');
+      jest.spyOn(AuthService, 'resetPassword').mockRejectedValue(error);
+      
+      req.params = { token: 'invalid_token' };
+      req.body = { password: 'NewPassword123!' };
+      
+      // Act
+      await AuthController.resetPassword(req as Request, res as Response, next);
+      
+      // Assert
+      expect(next).toHaveBeenCalledWith(error);
+      expect(res.status).not.toHaveBeenCalled();
+      expect(res.json).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getCurrentUser', () => {
+    it('should return the current user', async () => {
+      // Arrange
+      const userId = 'user_id';
+      req.userId = userId;
+      
+      const mockUser = {
+        _id: userId,
+        name: 'Test User',
+        email: 'test@example.com',
+        getPublicProfile: jest.fn().mockReturnValue({
+          _id: userId,
+          name: 'Test User',
+          email: 'test@example.com'
+        })
+      };
+      
+      // Mock User.findById
+      (User.findById as jest.Mock).mockResolvedValue(mockUser);
+      
+      // Act
+      await AuthController.getCurrentUser(req as Request, res as Response, next);
+      
+      // Assert
+      expect(User.findById).toHaveBeenCalledWith(userId);
+      expect(mockUser.getPublicProfile).toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({ 
+        user: { 
+          _id: userId,
+          name: 'Test User',
+          email: 'test@example.com'
+        }
+      });
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('should pass user retrieval errors to next middleware', async () => {
+      // Arrange
+      const error = new Error('Database error');
+      req.userId = 'user_id';
+      
+      // Mock User.findById to throw
+      (User.findById as jest.Mock).mockRejectedValue(error);
+      
+      // Act
+      await AuthController.getCurrentUser(req as Request, res as Response, next);
+      
+      // Assert
+      expect(next).toHaveBeenCalledWith(error);
+      expect(res.status).not.toHaveBeenCalled();
+      expect(res.json).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('validateToken', () => {
+    it('should successfully validate token', async () => {
+      // Arrange
+      const token = 'valid_jwt_token';
+      const serviceResponse = { 
+        valid: true,
+        user: {
+          _id: 'user_id',
+          name: 'Test User',
+          email: 'test@example.com'
+        }
+      };
+      
+      req.body = { token };
+      
+      // Mock service call
+      jest.spyOn(AuthService, 'validateToken').mockResolvedValue(serviceResponse);
+      
+      // Act
+      await AuthController.validateToken(req as Request, res as Response, next);
+      
+      // Assert
+      expect(AuthService.validateToken).toHaveBeenCalledWith(token);
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith(serviceResponse);
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('should pass token validation errors to next middleware', async () => {
+      // Arrange
+      const error = new Error('Token validation error');
+      jest.spyOn(AuthService, 'validateToken').mockRejectedValue(error);
+      
+      req.body = { token: 'invalid_token' };
+      
+      // Act
+      await AuthController.validateToken(req as Request, res as Response, next);
+      
+      // Assert
+      expect(next).toHaveBeenCalledWith(error);
+      expect(res.status).not.toHaveBeenCalled();
+      expect(res.json).not.toHaveBeenCalled();
+    });
   });
 });

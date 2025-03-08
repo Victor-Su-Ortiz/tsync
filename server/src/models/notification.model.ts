@@ -1,16 +1,7 @@
 // src/models/notification.model.ts
-import mongoose, { Schema, Types } from "mongoose";
+import mongoose, { Schema } from "mongoose";
+import { INotification } from "../types/notification.types";
 
-export interface INotification {
-  recipient: Types.ObjectId;
-  sender: Types.ObjectId;
-  type: string;
-  message: string;
-  relatedId?: Types.ObjectId; // ID of related entity (friend request, etc.)
-  onModel?: string; // Model of related entity
-  read: boolean;
-  createdAt: Date;
-}
 
 const notificationSchema = new Schema<INotification>(
   {
