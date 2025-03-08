@@ -55,8 +55,6 @@ const FriendsDropdown = ({ selectedFriends, setSelectedFriends }) => {
     setError(null);
 
     try {
-      // Use api.get instead of api.post since the controller handles GET requests
-      // const token = await AsyncStorage.getItem("authToken");
       const response = await api.get('/friends/friends', { headers: { Authorization: `Bearer ${authToken}` } });
       const { success, friends } = response.data;
 
