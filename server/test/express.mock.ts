@@ -22,7 +22,6 @@ export const mockRequest = (): Partial<Request> => {
     // Create properly typed mock functions
     // Status method
     // Status method
-    res.status
   res.status = jest.fn().mockImplementation((code: number) => res as Response);
   
   // JSON method
