@@ -106,7 +106,7 @@ export class UserService {
     
     const users = await User.find(searchQuery)
         .limit(limit)
-        .select('_id name email profilePicture')
+        .select('_id name email profilePicture friendRequests friends')
         .sort({ name: 1 });
     
     return users;

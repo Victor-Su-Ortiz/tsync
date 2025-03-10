@@ -29,6 +29,7 @@ beforeAll(async () => {
 
   // Connect to the in-memory database
   await mongoose.connect(mongoUri);
+  console.log('🟢 Test MongoDB connected');
 
   // Set up any test environment variables needed for auth
   // process.env.JWT_SECRET = 'f23505b4f271f2d3ddcaf0ffd2dcdfb074f29cecf248c914c3e0b5c6a0a9cedc43f92c526386a075e903a5db6fcab1a6ed9fbb23bf42af9353b31c6001099bed';
@@ -47,7 +48,7 @@ afterAll(async () => {
   // Reset environment variables
   // process.env.JWT_SECRET = undefined;
   // process.env.JWT_EXPIRES_IN = undefined;
-  // console.log('✅ Tests completed, MongoDB connection closed.');
+  console.log('✅ Tests completed, MongoDB connection closed.');
   // process.env.GOOGLE_CLIENT_ID = undefined;
 });
 

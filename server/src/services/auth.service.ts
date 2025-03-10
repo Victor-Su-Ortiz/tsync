@@ -188,7 +188,6 @@ export class AuthService {
         token,
       };
     } catch (error) {
-      console.log(error)
       throw new AuthenticationError("Google authentication failed");
     }
   }
