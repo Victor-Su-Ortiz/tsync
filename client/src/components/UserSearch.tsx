@@ -19,6 +19,9 @@ import UserProfile from './UserProfile';
 import { debounce } from 'lodash';
 import { api } from '../utils/api'; // Import your API utility
 
+// Make sure this type matches the type in UserProfile.tsx
+type FriendStatus = 'none' | 'pending' | 'friends' | 'incoming_request';
+
 type User = {
   id: string;
   name: string;
@@ -26,7 +29,7 @@ type User = {
   bio?: string;
   favoriteTea?: string;
   joinedDate?: string;
-  friendStatus?: 'none' | 'pending' | 'friends';
+  friendStatus?: FriendStatus;
 };
 
 type UserSearchProps = {
@@ -46,8 +49,8 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
   const [profileVisible, setProfileVisible] = useState(false);
   const inputRef = useRef<TextInput>(null);
 
-  // Keep track of friend statuses
-  const [friendStatuses, setFriendStatuses] = useState<Record<string, 'none' | 'pending' | 'friends'>>({});
+  // Keep track of friend statuses - using the unified FriendStatus type
+  const [friendStatuses, setFriendStatuses] = useState<Record<string, FriendStatus>>({});
 
   // Create a debounced search function to prevent too many searches as user types
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -65,7 +68,6 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
   );
 
   useEffect(() => {
-
     // Reset state when modal opens
     if (visible) {
       setSearchQuery('');
@@ -144,7 +146,9 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
   };
 
   // Handle friend status changes from the UserProfile component
-  const handleFriendStatusChange = (userId: string, newStatus: 'none' | 'pending' | 'friends') => {
+  const handleFriendStatusChange = (userId: string, newStatus: FriendStatus) => {
+    console.log(`Updating friend status for user ${userId} to ${newStatus}`);
+
     // Update our local state to remember this status
     setFriendStatuses(prev => ({
       ...prev,
@@ -170,7 +174,7 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
   };
 
   const handleUserPress = (user: User) => {
-    console.log('User pressed:', user.name); // Debug log
+    console.log('User pressed:', user.name, 'with status:', user.friendStatus || 'none');
 
     // Apply any known friend status before opening the profile
     const updatedUser = {
@@ -270,6 +274,14 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
                           <Ionicons name="checkmark-circle-outline" size={14} color="#00cc99" />
                           <Text style={[styles.friendStatusText, { color: '#00cc99' }]}>
                             Friends
+                          </Text>
+                        </View>
+                      )}
+                      {item.friendStatus === 'incoming_request' && (
+                        <View style={styles.friendStatusPending}>
+                          <Ionicons name="person-add-outline" size={14} color="#007AFF" />
+                          <Text style={[styles.friendStatusText, { color: '#007AFF' }]}>
+                            Wants to be Friends
                           </Text>
                         </View>
                       )}

@@ -15,21 +15,23 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
-import { AxiosError } from 'axios';
+
+// Define all possible friend statuses
+type FriendStatus = 'none' | 'pending' | 'friends' | 'incoming_request';
 
 type User = {
   id: string;
   name: string;
   profilePicture?: string;
   bio?: string;
-  friendStatus?: 'none' | 'pending' | 'friends' | 'incoming_request';
+  friendStatus?: FriendStatus;
 };
 
 type UserProfileProps = {
   visible: boolean;
   onClose: () => void;
   user: User | null;
-  onFriendStatusChange?: (userId: string, newStatus: 'none' | 'pending' | 'friends') => void;
+  onFriendStatusChange?: (userId: string, newStatus: FriendStatus) => void;
   fromNotification?: boolean;
   requestId?: string;
 };
@@ -42,9 +44,7 @@ const UserProfile = ({
   fromNotification = false,
   requestId
 }: UserProfileProps) => {
-  const [friendRequestStatus, setFriendRequestStatus] = useState<'none' | 'pending' | 'friends' | 'incoming_request'>(
-    user?.friendStatus || 'none'
-  );
+  const [friendRequestStatus, setFriendRequestStatus] = useState<FriendStatus>('none');
   const [isLoading, setIsLoading] = useState(false);
 
   const { authToken } = useAuth();
@@ -52,13 +52,19 @@ const UserProfile = ({
   // Update friend status when user changes
   useEffect(() => {
     if (user) {
-      console.log('User profile loaded:', user.name, 'with status:', user.friendStatus); // Debug log
-      setFriendRequestStatus(user.friendStatus || 'none');
+      console.log('User profile loaded:', user.name, 'with status:', user.friendStatus);
+
+      // Prioritize incoming_request if fromNotification is true
+      if (fromNotification) {
+        setFriendRequestStatus('incoming_request');
+      } else {
+        setFriendRequestStatus(user.friendStatus || 'none');
+      }
     }
-  }, [user]);
+  }, [user, fromNotification]);
 
   // This function updates both the local state and calls the parent callback
-  const updateFriendStatus = (userId: string, newStatus: 'none' | 'pending' | 'friends') => {
+  const updateFriendStatus = (userId: string, newStatus: FriendStatus) => {
     setFriendRequestStatus(newStatus);
     if (onFriendStatusChange) {
       onFriendStatusChange(userId, newStatus);
@@ -118,13 +124,20 @@ const UserProfile = ({
   };
 
   const handleAcceptFriendRequest = async () => {
-    if (!user || !requestId) return;
+    if (!user) return;
+
+    // Make sure we have a request ID - either from props or from the user ID
+    const actualRequestId = requestId || user.id;
+    if (!actualRequestId) {
+      Alert.alert("Error", "Could not identify the friend request to accept.");
+      return;
+    }
 
     setIsLoading(true);
 
     try {
       // Call API to accept the friend request
-      await api.post(`/friends/requests/${requestId}/accept`, {}, {
+      await api.post(`/friends/requests/${actualRequestId}/accept`, {}, {
         headers: {
           'Authorization': `Bearer ${authToken}`
         }
@@ -147,13 +160,20 @@ const UserProfile = ({
   };
 
   const handleDeclineFriendRequest = async () => {
-    if (!user || !requestId) return;
+    if (!user) return;
+
+    // Make sure we have a request ID - either from props or from the user ID
+    const actualRequestId = requestId || user.id;
+    if (!actualRequestId) {
+      Alert.alert("Error", "Could not identify the friend request to decline.");
+      return;
+    }
 
     setIsLoading(true);
 
     try {
       // Call API to decline the friend request
-      await api.post(`/friends/requests/${requestId}/reject`, {}, {
+      await api.post(`/friends/requests/${actualRequestId}/reject`, {}, {
         headers: {
           'Authorization': `Bearer ${authToken}`
         }
@@ -174,6 +194,13 @@ const UserProfile = ({
       setIsLoading(false);
     }
   };
+
+  // Debug log for friend status
+  useEffect(() => {
+    if (user) {
+      console.log(`Current friend status for ${user.name}: ${friendRequestStatus}`);
+    }
+  }, [friendRequestStatus, user]);
 
   if (!user) return null;
 
@@ -211,7 +238,7 @@ const UserProfile = ({
 
             {/* Friend Request Button */}
             <View style={styles.actionButtonContainer}>
-              {fromNotification || friendRequestStatus === 'incoming_request' ? (
+              {friendRequestStatus === 'incoming_request' ? (
                 <View style={styles.requestButtonsContainer}>
                   <TouchableOpacity
                     style={styles.acceptButton}

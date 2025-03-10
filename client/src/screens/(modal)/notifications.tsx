@@ -5,10 +5,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useAuth } from '@/src/context/AuthContext';
 import { api } from '@/src/utils/api';
-import UserProfile from '@/src/components/UserProfile'; // Import UserProfile component
+import UserProfile from '@/src/components/UserProfile';
 
 // Define notification types
 type NotificationType = 'promotion' | 'social' | 'friend_request';
+
+// Ensure FriendStatus matches the UserProfile component
+type FriendStatus = 'none' | 'pending' | 'friends' | 'incoming_request';
 
 type Notification = {
   id: string;
@@ -22,6 +25,7 @@ type Notification = {
     name: string;
     profilePicture?: string | null;
   };
+  requestId?: string; // Added to track the original request ID
 };
 
 // Define User type to match the UserProfile component
@@ -30,7 +34,7 @@ type User = {
   name: string;
   profilePicture?: string;
   bio?: string;
-  friendStatus?: 'none' | 'pending' | 'friends' | 'incoming_request';
+  friendStatus?: FriendStatus;
 };
 
 export default function Notifications() {
@@ -42,6 +46,9 @@ export default function Notifications() {
   const [userProfileVisible, setUserProfileVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [selectedRequestId, setSelectedRequestId] = useState<string | undefined>(undefined);
+
+  // Keep track of friend statuses (across the app)
+  const [friendStatuses, setFriendStatuses] = useState<Record<string, FriendStatus>>({});
 
   // Fetch friend requests when component mounts
   useEffect(() => {
@@ -146,9 +153,6 @@ export default function Notifications() {
       // Mark notification as read
       markAsRead(notification.id);
 
-      // Extract the request ID (remove the 'fr_' prefix)
-      const requestId = notification.id.replace('fr_', '');
-
       // Set up the user object for the profile
       const user: User = {
         id: notification.userData.id,
@@ -157,9 +161,15 @@ export default function Notifications() {
         friendStatus: 'incoming_request' // This user sent a request to us
       };
 
-      // Set selected user and open modal
+      // Update the global friend status tracker
+      setFriendStatuses(prev => ({
+        ...prev,
+        [user.id]: 'incoming_request'
+      }));
+
+      // Set selected user and request ID
       setSelectedUser(user);
-      setSelectedRequestId(requestId);
+      setSelectedRequestId(notification.requestId);
       setUserProfileVisible(true);
     } catch (error) {
       console.error('Error setting up user profile:', error);
@@ -177,64 +187,22 @@ export default function Notifications() {
     }
   };
 
-  const handleFriendStatusChange = (userId: string, newStatus: 'none' | 'pending' | 'friends') => {
-    // If status changed to friends, remove the corresponding notification
-    if (newStatus === 'friends') {
+  const handleFriendStatusChange = (userId: string, newStatus: FriendStatus) => {
+    console.log(`Notifications - Friend status changed for ${userId}: ${newStatus}`);
+
+    // Update the global friend status tracker
+    setFriendStatuses(prev => ({
+      ...prev,
+      [userId]: newStatus
+    }));
+
+    // If status changed to friends or none, remove the corresponding notification
+    if (newStatus === 'friends' || newStatus === 'none') {
       setNotifications(prevNotifications =>
         prevNotifications.filter(notif =>
           !(notif.type === 'friend_request' && notif.userData?.id === userId)
         )
       );
-    }
-  };
-
-  const acceptFriendRequest = async (notification: Notification) => {
-    if (!notification.userData || !authToken) return;
-
-    try {
-      // Extract the actual request ID from the notification ID
-      const requestId = notification.id.replace('fr_', '');
-
-      // Call your API to accept the friend request
-      await api.post(`/friends/requests/${requestId}/accept`, {}, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
-      });
-
-      // Remove this notification from the list
-      setNotifications(notifications.filter(n => n.id !== notification.id));
-
-      // Show success message
-      Alert.alert('Success', `You are now friends with ${notification.userData.name}`);
-    } catch (error) {
-      console.error('Error accepting friend request:', error);
-      Alert.alert('Error', 'Failed to accept friend request. Please try again.');
-    }
-  };
-
-  const declineFriendRequest = async (notification: Notification) => {
-    if (!notification.userData || !authToken) return;
-
-    try {
-      // Extract the actual request ID from the notification ID
-      const requestId = notification.id.replace('fr_', '');
-
-      // Call your API to decline the friend request
-      await api.post(`/friends/requests/${requestId}/reject`, {}, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
-      });
-
-      // Remove this notification from the list
-      setNotifications(notifications.filter(n => n.id !== notification.id));
-
-      // Show success message
-      Alert.alert('Friend Request Declined', `Friend request from ${notification.userData.name} has been declined`);
-    } catch (error) {
-      console.error('Error declining friend request:', error);
-      Alert.alert('Error', 'Failed to decline friend request. Please try again.');
     }
   };
 
