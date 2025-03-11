@@ -114,7 +114,8 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
 
     try {
       console.log("📡 Making API request...");
-      const response = await api.get(
+      // First get search results
+      const searchResponse = await api.get(
         '/users/search',
         {
           params: { q: query, limit: 10 },
@@ -124,21 +125,85 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
         }
       );
 
-      console.log("✅ API Response:", response.data);
+      console.log("✅ API Response:", searchResponse.data);
 
-      const searchedUsers = response.data.users || [];
+      const searchedUsers = searchResponse.data.users || [];
       console.log("👥 Users found:", searchedUsers.length);
 
-      // Apply any known friend statuses to the search results
-      const updatedUsers = searchedUsers.map((user: User) => ({
-        ...user,
-        friendStatus: friendStatuses[user.id] || user.friendStatus || 'none'
-      }));
+      // Then check for any pending friend requests to/from these users
+      const incomingRequestsResponse = await api.get('/friends/requests', {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        }
+      });
+
+      // Also check for outgoing friend requests that the current user has sent
+      const outgoingRequestsResponse = await api.get('/friends/requests/', {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        }
+      });
+
+      console.log("✅ Incoming friend requests:", incomingRequestsResponse.data);
+      console.log("✅ Outgoing friend requests:", outgoingRequestsResponse.data);
+
+      // Create a map of user IDs to incoming request status
+      const incomingRequestMap: Record<string, boolean> = {};
+      if (incomingRequestsResponse.data.requests && Array.isArray(incomingRequestsResponse.data.requests)) {
+        incomingRequestsResponse.data.requests.forEach((request: any) => {
+          if (request.from && (request.from._id || request.from.id)) {
+            // This is a request FROM someone else TO the current user
+            const requesterId = request.from._id || request.from.id;
+            incomingRequestMap[requesterId] = true;
+          }
+        });
+      }
+
+      // Create a map of user IDs that the current user has sent requests to
+      const outgoingRequestMap: Record<string, boolean> = {};
+      if (outgoingRequestsResponse.data.requests && Array.isArray(outgoingRequestsResponse.data.requests)) {
+        outgoingRequestsResponse.data.requests.forEach((request: any) => {
+          if (request.to && (request.to._id || request.to.id)) {
+            // This is a request FROM the current user TO someone else
+            const recipientId = request.to._id || request.to.id;
+            outgoingRequestMap[recipientId] = true;
+          }
+        });
+      }
+
+      // Apply statuses from these sources in order of priority:
+      // 1. Local friend status state (most up-to-date in current session)
+      // 2. Incoming friend requests detected from API
+      // 3. Outgoing friend requests detected from API
+      // 4. Original status from search API
+      const updatedUsers = searchedUsers.map((user: User) => {
+        // Check if we have a stored status first (for this session)
+        const storedStatus = friendStatuses[user.id];
+        if (storedStatus) {
+          return { ...user, friendStatus: storedStatus };
+        }
+
+        // Check if this user has an incoming request to us
+        if (incomingRequestMap[user.id]) {
+          return { ...user, friendStatus: 'incoming_request' as FriendStatus };
+        }
+
+        // Check if we have sent a request to this user
+        if (outgoingRequestMap[user.id]) {
+          return { ...user, friendStatus: 'pending' as FriendStatus };
+        }
+
+        // Fall back to the status from the API or 'none'
+        return { ...user, friendStatus: user.friendStatus || 'none' };
+      });
 
       setUsers(updatedUsers);
     } catch (error: any) {
       console.error("❌ Error searching for users:", error);
       console.error("⚠️ API Error Response:", error.response?.status, error.response?.data);
+
+      // Just show empty results if there's an error
+      setUsers([]);
     } finally {
       console.log("⏳ Finished searching, updating UI...");
       setIsSearching(false);

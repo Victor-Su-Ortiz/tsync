@@ -49,19 +49,96 @@ const UserProfile = ({
 
   const { authToken } = useAuth();
 
-  // Update friend status when user changes
+  // Update friend status when user changes or component mounts
   useEffect(() => {
     if (user) {
       console.log('User profile loaded:', user.name, 'with status:', user.friendStatus);
 
-      // Prioritize incoming_request if fromNotification is true
-      if (fromNotification) {
-        setFriendRequestStatus('incoming_request');
-      } else {
-        setFriendRequestStatus(user.friendStatus || 'none');
+      // First, check if we need to fetch the current status
+      // This is useful after sign out/sign in when local state is lost
+      async function verifyFriendRequestStatus() {
+        try {
+          // Check if we've sent a request to this user
+          const outgoingResponse = await api.get('/friends/requests/', {
+            headers: {
+              'Authorization': `Bearer ${authToken}`
+            }
+          });
+
+          if (outgoingResponse.data.requests && Array.isArray(outgoingResponse.data.requests)) {
+            const sentRequestToUser = outgoingResponse.data.requests.some((req: any) => {
+              const toId = req.to?._id || req.to?.id;
+              return toId === user.id;
+            });
+
+            if (sentRequestToUser) {
+              console.log(`Detected outgoing request to ${user.name}`);
+              setFriendRequestStatus('pending');
+              if (onFriendStatusChange) {
+                onFriendStatusChange(user.id, 'pending');
+              }
+              return;
+            }
+          }
+
+          // Check if we've received a request from this user
+          const incomingResponse = await api.get('/friends/requests', {
+            headers: {
+              'Authorization': `Bearer ${authToken}`
+            }
+          });
+
+          if (incomingResponse.data.requests && Array.isArray(incomingResponse.data.requests)) {
+            const receivedRequestFromUser = incomingResponse.data.requests.some((req: any) => {
+              const fromId = req.from?._id || req.from?.id;
+              return fromId === user.id;
+            });
+
+            if (receivedRequestFromUser) {
+              console.log(`Detected incoming request from ${user.name}`);
+              setFriendRequestStatus('incoming_request');
+              if (onFriendStatusChange) {
+                onFriendStatusChange(user.id, 'incoming_request');
+              }
+              return;
+            }
+          }
+
+          // If we reach here, set status based on props
+          determineStatus();
+
+        } catch (error) {
+          console.error("Error verifying friend request status:", error);
+          // Fall back to regular status determination
+          determineStatus();
+        }
       }
+
+      // Helper function to determine status based on props
+      const determineStatus = () => {
+        // Logic for determining the correct status to show:
+        // 1. If opened from notification, always show incoming_request
+        // 2. If user.friendStatus is incoming_request or pending, respect that
+        // 3. Otherwise use whatever status is provided
+        if (fromNotification) {
+          setFriendRequestStatus('incoming_request');
+          console.log(`Setting ${user.name}'s status to incoming_request (from notification)`);
+        } else if (user.friendStatus === 'incoming_request') {
+          setFriendRequestStatus('incoming_request');
+          console.log(`Setting ${user.name}'s status to incoming_request (from props)`);
+        } else if (user.friendStatus === 'pending') {
+          setFriendRequestStatus('pending');
+          console.log(`Setting ${user.name}'s status to pending (from props)`);
+        } else {
+          setFriendRequestStatus(user.friendStatus || 'none');
+          console.log(`Setting ${user.name}'s status to ${user.friendStatus || 'none'} (from props)`);
+        }
+      };
+
+      // Verify current status with API
+      verifyFriendRequestStatus();
     }
-  }, [user, fromNotification]);
+  }, [user, fromNotification, authToken, onFriendStatusChange]);
 
   // This function updates both the local state and calls the parent callback
   const updateFriendStatus = (userId: string, newStatus: FriendStatus) => {
@@ -103,8 +180,34 @@ const UserProfile = ({
     setIsLoading(true);
 
     try {
+      // First, find the outgoing request ID
+      let requestIdToCancel;
+
+      // Fetch all outgoing requests to find the right one
+      const outgoingResponse = await api.get('/friends/requests/sent', {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+
+      if (outgoingResponse.data.requests && Array.isArray(outgoingResponse.data.requests)) {
+        const sentRequest = outgoingResponse.data.requests.find((req: any) => {
+          const toId = req.to?._id || req.to?.id;
+          return toId === user.id;
+        });
+
+        if (sentRequest) {
+          requestIdToCancel = sentRequest._id;
+          console.log(`Found outgoing request ID to cancel: ${requestIdToCancel}`);
+        }
+      }
+
+      if (!requestIdToCancel) {
+        throw new Error("Could not find the friend request to cancel");
+      }
+
       // Cancel the friend request
-      await api.delete(`/friends/requests/${user.id}`, {
+      await api.delete(`/friends/requests/${requestIdToCancel}`, {
         headers: {
           'Authorization': `Bearer ${authToken}`
         }
@@ -126,16 +229,41 @@ const UserProfile = ({
   const handleAcceptFriendRequest = async () => {
     if (!user) return;
 
-    // Make sure we have a request ID - either from props or from the user ID
-    const actualRequestId = requestId || user.id;
-    if (!actualRequestId) {
-      Alert.alert("Error", "Could not identify the friend request to accept.");
-      return;
-    }
+    // If we don't have a specific requestId, we need to fetch it
+    let actualRequestId = requestId;
 
     setIsLoading(true);
 
     try {
+      // If we don't have a requestId, fetch pending requests to find it
+      if (!actualRequestId) {
+        console.log("No request ID provided, fetching from API...");
+        const response = await api.get('/friends/requests', {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        });
+
+        console.log("Friend requests response:", response.data);
+
+        // Find the request from this user
+        if (response.data.requests && Array.isArray(response.data.requests)) {
+          const matchingRequest = response.data.requests.find((req: any) => {
+            const fromId = req.from?._id || req.from?.id;
+            return fromId === user.id;
+          });
+
+          if (matchingRequest) {
+            actualRequestId = matchingRequest._id;
+            console.log(`Found request ID: ${actualRequestId}`);
+          }
+        }
+      }
+
+      if (!actualRequestId) {
+        throw new Error("Could not find the friend request ID");
+      }
+
       // Call API to accept the friend request
       await api.post(`/friends/requests/${actualRequestId}/accept`, {}, {
         headers: {
@@ -162,16 +290,41 @@ const UserProfile = ({
   const handleDeclineFriendRequest = async () => {
     if (!user) return;
 
-    // Make sure we have a request ID - either from props or from the user ID
-    const actualRequestId = requestId || user.id;
-    if (!actualRequestId) {
-      Alert.alert("Error", "Could not identify the friend request to decline.");
-      return;
-    }
+    // If we don't have a specific requestId, we need to fetch it
+    let actualRequestId = requestId;
 
     setIsLoading(true);
 
     try {
+      // If we don't have a requestId, fetch pending requests to find it
+      if (!actualRequestId) {
+        console.log("No request ID provided, fetching from API...");
+        const response = await api.get('/friends/requests', {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        });
+
+        console.log("Friend requests response:", response.data);
+
+        // Find the request from this user
+        if (response.data.requests && Array.isArray(response.data.requests)) {
+          const matchingRequest = response.data.requests.find((req: any) => {
+            const fromId = req.from?._id || req.from?.id;
+            return fromId === user.id;
+          });
+
+          if (matchingRequest) {
+            actualRequestId = matchingRequest._id;
+            console.log(`Found request ID: ${actualRequestId}`);
+          }
+        }
+      }
+
+      if (!actualRequestId) {
+        throw new Error("Could not find the friend request ID");
+      }
+
       // Call API to decline the friend request
       await api.post(`/friends/requests/${actualRequestId}/reject`, {}, {
         headers: {
