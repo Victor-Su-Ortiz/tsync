@@ -41,7 +41,7 @@ const UserProfile = ({
   onClose,
   user,
   onFriendStatusChange,
-  fromNotification = false,
+  // fromNotification = false,
   requestId
 }: UserProfileProps) => {
   const [friendRequestStatus, setFriendRequestStatus] = useState<FriendStatus>('none');
@@ -51,6 +51,7 @@ const UserProfile = ({
 
   // Update friend status when user changes or component mounts
   useEffect(() => {
+    console.log(requestId);
     if (user) {
       console.log('User profile loaded:', user.name, 'with status:', user.friendStatus);
 
@@ -81,28 +82,28 @@ const UserProfile = ({
             }
           }
 
-          // Check if we've received a request from this user
-          const incomingResponse = await api.get('/friends/requests', {
-            headers: {
-              'Authorization': `Bearer ${authToken}`
-            }
-          });
+          // // Check if we've received a request from this user
+          // const incomingResponse = await api.get('/friends/requests', {
+          //   headers: {
+          //     'Authorization': `Bearer ${authToken}`
+          //   }
+          // });
 
-          if (incomingResponse.data.requests && Array.isArray(incomingResponse.data.requests)) {
-            const receivedRequestFromUser = incomingResponse.data.requests.some((req: any) => {
-              const fromId = req.from?._id || req.from?.id;
-              return fromId === user.id;
-            });
+          // if (incomingResponse.data.requests && Array.isArray(incomingResponse.data.requests)) {
+          //   const receivedRequestFromUser = incomingResponse.data.requests.some((req: any) => {
+          //     const fromId = req.from?._id || req.from?.id;
+          //     return fromId === user.id;
+          //   });
 
-            if (receivedRequestFromUser) {
-              console.log(`Detected incoming request from ${user.name}`);
-              setFriendRequestStatus('incoming_request');
-              if (onFriendStatusChange) {
-                onFriendStatusChange(user.id, 'incoming_request');
-              }
-              return;
-            }
-          }
+          //   if (receivedRequestFromUser) {
+          //     console.log(`Detected incoming request from ${user.name}`);
+          //     setFriendRequestStatus('incoming_request');
+          //     if (onFriendStatusChange) {
+          //       onFriendStatusChange(user.id, 'incoming_request');
+          //     }
+          //     return;
+          //   }
+          // }
 
           // If we reach here, set status based on props
           determineStatus();
@@ -120,10 +121,10 @@ const UserProfile = ({
         // 1. If opened from notification, always show incoming_request
         // 2. If user.friendStatus is incoming_request or pending, respect that
         // 3. Otherwise use whatever status is provided
-        if (fromNotification) {
-          setFriendRequestStatus('incoming_request');
-          console.log(`Setting ${user.name}'s status to incoming_request (from notification)`);
-        } else if (user.friendStatus === 'incoming_request') {
+        // if (fromNotification) {
+        //   setFriendRequestStatus('incoming_request');
+        //   console.log(`Setting ${user.name}'s status to incoming_request (from notification)`);
+        if (user.friendStatus === 'incoming_request') {
           setFriendRequestStatus('incoming_request');
           console.log(`Setting ${user.name}'s status to incoming_request (from props)`);
         } else if (user.friendStatus === 'pending') {
@@ -138,7 +139,7 @@ const UserProfile = ({
       // Verify current status with API
       verifyFriendRequestStatus();
     }
-  }, [user, fromNotification, authToken, onFriendStatusChange]);
+  }, [user, onFriendStatusChange, authToken]);
 
   // This function updates both the local state and calls the parent callback
   const updateFriendStatus = (userId: string, newStatus: FriendStatus) => {
@@ -238,7 +239,7 @@ const UserProfile = ({
       // If we don't have a requestId, fetch pending requests to find it
       if (!actualRequestId) {
         console.log("No request ID provided, fetching from API...");
-        const response = await api.get('/friends/requests', {
+        const response = await api.put(`/friends/requests/${actualRequestId}/accept`, {
           headers: {
             'Authorization': `Bearer ${authToken}`
           }
@@ -265,7 +266,7 @@ const UserProfile = ({
       }
 
       // Call API to accept the friend request
-      await api.post(`/friends/requests/${actualRequestId}/accept`, {}, {
+      await api.put(`/friends/requests/${actualRequestId}/accept`, {}, {
         headers: {
           'Authorization': `Bearer ${authToken}`
         }

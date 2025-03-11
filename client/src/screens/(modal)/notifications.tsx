@@ -274,7 +274,7 @@ export default function Notifications() {
         }}
         user={selectedUser}
         onFriendStatusChange={handleFriendStatusChange}
-        fromNotification={true}
+        // fromNotification={true}
         requestId={selectedRequestId}
       />
     </SafeAreaView>
