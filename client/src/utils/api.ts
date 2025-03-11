@@ -1,8 +1,7 @@
 import axios from "axios";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { EXPO_PUBLIC_API_URL } from "@env";
 
-const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+const API_BASE_URL = EXPO_PUBLIC_API_URL || "http://localhost:5000/api/v1";
 
 
 
