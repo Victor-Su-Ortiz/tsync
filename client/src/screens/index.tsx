@@ -62,7 +62,6 @@ export default function Index() {
       setUserInfo(formattedUserInfo);
 
       // Send the ID token to your backend
-
       await sendTokenToBackend(tokens.idToken);
 
 
@@ -86,7 +85,7 @@ export default function Index() {
     try {
       console.log("Sending token to backend:", idToken);
 
-      // Make sure your API is configured with proper error handlingrr
+      // Make sure your API is configured with proper error handling
       const res = await api.post("/auth/google", { token: idToken });
 
       console.log("Backend response:", res.data);
@@ -97,22 +96,14 @@ export default function Index() {
         throw new Error("Invalid response from server");
       }
 
-      // Store the JWT token from your backend
-      await AsyncStorage.setItem("authToken", authToken);
-
-      // // Store the access token in context
-      // setAuthToken(authToken);
-
-      // Store user info in AsyncStosrage as a string
-      // await AsyncStorage.setItem("userInfo", JSON.stringify({
-      //   id: user.id,
-      //   name: user.name,
-      //   email: user.email,
-      //   picture: user.picture || user.photo,
-      //   bio: user.bio || "Let's meet!"
-      // }));
+      // Store all data with Promise.all to ensure everything completes
+      await Promise.all([
+        setAuthToken(authToken),
+      ]);
 
       Alert.alert("Success", `Welcome ${user.name}!`);
+
+      // Now that everything is saved, navigate to the home screen
       router.push('./(tabs)/home');
     } catch (error: any) {
       console.error("Backend Auth Error:", error);

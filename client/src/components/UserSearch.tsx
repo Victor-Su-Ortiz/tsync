@@ -19,14 +19,17 @@ import UserProfile from './UserProfile';
 import { debounce } from 'lodash';
 import { api } from '../utils/api'; // Import your API utility
 
+// Make sure this type matches the type in UserProfile.tsx
+type FriendStatus = 'none' | 'pending' | 'friends' | 'incoming_request';
+
 type User = {
   id: string;
   name: string;
-  profileImage?: string;
+  profilePicture?: string;
   bio?: string;
   favoriteTea?: string;
   joinedDate?: string;
-  friendStatus?: 'none' | 'pending' | 'friends';
+  friendStatus?: FriendStatus;
 };
 
 type UserSearchProps = {
@@ -46,6 +49,9 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
   const [profileVisible, setProfileVisible] = useState(false);
   const inputRef = useRef<TextInput>(null);
 
+  // Keep track of friend statuses - using the unified FriendStatus type
+  const [friendStatuses, setFriendStatuses] = useState<Record<string, FriendStatus>>({});
+
   // Create a debounced search function to prevent too many searches as user types
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedSearch = useCallback(
@@ -62,7 +68,6 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
   );
 
   useEffect(() => {
-
     // Reset state when modal opens
     if (visible) {
       setSearchQuery('');
@@ -109,7 +114,8 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
 
     try {
       console.log("📡 Making API request...");
-      const response = await api.get(
+      // First get search results
+      const searchResponse = await api.get(
         '/users/search',
         {
           params: { q: query, limit: 10 },
@@ -119,29 +125,130 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
         }
       );
 
+      console.log("✅ API Response:", searchResponse.data);
 
-
-      console.log("✅ API Response:", response.data);
-
-      const searchedUsers = response.data.users || [];
+      const searchedUsers = searchResponse.data.users || [];
       console.log("👥 Users found:", searchedUsers.length);
 
-      setUsers(searchedUsers);
+      // Then check for any pending friend requests to/from these users
+      const incomingRequestsResponse = await api.get('/friends/requests', {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        }
+      });
+
+      // Also check for outgoing friend requests that the current user has sent
+      const outgoingRequestsResponse = await api.get('/friends/requests/', {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        }
+      });
+
+      console.log("✅ Incoming friend requests:", incomingRequestsResponse.data);
+      console.log("✅ Outgoing friend requests:", outgoingRequestsResponse.data);
+
+      // Create a map of user IDs to incoming request status
+      const incomingRequestMap: Record<string, boolean> = {};
+      if (incomingRequestsResponse.data.requests && Array.isArray(incomingRequestsResponse.data.requests)) {
+        incomingRequestsResponse.data.requests.forEach((request: any) => {
+          if (request.from && (request.from._id || request.from.id)) {
+            // This is a request FROM someone else TO the current user
+            const requesterId = request.from._id || request.from.id;
+            incomingRequestMap[requesterId] = true;
+          }
+        });
+      }
+
+      // Create a map of user IDs that the current user has sent requests to
+      const outgoingRequestMap: Record<string, boolean> = {};
+      if (outgoingRequestsResponse.data.requests && Array.isArray(outgoingRequestsResponse.data.requests)) {
+        outgoingRequestsResponse.data.requests.forEach((request: any) => {
+          if (request.to && (request.to._id || request.to.id)) {
+            // This is a request FROM the current user TO someone else
+            const recipientId = request.to._id || request.to.id;
+            outgoingRequestMap[recipientId] = true;
+          }
+        });
+      }
+
+      // Apply statuses from these sources in order of priority:
+      // 1. Local friend status state (most up-to-date in current session)
+      // 2. Incoming friend requests detected from API
+      // 3. Outgoing friend requests detected from API
+      // 4. Original status from search API
+      const updatedUsers = searchedUsers.map((user: User) => {
+        // Check if we have a stored status first (for this session)
+        const storedStatus = friendStatuses[user.id];
+        if (storedStatus) {
+          return { ...user, friendStatus: storedStatus };
+        }
+
+        // Check if this user has an incoming request to us
+        if (incomingRequestMap[user.id]) {
+          return { ...user, friendStatus: 'incoming_request' as FriendStatus };
+        }
+
+        // Check if we have sent a request to this user
+        if (outgoingRequestMap[user.id]) {
+          return { ...user, friendStatus: 'pending' as FriendStatus };
+        }
+
+        // Fall back to the status from the API or 'none'
+        return { ...user, friendStatus: user.friendStatus || 'none' };
+      });
+
+      setUsers(updatedUsers);
     } catch (error: any) {
       console.error("❌ Error searching for users:", error);
       console.error("⚠️ API Error Response:", error.response?.status, error.response?.data);
+
+      // Just show empty results if there's an error
+      setUsers([]);
     } finally {
       console.log("⏳ Finished searching, updating UI...");
       setIsSearching(false);
     }
   };
 
+  // Handle friend status changes from the UserProfile component
+  const handleFriendStatusChange = (userId: string, newStatus: FriendStatus) => {
+    console.log(`Updating friend status for user ${userId} to ${newStatus}`);
 
+    // Update our local state to remember this status
+    setFriendStatuses(prev => ({
+      ...prev,
+      [userId]: newStatus
+    }));
+
+    // Also update the search results list if this user is in it
+    setUsers(prev =>
+      prev.map(user =>
+        user.id === userId
+          ? { ...user, friendStatus: newStatus }
+          : user
+      )
+    );
+
+    // Update the selected user if it's the one we're viewing
+    if (selectedUser && selectedUser.id === userId) {
+      setSelectedUser({
+        ...selectedUser,
+        friendStatus: newStatus
+      });
+    }
+  };
 
   const handleUserPress = (user: User) => {
-    console.log('User pressed:', user.name); // Debug log
+    console.log('User pressed:', user.name, 'with status:', user.friendStatus || 'none');
+
+    // Apply any known friend status before opening the profile
+    const updatedUser = {
+      ...user,
+      friendStatus: friendStatuses[user.id] || user.friendStatus || 'none'
+    };
+
     // Set the selected user and show their profile
-    setSelectedUser(user);
+    setSelectedUser(updatedUser);
     // Add a slight delay to ensure the state updates before showing the profile
     setTimeout(() => {
       setProfileVisible(true);
@@ -214,7 +321,7 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
                     onPress={() => handleUserPress(item)}
                   >
                     <Image
-                      source={{ uri: item.profileImage || "https://via.placeholder.com/150" }}
+                      source={{ uri: item.profilePicture || "https://via.placeholder.com/150" }}
                       style={styles.userAvatar}
                     />
                     <View style={styles.userInfo}>
@@ -232,6 +339,14 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
                           <Ionicons name="checkmark-circle-outline" size={14} color="#00cc99" />
                           <Text style={[styles.friendStatusText, { color: '#00cc99' }]}>
                             Friends
+                          </Text>
+                        </View>
+                      )}
+                      {item.friendStatus === 'incoming_request' && (
+                        <View style={styles.friendStatusPending}>
+                          <Ionicons name="person-add-outline" size={14} color="#007AFF" />
+                          <Text style={[styles.friendStatusText, { color: '#007AFF' }]}>
+                            Wants to be Friends
                           </Text>
                         </View>
                       )}
@@ -259,6 +374,7 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
               visible={profileVisible}
               onClose={handleProfileClose}
               user={selectedUser}
+              onFriendStatusChange={handleFriendStatusChange}
             />
           )}
         </View>
