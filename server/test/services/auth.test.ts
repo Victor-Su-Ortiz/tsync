@@ -489,8 +489,7 @@ describe("AuthService", () => {
       (crypto.createHash as jest.Mock).mockReturnValueOnce(mockHash);
 
       // Mock Date.now
-      const originalDateNow = Date.now;
-      (Date.now as jest.Mock).mockReturnValueOnce(1000);
+      jest.spyOn(Date, 'now').mockImplementation(() => 1616161616161);
 
       // Mock sendEmail
       (sendEmail as jest.Mock).mockResolvedValueOnce(undefined as never);
@@ -511,9 +510,6 @@ describe("AuthService", () => {
         subject: "Password Reset Request",
       }));
       expect(result).toEqual({ message: "Password reset email sent" });
-
-      // Restore Date.now
-      Date.now = originalDateNow;
     });
 
     it("should throw NotFoundError if user not found", async () => {
