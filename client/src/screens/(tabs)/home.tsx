@@ -1,14 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, Alert, Text, ActivityIndicator, FlatList, View, Image, ImageBackground, TouchableOpacity } from "react-native";
+import React, { useEffect, useState, useRef } from 'react';
+import { StyleSheet, Alert, Text, ActivityIndicator, FlatList, View, Image, ImageBackground, TouchableOpacity, AppState } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as Location from 'expo-location';
 import axios from 'axios';
 import { GOOGLE_PLACES_API } from '@env';
 import { router, useLocalSearchParams } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import UserSearch from '../../components/UserSearch';
 import { useAuth } from '@/src/context/AuthContext';
+import { useSocket } from '@/src/context/SocketContext'; // Import the socket hook
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type Place = {
   place_id: string;
@@ -19,7 +20,6 @@ type Place = {
 };
 
 export default function Home() {
-
   const params = useLocalSearchParams();
   const isSelectingTeaShop = params.selectingTeaShop === 'true';
   const [selectionMode, setSelectionMode] = useState<'normal' | 'tea-shop-selection'>('normal');
@@ -27,8 +27,83 @@ export default function Home() {
   const [shops, setShops] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchModalVisible, setSearchModalVisible] = useState(false);
-  const [notificationCount, setNotificationCount] = useState(0); // Sample notification count
   const { authToken } = useAuth();
+
+  // Get notification count from the socket context
+  const { notificationCount: socketNotificationCount, incrementNotificationCount } = useSocket();
+
+  // Local notification state as a fallback mechanism
+  const [localNotificationCount, setLocalNotificationCount] = useState(0);
+  const appState = useRef(AppState.currentState);
+
+  // Combine socket notification count with local count
+  const notificationCount = socketNotificationCount || localNotificationCount;
+
+  // Check for pending notifications when app resumes
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
+        // App has come to the foreground
+        checkPendingNotifications();
+      }
+      appState.current = nextAppState;
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+
+  // Initial check for notifications
+  useEffect(() => {
+    checkPendingNotifications();
+
+    // Debug: Force a notification after 5 seconds for testing
+    const debugTimer = setTimeout(() => {
+      console.log('Debug: Setting test notification');
+      setLocalNotificationCount(prev => prev + 1);
+    }, 5000);
+
+    return () => clearTimeout(debugTimer);
+  }, []);
+
+  // Function to check API for pending friend requests
+  const checkPendingNotifications = async () => {
+    if (!authToken) return;
+
+    try {
+      console.log('Checking for pending notifications...');
+
+      // First try to get count from AsyncStorage as a quick check
+      const storedCount = await AsyncStorage.getItem('notificationCount');
+      if (storedCount) {
+        const count = parseInt(storedCount, 10);
+        if (count > 0) {
+          console.log('Found stored notifications:', count);
+          setLocalNotificationCount(count);
+        }
+      }
+
+      // Then check the API for friend requests
+      const response = await axios.get('YOUR_API_URL/friends/requests', {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+
+      if (response.data && response.data.requests && Array.isArray(response.data.requests)) {
+        const pendingCount = response.data.requests.length;
+        console.log('Pending friend requests from API:', pendingCount);
+
+        if (pendingCount > 0) {
+          setLocalNotificationCount(pendingCount);
+          await AsyncStorage.setItem('notificationCount', pendingCount.toString());
+        }
+      }
+    } catch (error) {
+      console.error('Error checking notifications:', error);
+    }
+  };
 
   const handleTeaShopPress = async (teaShop: Place) => {
     return;
@@ -50,7 +125,6 @@ export default function Home() {
     const location = await Location.getCurrentPositionAsync({});
 
     console.log("jwt token", authToken);
-    // console.log(location.coords.latitude, location.coords.longitude);
     setLocation(location.coords);
     return location.coords;
   };
@@ -65,7 +139,6 @@ export default function Home() {
     try {
       const response = await axios.get(url);
       setShops(response.data.results);
-      // console.log(response.data.results); // List of tea shops
     } catch (error) {
       console.error(error);
     } finally {

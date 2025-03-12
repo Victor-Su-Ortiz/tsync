@@ -4,8 +4,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useAuth } from '@/src/context/AuthContext';
+import { useSocket } from '@/src/context/SocketContext'; // Import the socket hook
 import { api } from '@/src/utils/api';
 import UserProfile from '@/src/components/UserProfile';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Define notification types
 type NotificationType = 'promotion' | 'social' | 'friend_request';
@@ -41,6 +43,7 @@ export default function Notifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
   const { authToken } = useAuth(); // Get auth token from context
+  const { resetNotificationCount } = useSocket(); // Get reset function from socket context
 
   // State for User Profile modal
   const [userProfileVisible, setUserProfileVisible] = useState(false);
@@ -50,9 +53,28 @@ export default function Notifications() {
   // Keep track of friend statuses (across the app)
   const [friendStatuses, setFriendStatuses] = useState<Record<string, FriendStatus>>({});
 
-  // Fetch friend requests when component mounts
+  // Fetch friend requests when component mounts and reset notification count
   useEffect(() => {
     fetchFriendRequests();
+
+    // Reset notification count when the notifications screen is opened
+    resetNotificationCount();
+
+    // Also clear the stored count in AsyncStorage
+    const clearStoredCount = async () => {
+      try {
+        await AsyncStorage.setItem('notificationCount', '0');
+        console.log('Cleared notification count in AsyncStorage');
+      } catch (error) {
+        console.error('Error clearing notification count:', error);
+      }
+    };
+
+    clearStoredCount();
+
+    // Debug: Log that we're resetting notifications
+    console.log('Notifications screen opened, resetting notification count');
+    Alert.alert('Debug', 'Notifications opened, count reset');
   }, []);
 
   const fetchFriendRequests = async () => {
@@ -274,7 +296,6 @@ export default function Notifications() {
         }}
         user={selectedUser}
         onFriendStatusChange={handleFriendStatusChange}
-        // fromNotification={true}
         requestId={selectedRequestId}
       />
     </SafeAreaView>
