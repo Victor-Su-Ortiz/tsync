@@ -69,13 +69,14 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
       setSocket(newSocket);
 
-      newSocket.on('connect', () => {
+      newSocket.on('connection', () => {
         console.log('Socket connected successfully', newSocket.id);
         Alert.alert('Debug', 'Socket connected successfully');
       });
 
       newSocket.on('connect_error', (err) => {
-        console.error('Socket connection error:', err.message);
+        console.error('Socket connection error:', err);
+        console.error('Error details:', JSON.stringify(err));
         Alert.alert('Socket Error', `Connection error: ${err.message}`);
       });
 
@@ -95,7 +96,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
       // Listen for the user-specific channel
       // This is how the server will likely emit events for a specific user
-      newSocket.on(`user_${userId}`, (data) => {
+      newSocket.on(`user:${userId}`, (data) => {
         console.log(`Received event on user_${userId}:`, data);
         incrementNotificationCount();
         Alert.alert('User Event', `New notification for user ${userId}`);
@@ -114,7 +115,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
           newSocket.disconnect();
         }
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error setting up socket:', error);
       Alert.alert('Socket Setup Error', error.message);
     }
