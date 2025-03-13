@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuth } from './AuthContext';
 import { Alert } from 'react-native'; // For debugging
-import { EXPO_PUBLIC_API_URL } from '@env';
+import { SOCKET_URL } from '@env';
 
 // Define the socket context structure
 type SocketContextType = {
@@ -47,7 +47,6 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Get your backend URL from environment or use direct URL
     // Don't include any path or namespace - connect to the root
-    const SOCKET_URL = EXPO_PUBLIC_API_URL // Update with your actual server address
     console.log('Connecting to socket server:', SOCKET_URL);
 
     // Initialize socket connection with error handling
