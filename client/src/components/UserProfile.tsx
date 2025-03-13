@@ -30,7 +30,7 @@ type User = {
 type UserProfileProps = {
   visible: boolean;
   onClose: () => void;
-  user: User | null;
+  user: User;
   onFriendStatusChange?: (userId: string, newStatus: FriendStatus) => void;
   fromNotification?: boolean;
   requestId?: string;
