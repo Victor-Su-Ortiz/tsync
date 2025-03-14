@@ -13,6 +13,11 @@ router.use(protect);
 router.get("/friends", FriendController.getFriends);
 router.get("/requests", FriendController.getPendingRequests);
 
+// Check friend request
+router.get("/requests/:receiverId",
+  validateRequest(friendValidation.checkFriendRequest),
+   FriendController.checkFriendRequest);
+
 // Friend request operations
 router.post(
   "/requests/:userId",

@@ -1,6 +1,16 @@
 import Joi from "joi";
 
 export const friendValidation = {
+
+  // Validate friend request params (receiverId)
+  checkFriendRequest: Joi.object({
+    receiverId: Joi.string()
+      .required()
+      .messages({
+        'any.required': 'Receiver ID is required',
+        'any.invalid': 'Invalid receiver ID format'
+      })
+  }),
   sendRequest: Joi.object({
     params: Joi.object({
       userId: Joi.string()
