@@ -21,6 +21,7 @@ export class NotificationController {
         req.userId!.toString(),
         options
       );
+      console.log("notifications ", result);
 
       res.status(200).json(result);
     } catch (error) {

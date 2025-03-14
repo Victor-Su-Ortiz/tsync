@@ -3,13 +3,13 @@ import { StyleSheet, Alert, Text, ActivityIndicator, FlatList, View, Image, Imag
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as Location from 'expo-location';
 import axios from 'axios';
-import { GOOGLE_PLACES_API } from '@env';
+import { GOOGLE_PLACES_API, EXPO_PUBLIC_API_URL } from '@env';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import UserSearch from '../../components/UserSearch';
 import { useAuth } from '@/src/context/AuthContext';
 import { useSocket } from '@/src/context/SocketContext'; // Import the socket hook
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { api } from '@/src/utils/api';
 
 type Place = {
   place_id: string;
@@ -30,14 +30,15 @@ export default function Home() {
   const { authToken } = useAuth();
 
   // Get notification count from the socket context
-  const { notificationCount: socketNotificationCount, incrementNotificationCount } = useSocket();
+  const { notificationCount: socketNotificationCount, resetNotificationCount } = useSocket();
 
-  // Local notification state as a fallback mechanism
-  const [localNotificationCount, setLocalNotificationCount] = useState(0);
+  // Local notification state for API-fetched notifications
+  const [apiNotificationCount, setApiNotificationCount] = useState(0);
   const appState = useRef(AppState.currentState);
 
-  // Combine socket notification count with local count
-  const notificationCount = socketNotificationCount || localNotificationCount;
+  // Combine socket notification count with API notification count
+  // If socket has notifications, use that; otherwise use the API count
+  const notificationCount = socketNotificationCount || apiNotificationCount;
 
   // Check for pending notifications when app resumes
   useEffect(() => {
@@ -56,49 +57,29 @@ export default function Home() {
 
   // Initial check for notifications
   useEffect(() => {
-    checkPendingNotifications();
+    if (authToken) {
+      checkPendingNotifications();
+    }
+  }, [authToken]);
 
-    // Debug: Force a notification after 5 seconds for testing
-    const debugTimer = setTimeout(() => {
-      console.log('Debug: Setting test notification');
-      setLocalNotificationCount(prev => prev + 1);
-    }, 5000);
-
-    return () => clearTimeout(debugTimer);
-  }, []);
-
-  // Function to check API for pending friend requests
+  // Function to check API for pending notifications
   const checkPendingNotifications = async () => {
     if (!authToken) return;
 
     try {
       console.log('Checking for pending notifications...');
-
-      // First try to get count from AsyncStorage as a quick check
-      const storedCount = await AsyncStorage.getItem('notificationCount');
-      if (storedCount) {
-        const count = parseInt(storedCount, 10);
-        if (count > 0) {
-          console.log('Found stored notifications:', count);
-          setLocalNotificationCount(count);
-        }
-      }
-
-      // Then check the API for friend requests
-      const response = await axios.get('YOUR_API_URL/friends/requests', {
+      
+      // Use the notifications endpoint to get unread count
+      const response = await api.get(`notifications`, {
         headers: {
           'Authorization': `Bearer ${authToken}`
         }
       });
+      console.log('API Notifications:', response.data);
 
-      if (response.data && response.data.requests && Array.isArray(response.data.requests)) {
-        const pendingCount = response.data.requests.length;
-        console.log('Pending friend requests from API:', pendingCount);
-
-        if (pendingCount > 0) {
-          setLocalNotificationCount(pendingCount);
-          await AsyncStorage.setItem('notificationCount', pendingCount.toString());
-        }
+      if (response.data && response.data.pagination !== undefined) {
+        console.log('Unread notifications count:', response.data.pagination.unreadCount);
+        setApiNotificationCount(response.data.pagination.unreadCount);
       }
     } catch (error) {
       console.error('Error checking notifications:', error);
@@ -123,8 +104,6 @@ export default function Home() {
       return;
     }
     const location = await Location.getCurrentPositionAsync({});
-
-    console.log("jwt token", authToken);
     setLocation(location.coords);
     return location.coords;
   };
