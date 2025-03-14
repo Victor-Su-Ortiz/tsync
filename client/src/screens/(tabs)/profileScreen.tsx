@@ -4,10 +4,10 @@ import { Stack, router } from 'expo-router';
 import images from '../../constants/images';
 import { useAuth } from '../../context/AuthContext';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import UserProfile from '@/src/components/UserProfile';
 
 export default function ProfileScreen() {
   const { userInfo, logout } = useAuth();
-
 
   // Default stats if not available from the API
   const stats = {

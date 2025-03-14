@@ -1,9 +1,51 @@
 import User from '../models/user.model';
-// import { Types } from 'mongoose';
-import { NotFoundError, ValidationError } from '../utils/errors';
+import { Types } from 'mongoose';
+import { NotFoundError, ValidationError, BadRequestError } from '../utils/errors';
 import { FriendRequestResponse, PublicUser } from '../types/user.types';
 
 export class FriendService {
+  /**
+   * Check if a friend request already exists between users
+   * @param senderId ID of the user who sent the request
+   * @param receiverId ID of the user who received the request
+   * @returns Boolean indicating if a request exists and its status
+   */
+  public static async checkFriendRequestExists(senderId: string, receiverId: string): Promise<{exists: boolean, status?: string}> {
+    try {
+      // Validate IDs
+      if (!Types.ObjectId.isValid(senderId) || !Types.ObjectId.isValid(receiverId)) {
+        throw new BadRequestError('Invalid user ID');
+      }
+
+      // Get the receiver user to check their friend requests
+      const receiver = await User.findById(receiverId);
+      if (!receiver) {
+        throw new NotFoundError('Receiver user not found');
+      }
+
+      // Check if a request from sender exists in receiver's friendRequests
+      // Using the friendRequestsWithSenderId map from your model
+      const request = receiver.friendRequestsWithSenderId?.get(senderId);
+      
+      if (request) {
+        return { exists: true, status: request.status };
+      }
+
+      // Also check if they're already friends (bidirectional check)
+      const isFriend = receiver.friends.some(id => id.toString() === senderId);
+      if (isFriend) {
+        return { exists: true, status: 'friends' };
+      }
+
+      return { exists: false };
+    } catch (error) {
+      if (error instanceof NotFoundError || error instanceof BadRequestError) {
+        throw error;
+      }
+      throw new Error(`Error checking friend request: ${error}`);
+    }
+  }
+
   /**
    * Get all friends of a user
    */

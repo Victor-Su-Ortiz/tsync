@@ -3,6 +3,23 @@ import { FriendService } from '../services/friends.service';
 // import User from '../models/user.model';
 
 export class FriendController {
+
+  /**
+   * Check if a friend request exists between users
+   * returns a boolean indicating if a request exists and its status
+   */
+  static async checkFriendRequest(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { receiverId } = req.params;
+      const senderId = req.userId; // From auth middleware
+
+      const result = await FriendService.checkFriendRequestExists(senderId!.toString(), receiverId);
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
   /**
    * Get all friends of the current user
    */

@@ -230,12 +230,12 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
     );
 
     // Update the selected user if it's the one we're viewing
-    if (selectedUser && selectedUser.id === userId) {
-      setSelectedUser({
-        ...selectedUser,
-        friendStatus: newStatus
-      });
-    }
+    // if (selectedUser && selectedUser.id === userId) {
+    //   setSelectedUser({
+    //     ...selectedUser,
+    //     friendStatus: newStatus
+    //   });
+    // }
   };
 
   const handleUserPress = (user: User) => {
