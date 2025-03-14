@@ -1,14 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, Alert, Text, ActivityIndicator, FlatList, View, Image, ImageBackground, TouchableOpacity } from "react-native";
+import React, { useEffect, useState, useRef } from 'react';
+import { StyleSheet, Alert, Text, ActivityIndicator, FlatList, View, Image, ImageBackground, TouchableOpacity, AppState } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as Location from 'expo-location';
 import axios from 'axios';
-import { GOOGLE_PLACES_API } from '@env';
+import { GOOGLE_PLACES_API, EXPO_PUBLIC_API_URL } from '@env';
 import { router, useLocalSearchParams } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import UserSearch from '../../components/UserSearch';
 import { useAuth } from '@/src/context/AuthContext';
+import { useSocket } from '@/src/context/SocketContext'; // Import the socket hook
+import { api } from '@/src/utils/api';
 
 type Place = {
   place_id: string;
@@ -19,7 +20,6 @@ type Place = {
 };
 
 export default function Home() {
-
   const params = useLocalSearchParams();
   const isSelectingTeaShop = params.selectingTeaShop === 'true';
   const [selectionMode, setSelectionMode] = useState<'normal' | 'tea-shop-selection'>('normal');
@@ -27,8 +27,64 @@ export default function Home() {
   const [shops, setShops] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchModalVisible, setSearchModalVisible] = useState(false);
-  const [notificationCount, setNotificationCount] = useState(0); // Sample notification count
   const { authToken } = useAuth();
+
+  // Get notification count from the socket context
+  const { notificationCount: socketNotificationCount, resetNotificationCount } = useSocket();
+
+  // Local notification state for API-fetched notifications
+  const [apiNotificationCount, setApiNotificationCount] = useState(0);
+  const appState = useRef(AppState.currentState);
+
+  // Combine socket notification count with API notification count
+  // If socket has notifications, use that; otherwise use the API count
+  const notificationCount = socketNotificationCount || apiNotificationCount;
+
+  // Check for pending notifications when app resumes
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
+        // App has come to the foreground
+        checkPendingNotifications();
+      }
+      appState.current = nextAppState;
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+
+  // Initial check for notifications
+  useEffect(() => {
+    if (authToken) {
+      checkPendingNotifications();
+    }
+  }, [authToken]);
+
+  // Function to check API for pending notifications
+  const checkPendingNotifications = async () => {
+    if (!authToken) return;
+
+    try {
+      console.log('Checking for pending notifications...');
+      
+      // Use the notifications endpoint to get unread count
+      const response = await api.get(`notifications`, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+      console.log('API Notifications:', response.data);
+
+      if (response.data && response.data.pagination !== undefined) {
+        console.log('Unread notifications count:', response.data.pagination.unreadCount);
+        setApiNotificationCount(response.data.pagination.unreadCount);
+      }
+    } catch (error) {
+      console.error('Error checking notifications:', error);
+    }
+  };
 
   const handleTeaShopPress = async (teaShop: Place) => {
     return;
@@ -48,9 +104,6 @@ export default function Home() {
       return;
     }
     const location = await Location.getCurrentPositionAsync({});
-
-    console.log("jwt token", authToken);
-    // console.log(location.coords.latitude, location.coords.longitude);
     setLocation(location.coords);
     return location.coords;
   };
@@ -65,7 +118,6 @@ export default function Home() {
     try {
       const response = await axios.get(url);
       setShops(response.data.results);
-      // console.log(response.data.results); // List of tea shops
     } catch (error) {
       console.error(error);
     } finally {

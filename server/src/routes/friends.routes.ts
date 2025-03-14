@@ -10,8 +10,15 @@ const router = express.Router();
 router.use(protect);
 
 // Get friend lists
-router.get("/friends", FriendController.getFriends);
+router.get("/", FriendController.getFriends);
+
+// Get pending friend requests
 router.get("/requests", FriendController.getPendingRequests);
+
+// Check friend request
+router.get("/requests/:receiverId",
+  validateRequest(friendValidation.checkFriendRequest),
+   FriendController.checkFriendRequest);
 
 // Friend request operations
 router.post(
@@ -34,7 +41,7 @@ router.put(
 
 // Friend removal
 router.delete(
-  "/friends/:friendId",
+  "/:friendId",
   validateRequest(friendValidation.removeFriend),
   FriendController.removeFriend
 );
