@@ -55,7 +55,7 @@ const FriendsDropdown = ({ selectedFriends, setSelectedFriends }) => {
     setError(null);
 
     try {
-      const response = await api.get('/friends/friends', { headers: { Authorization: `Bearer ${authToken}` } });
+      const response = await api.get('/friends', { headers: { Authorization: `Bearer ${authToken}` } });
       const { success, friends } = response.data;
 
       // Based on your controller, response should have a structure with success and data fields
