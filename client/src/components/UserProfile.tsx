@@ -63,16 +63,25 @@ const UserProfile = ({
     console.log(user.id)
     
     try {
-      // Use our new API endpoint to check friend request status
-      const response = await api.get(`/friends/requests/${user.id}`, {
+      // Check friend request status of the user in profile
+      const outgoingRequest = await api.get(`/friends/requests/${user.id}`, {
         headers: {
           'Authorization': `Bearer ${authToken}`
         }
       });
+      console.log("response friend request ", outgoingRequest.data)
+
+      const pendingRequests = await api.get(`/friends/requests/pending/${user.id}`, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+      console.log("response pending request ", pendingRequests.data)
       
       // The response format should be { exists: boolean, status?: string }
-      if (response.data.exists) {
-        const status = response.data.status;
+      if (outgoingRequest.data.exists) {
+        const status = outgoingRequest.data.status;
+        console.log("current status ", status)
         
         if (status === 'pending') {
           // We sent the request
@@ -83,7 +92,12 @@ const UserProfile = ({
           // If we have a request ID, it means we're receiving a request
           setFriendRequestStatus('incoming_request');
         }
-      } else {
+      }
+      else if (pendingRequests.data.exists) {
+        // We have a pending request from the user
+        setFriendRequestStatus('incoming_request');
+      }
+      else {
         // No request exists
         setFriendRequestStatus('none');
       }

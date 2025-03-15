@@ -15,10 +15,15 @@ router.get("/", FriendController.getFriends);
 // Get pending friend requests
 router.get("/requests", FriendController.getPendingRequests);
 
-// Check friend request
+// Get pending friend requests for a specific user
+router.get("/requests/pending/:senderId", 
+  validateRequest(friendValidation.checkPendingRequest),
+  FriendController.checkPendingRequest);
+
+// Check if user sent friend request to receiver
 router.get("/requests/:receiverId",
   validateRequest(friendValidation.checkFriendRequest),
-   FriendController.checkFriendRequest);
+  FriendController.checkFriendRequest);
 
 // Friend request operations
 router.post(

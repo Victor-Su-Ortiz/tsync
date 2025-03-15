@@ -39,6 +39,9 @@ export default function Home() {
   // Combine socket notification count with API notification count
   // If socket has notifications, use that; otherwise use the API count
   const notificationCount = socketNotificationCount || apiNotificationCount;
+  // console.log("notificationCount", notificationCount);
+  // console.log("socketNotificationCount", socketNotificationCount);
+  // console.log("apiNotificationCount", apiNotificationCount);
 
   // Check for pending notifications when app resumes
   useEffect(() => {

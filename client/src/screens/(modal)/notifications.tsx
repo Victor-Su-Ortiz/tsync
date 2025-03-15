@@ -74,7 +74,6 @@ export default function Notifications() {
 
     // Debug: Log that we're resetting notifications
     console.log('Notifications screen opened, resetting notification count');
-    Alert.alert('Debug', 'Notifications opened, count reset');
   }, []);
 
   const fetchFriendRequests = async () => {

@@ -12,6 +12,17 @@ export const friendValidation = {
         })
     })
   }),
+
+  checkPendingRequest: Joi.object({
+    params: Joi.object({
+      userId: Joi.string()
+        .required()
+        .messages({
+          'any.required': 'User ID is required'
+        })
+    })
+  }),
+  
   sendRequest: Joi.object({
     params: Joi.object({
       userId: Joi.string()

@@ -8,6 +8,21 @@ export class FriendController {
    * Check if a friend request exists between users
    * returns a boolean indicating if a request exists and its status
    */
+  static async checkPendingRequest(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { senderId } = req.params;
+      const receiverId = req.userId; // From auth middleware
+      const result = await FriendService.checkFriendRequestExists(senderId, receiverId!.toString());
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Check if a friend request exists between users
+   * returns a boolean indicating if a request exists and its status
+   */
   static async checkFriendRequest(req: Request, res: Response, next: NextFunction) {
     try {
       const { receiverId } = req.params;
