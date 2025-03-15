@@ -37,6 +37,7 @@ type Place = {
 export default function AddEventScreen() {
   const params = useLocalSearchParams();
   const { authToken } = useAuth(); // Get the auth token from context
+  const sourceScreen = params.sourceScreen as string;
 
   const [teaShopInfo, setTeaShopInfo] = useState('');
   const [teaShopAddress, setTeaShopAddress] = useState('');
@@ -87,6 +88,28 @@ export default function AddEventScreen() {
     setTeaShopAddress(teaShop.vicinity);
   };
 
+  // Navigate back to the source screen if available
+  const navigateBack = () => {
+    if (sourceScreen) {
+      // Check if source screen is a valid path
+      if (sourceScreen.startsWith('/')) {
+        // For absolute paths just use them directly
+        router.push(sourceScreen as any);
+      } else {
+        // For relative paths like "./events" ensure in correct format
+        const normalizedPath = sourceScreen.startsWith('.')
+          ? sourceScreen
+          : `./${sourceScreen}`;
+
+        router.push(normalizedPath as any);
+      }
+    } else {
+      // If no source screen, just go back
+      router.back();
+    }
+  };
+
+  // Updated to navigate back to source screen
   const handleBackButton = () => {
     if (formDirty) {
       // Show confirmation dialog if there are unsaved changes
@@ -111,15 +134,15 @@ export default function AddEventScreen() {
               setSelectedFriends([]);
               setFormDirty(false);
 
-              // Navigate back to events screen, discarding all changes
-              router.push('./events');
+              // Navigate back to source screen
+              navigateBack();
             }
           }
         ]
       );
     } else {
       // No changes to discard, just navigate back
-      router.push('./events');
+      navigateBack();
     }
   };
 
@@ -176,11 +199,11 @@ export default function AddEventScreen() {
       // Reset form dirty state since we're saving
       setFormDirty(false);
 
-      // Show success message and navigate back to events tab
+      // Show success message and navigate back to source screen
       Alert.alert(
         'Success!',
         'Event has been created successfully.',
-        [{ text: 'OK', onPress: () => router.push('./events') }]
+        [{ text: 'OK', onPress: () => navigateBack() }]
       );
     } catch (error: any) {
       console.error('Error creating event:', error);
