@@ -1,7 +1,8 @@
 // src/models/User.ts
-import mongoose, { Types, Schema } from "mongoose";
+import mongoose, { Types, Schema, Document } from "mongoose";
 import bcrypt from "bcryptjs";
 import { IUser, IUserMethods, IUserModel, PublicUser } from "../types/user.types";
+import { IFriendRequest } from "../types/friendRequest.types";
 import FriendRequest from "./friendRequest.model"; // Import the FriendRequest model
 
 const userSchema = new Schema<IUser, IUserModel, IUserMethods>(
@@ -254,13 +255,13 @@ userSchema.methods.removeFriend = async function (friendId: string) {
   });
 };
 
-// // Helper method to get all pending friend requests
-// userSchema.methods.getPendingFriendRequests = async function (): Promise<(IFriendRequest & Document)[]> {
-//   return FriendRequest.find({
-//     receiver: this._id,
-//     status: 'pending'
-//   }).populate('sender', 'name email profilePicture');
-// };
+// Helper method to get all pending friend requests
+userSchema.methods.getPendingFriendRequests = async function (): Promise<(IFriendRequest & Document)[]> {
+  return FriendRequest.find({
+    receiver: this._id,
+    status: 'pending'
+  });
+};
 
 // Static method to find user by email
 userSchema.static("findByEmail", async function findByEmail(email: string) {

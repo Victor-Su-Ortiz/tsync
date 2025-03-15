@@ -25,10 +25,10 @@ export class FriendController {
    */
   static async checkFriendRequest(req: Request, res: Response, next: NextFunction) {
     try {
-      const { receiverId } = req.params;
+      const { userId } = req.params;
       const senderId = req.userId; // From auth middleware
 
-      const result = await FriendService.checkFriendRequestExists(senderId!.toString(), receiverId);
+      const result = await FriendService.checkFriendRequestExists(senderId!.toString(), userId);
       res.status(200).json(result);
     } catch (error) {
       next(error);

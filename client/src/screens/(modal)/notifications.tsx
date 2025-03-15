@@ -102,7 +102,7 @@ export default function Notifications() {
         console.log('Processing request:', JSON.stringify(request));
 
         // Check if request.from exists
-        if (!request.from) {
+        if (!request.sender) {
           console.warn('Missing from field in request:', request);
           return null;
         }
@@ -110,14 +110,14 @@ export default function Notifications() {
         return {
           id: `fr_${request._id}`, // Using _id instead of id based on your response
           title: 'Friend Request',
-          message: `${request.from.name || 'Someone'} wants to be your friend`,
+          message: `${request.sender.name || 'Someone'} wants to be your friend`,
           timestamp: formatTimestamp(request.createdAt),
           read: false,
           type: 'friend_request' as NotificationType,
           userData: {
-            id: request.from._id || request.from.id,
-            name: request.from.name || 'User',
-            profilePicture: request.from.profilePicture,
+            id: request.sender._id || request.sender.id,
+            name: request.sender.name || 'User',
+            profilePicture: request.sender.profilePicture,
           },
           requestId: request._id // Save the original request ID
         };

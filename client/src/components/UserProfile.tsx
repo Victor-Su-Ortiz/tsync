@@ -71,12 +71,12 @@ const UserProfile = ({
       });
       console.log("response friend request ", outgoingRequest.data)
 
-      const pendingRequests = await api.get(`/friends/requests/pending/${user.id}`, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
-      });
-      console.log("response pending request ", pendingRequests.data)
+      // const pendingRequests = await api.get(`/friends/requests/pending/${user.id}`, {
+      //   headers: {
+      //     'Authorization': `Bearer ${authToken}`
+      //   }
+      // });
+      // console.log("response pending request ", pendingRequests.data)
       
       // The response format should be { exists: boolean, status?: string }
       if (outgoingRequest.data.exists) {
@@ -93,10 +93,10 @@ const UserProfile = ({
           setFriendRequestStatus('incoming_request');
         }
       }
-      else if (pendingRequests.data.exists) {
-        // We have a pending request from the user
-        setFriendRequestStatus('incoming_request');
-      }
+      // else if (pendingRequests.data.exists) {
+      //   // We have a pending request from the user
+      //   setFriendRequestStatus('incoming_request');
+      // }
       else {
         // No request exists
         setFriendRequestStatus('none');
