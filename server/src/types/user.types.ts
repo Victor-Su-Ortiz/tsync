@@ -17,7 +17,7 @@ export interface IUser extends Document {
   lastLogin?: Date;
   createdAt: Date;
   updatedAt: Date;
-  
+
   // Friend-related fields
   friends: Types.ObjectId[];
   // Map from requestId to friend request
@@ -40,6 +40,7 @@ export interface IUserMethods {
   acceptFriendRequest(requestId: string): Promise<void>;
   rejectFriendRequest(requestId: string): Promise<void>;
   removeFriend(friendId: string): Promise<void>;
+  // getPendingFriendRequests(): Promise<(IFriendRequest & Document)[]>;
 }
 
 // Public user data type (for API responses)

@@ -2,7 +2,7 @@
 import mongoose, { Types, Schema } from "mongoose";
 import bcrypt from "bcryptjs";
 import { IUser, IUserMethods, IUserModel, PublicUser } from "../types/user.types";
-import { IFriendRequest } from "../types/friendRequest.types";
+import FriendRequest from "./friend.model"; // Import the FriendRequest model
 
 const userSchema = new Schema<IUser, IUserModel, IUserMethods>(
   {
@@ -66,22 +66,8 @@ const userSchema = new Schema<IUser, IUserModel, IUserMethods>(
       type: Schema.Types.ObjectId,
       ref: 'User'
     }],
-    
-    friendRequests: [{
-      from: {
-        type: Schema.Types.ObjectId,
-        ref: 'User'
-      },
-      status: {
-        type: String,
-        enum: ['pending', 'accepted', 'rejected'],
-        default: 'pending'
-      },
-      createdAt: {
-        type: Date,
-        default: Date.now
-      }
-    }],
+
+    // Removed the embedded friendRequests array since we're now using a separate model
 
     blockedUsers: [{
       type: Schema.Types.ObjectId,
@@ -96,33 +82,19 @@ const userSchema = new Schema<IUser, IUserModel, IUserMethods>(
   }
 );
 
-// Helper function to initialize maps for a document
-const initializeMaps = function(docs: any) {
-  // Handle both single doc and array of docs
-  const documents = Array.isArray(docs) ? docs : [docs];
-  
-  documents.forEach(doc => {
-    if (doc && doc.friendRequests) {
-      // Initialize request ID map
-      doc.friendRequestsWithRequestId = new Map(
-        doc.friendRequests.map((request: IFriendRequest) => [request._id.toString(), request])
-      );
-      
-      // Initialize sender ID map
-      doc.friendRequestsWithSenderId = new Map(
-        doc.friendRequests.map((request: IFriendRequest) => [request.from.toString(), request])
-      );
-    }
-  });
-};
+// Virtual field to get all friend requests sent by this user
+userSchema.virtual('sentFriendRequests', {
+  ref: 'FriendRequest',
+  localField: '_id',
+  foreignField: 'sender'
+});
 
-// Initialize maps when document is loaded
-userSchema.post("find", initializeMaps);
-userSchema.post("findOne", initializeMaps);
-
-// Also handle init to ensure maps are created when documents are initialized
-userSchema.post('init', initializeMaps);
-
+// Virtual field to get all friend requests received by this user
+userSchema.virtual('receivedFriendRequests', {
+  ref: 'FriendRequest',
+  localField: '_id',
+  foreignField: 'receiver'
+});
 
 // Pre-save middleware to hash password
 userSchema.pre("save", async function (next) {
@@ -165,8 +137,9 @@ userSchema.methods.getPublicProfile = function (): PublicUser {
   return publicData;
 };
 
-// Add friend-related methods
-userSchema.methods.sendFriendRequest = async function(friendId: string) {
+// Updated friend-related methods to use the new FriendRequest model
+// Make sure these methods match the IUserMethods interface return types
+userSchema.methods.sendFriendRequest = async function (friendId: string): Promise<void> {
   if (this._id.toString() === friendId) {
     throw new Error('Cannot send friend request to self');
   }
@@ -177,31 +150,25 @@ userSchema.methods.sendFriendRequest = async function(friendId: string) {
   }
 
   // Check if blocked
-  if (this.blockedUsers.some((id: Types.ObjectId) => id.toString() === friendId) || 
-      (await User.findById(friendId))?.blockedUsers.includes(this._id)) {
+  if (this.blockedUsers.some((id: Types.ObjectId) => id.toString() === friendId) ||
+    (await User.findById(friendId))?.blockedUsers.includes(this._id)) {
     throw new Error('Unable to send friend request');
   }
 
-  // Check for existing requests
-  const targetUser = await User.findById(friendId);
-  if (!targetUser) {
-    throw new Error('User not found');
-  }
-
-  const existingRequest = targetUser.friendRequestsWithSenderId.get(this._id.toString());
+  // Check for existing request using the findBetweenUsers static method
+  const existingRequest = await FriendRequest.findBetweenUsers(this._id, friendId);
   if (existingRequest) {
-    throw new Error('Friend request already sent');
+    throw new Error('Friend request already exists between users');
   }
 
-  // Send friend request
-  await User.findByIdAndUpdate(friendId, {
-    $push: {
-      friendRequests: {
-        from: this._id,
-        status: 'pending'
-      }
-    }
+  // Create a new friend request
+  const friendRequest = new FriendRequest({
+    sender: this._id,
+    receiver: friendId,
+    status: 'pending'
   });
+
+  await friendRequest.save();
 
   // Create notification
   const { default: NotificationService } = await import('../services/notification.service');
@@ -210,23 +177,29 @@ userSchema.methods.sendFriendRequest = async function(friendId: string) {
     senderId: this._id.toString(),
     type: 'FRIEND_REQUEST',
     message: `${this.name} sent you a friend request`,
-    relatedId: this._id.toString(),
-    onModel: 'User'
+    relatedId: friendRequest._id ? friendRequest._id.toString() : friendRequest.id,
+    onModel: 'FriendRequest'
   });
 };
 
-userSchema.methods.acceptFriendRequest = async function(requestId: string) {
-  const request = this.friendRequestsWithRequestId.get(requestId);
-  if (!request || request.status !== 'pending') {
+userSchema.methods.acceptFriendRequest = async function (requestId: string): Promise<void> {
+  const request = await FriendRequest.findOne({
+    _id: requestId,
+    receiver: this._id,
+    status: 'pending'
+  });
+
+  if (!request) {
     throw new Error('Invalid friend request');
   }
 
   // Update request status
   request.status = 'accepted';
-  
+  await request.save();
+
   // Add to friends list for both users
-  this.friends.push(request.from);
-  await User.findByIdAndUpdate(request.from, {
+  this.friends.push(request.sender);
+  await User.findByIdAndUpdate(request.sender, {
     $push: { friends: this._id }
   });
 
@@ -235,26 +208,31 @@ userSchema.methods.acceptFriendRequest = async function(requestId: string) {
   // Create notification for the request sender
   const { default: NotificationService } = await import('../services/notification.service');
   await NotificationService.createNotification({
-    recipientId: request.from.toString(),
+    recipientId: request.sender.toString(),
     senderId: this._id.toString(),
     type: 'FRIEND_ACCEPTED',
     message: `${this.name} accepted your friend request`,
-    relatedId: this._id.toString(),
-    onModel: 'User'
+    relatedId: request._id ? request._id.toString() : request.id,
+    onModel: 'FriendRequest'
   });
 };
 
-userSchema.methods.rejectFriendRequest = async function(requestId: string) {
-  const request = this.friendRequestsWithRequestId.get(requestId);
-  if (!request || request.status !== 'pending') {
+userSchema.methods.rejectFriendRequest = async function (requestId: string): Promise<void> {
+  const request = await FriendRequest.findOne({
+    _id: requestId,
+    receiver: this._id,
+    status: 'pending'
+  });
+
+  if (!request) {
     throw new Error('Invalid friend request');
   }
 
   request.status = 'rejected';
-  await this.save();
+  await request.save();
 };
 
-userSchema.methods.removeFriend = async function(friendId: string) {
+userSchema.methods.removeFriend = async function (friendId: string) {
   if (!this.friends.some((id: Types.ObjectId) => id.toString() === friendId)) {
     throw new Error('User is not a friend');
   }
@@ -266,8 +244,23 @@ userSchema.methods.removeFriend = async function(friendId: string) {
   });
 
   await this.save();
+
+  // Also find and remove any friend requests between these users
+  await FriendRequest.deleteMany({
+    $or: [
+      { sender: this._id, receiver: friendId },
+      { sender: friendId, receiver: this._id }
+    ]
+  });
 };
 
+// // Helper method to get all pending friend requests
+// userSchema.methods.getPendingFriendRequests = async function (): Promise<(IFriendRequest & Document)[]> {
+//   return FriendRequest.find({
+//     receiver: this._id,
+//     status: 'pending'
+//   }).populate('sender', 'name email profilePicture');
+// };
 
 // Static method to find user by email
 userSchema.static("findByEmail", async function findByEmail(email: string) {
