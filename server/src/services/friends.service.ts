@@ -48,11 +48,40 @@ export class FriendService {
 
     return user.friends as unknown as PublicUser[];
   }
+  /**
+   * Get all sent friend requests
+   */
+  public static async getSentRequests(userId: string): Promise<(IFriendRequest & Document)[]> {
+    const requests = await FriendRequest.find({
+      sender: userId
+    }).populate('receiver', 'name email profilePicture');
+
+    if (!requests || requests.length === 0) {
+      return [];
+    }
+
+    return requests;
+  }
 
   /**
-   * Get all pending friend requests for a user
+   * Get all incoming requests
+   * */
+  public static async getReceivedRequests(userId: string): Promise<(IFriendRequest & Document)[]> {
+    const requests = await FriendRequest.find({
+      receiver: userId
+    }).populate('sender', 'name email profilePicture');
+
+    if (!requests || requests.length === 0) {
+      return [];
+    }
+
+    return requests;
+  }
+
+  /**
+   * Get all incoming requests that are pending
    */
-  public static async getPendingRequests(userId: string): Promise<(IFriendRequest & Document)[]> {
+  public static async getReceivedPendingRequests(userId: string): Promise<(IFriendRequest & Document)[]> {
     const pendingRequests = await FriendRequest.find({
       receiver: userId, 
       status: 'pending'
