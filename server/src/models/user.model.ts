@@ -2,7 +2,7 @@
 import mongoose, { Types, Schema } from "mongoose";
 import bcrypt from "bcryptjs";
 import { IUser, IUserMethods, IUserModel, PublicUser } from "../types/user.types";
-import FriendRequest from "./friend.model"; // Import the FriendRequest model
+import FriendRequest from "./friendRequest.model"; // Import the FriendRequest model
 
 const userSchema = new Schema<IUser, IUserModel, IUserMethods>(
   {
