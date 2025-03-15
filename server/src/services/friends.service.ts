@@ -13,7 +13,7 @@ export class FriendService {
    * @param receiverId ID of the user who received the request
    * @returns Boolean indicating if a request exists and its status
    */
-  public static async checkFriendRequestExists(senderId: string, receiverId: string): Promise<{ exists: boolean, status?: string }> {
+  public static async checkFriendRequestExists(senderId: string, receiverId: string): Promise<{ exists: boolean, status?: string, receiver?: string, sender?: string }> {
     try {
       // Validate IDs
       if (!Types.ObjectId.isValid(senderId) || !Types.ObjectId.isValid(receiverId)) {
@@ -26,7 +26,7 @@ export class FriendService {
         return { exists: false };
       }
 
-      return { exists: true, status: request.status };
+      return { exists: true, status: request.status, receiver: request.receiver.toString() , sender: request.sender.toString() };
     } catch (error) {
       if (error instanceof NotFoundError || error instanceof BadRequestError) {
         throw error;
