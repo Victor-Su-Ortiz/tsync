@@ -59,8 +59,6 @@ const UserProfile = ({
     if (!user) return;
     
     setLoadingStatus(true);
-
-    console.log(user.id)
     
     try {
       // Check friend request status of the user in profile
@@ -69,8 +67,6 @@ const UserProfile = ({
           'Authorization': `Bearer ${authToken}`
         }
       });
-      console.log("response friend request ", friendRequest.data)
-      console.log(user.id)
       
       // The response format should be { exists: boolean, status?: string }
       if (friendRequest.data.exists && friendRequest.data.receiver === user.id) {

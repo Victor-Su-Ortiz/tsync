@@ -65,8 +65,6 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [profileVisible, setProfileVisible] = useState(false);
   const inputRef = useRef<TextInput>(null);
-
-  console.log("component is being loaded");
   
   // Cache of friend requests to avoid repeated API calls
   const [friendRequestsCache, setFriendRequestsCache] = useState<{
@@ -81,9 +79,6 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
 
   // Define the searchUsers function without debounce first
   const searchUsers = async (query: string) => {
-    console.log("friendRequestsCache beginning search:", friendRequestsCache);
-    console.log("🔑 Auth Token Retrieved:", accessToken);
-    console.log("🔎 searchUsers function is being called with query:", query);
 
     if (!query.trim()) {
       console.log("⚠️ Empty query, exiting searchUsers");
@@ -94,13 +89,11 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
     setHasSearched(true);
 
     if (!accessToken) {
-      console.log("🚨 No access token found! Exiting search.");
       setIsSearching(false);
       return;
     }
 
     try {
-      console.log("📡 Making API request...");
       // Get search results
       const searchResponse = await api.get(
         '/users/search',
@@ -112,20 +105,15 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
         }
       );
 
-      console.log("✅ API Response:", searchResponse.data);
-
       const searchedUsers = searchResponse.data.users || [];
-      console.log("👥 Users found:", searchedUsers.length);
 
       // Get the current friend requests cache state
       // This ensures we use the latest state
       const currentCache = friendRequestsCache;
-      console.log("friendRequestsCache being used:", currentCache);
 
       // Apply friend statuses from our cache
       const updatedUsers = searchedUsers.map((user: User) => {
         const userId = user._id || user.id;
-        console.log("🔍 Processing user:", user.name, "ID:", userId);
 
         // Apply friend status based on our cached data
         let friendStatus: FriendStatus = 'none';
@@ -133,7 +121,6 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
 
         // Check if they're already friends
         if (currentCache.friends.includes(userId)) {
-          console.log("👫 User is already a friend");
           friendStatus = 'friends';
         }
         // Check if we have an incoming request from them
@@ -146,7 +133,6 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
           friendStatus = 'pending';
           requestId = currentCache.outgoing[userId];
         }
-        console.log("👥 User:", user.name, "Status:", friendStatus);
 
         return { 
           ...user, 
@@ -164,7 +150,6 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
       // Just show empty results if there's an error
       setUsers([]);
     } finally {
-      console.log("⏳ Finished searching, updating UI...");
       setIsSearching(false);
     }
   };
@@ -174,12 +159,9 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
   useEffect(() => {
     const debouncedSearchFn = debounce((query: string) => {
       if (query.trim().length > 0) {
-        console.log("Searching for:", query);
-        console.log("friendRequestsCache before search:", friendRequestsCache);
         searchUsers(query);
       } else {
         // Clear results if search query is empty
-        console.log("Clearing search results");
         setUsers([]);
         setHasSearched(false);
       }
@@ -198,7 +180,6 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
 
   // Fetch all friend-related data at component mount and when modal opens
   useEffect(() => {
-    console.log("use effect: fetch friend data")
     if (visible && accessToken) {
       fetchFriendData();
     }
@@ -206,7 +187,6 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
 
   useEffect(() => {
     // Reset state when modal opens
-    console.log("use effect: modal visible")
     if (visible) {
       setSearchQuery('');
       setHasSearched(false);
@@ -244,7 +224,6 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
         incomingResponse.data.requests.forEach((request: FriendRequestData) => {
           const senderId = request.sender._id;
           incomingRequests[senderId] = request._id; // Store request ID for accept/reject operations
-          console.log('Incoming request from id:', senderId);
         });
       }
 
@@ -254,7 +233,6 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
         outgoingResponse.data.requests.forEach((request: FriendRequestData) => {
           const recipientId = request.receiver._id;
           outgoingRequests[recipientId] = request._id; // Store request ID for cancel operations
-          console.log('Outgoing request to id:', recipientId);
         });
       }
 
@@ -285,7 +263,6 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
 
   // Handle friend status changes from the UserProfile component
   const handleFriendStatusChange = (userId: string, newStatus: FriendStatus, requestId?: string) => {
-    console.log(`Updating friend status for user ${userId} to ${newStatus}`);
 
     // Update our cache based on the new status
     const newCache = { ...friendRequestsCache };
@@ -317,7 +294,6 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
   };
 
   const handleUserPress = (user: User) => {
-    console.log('User pressed:', user.name, 'with status:', user.friendStatus || 'none');
     setSelectedUser(user);
     
     // Add a slight delay to ensure the state updates before showing the profile
