@@ -16,6 +16,8 @@ export default function ProfileScreen() {
     eventsHosted: 10
   };
 
+  useEffect(() => console.log(userInfo));
+
   const handleSignOut = async () => {
     try {
       // Sign out from Google
@@ -37,7 +39,7 @@ export default function ProfileScreen() {
 
       <View style={styles.avatarContainer}>
         <Image
-          source={userInfo?.picture ? { uri: userInfo.picture } : images.defaultpfp}
+          source={userInfo?.picture || userInfo?.profilePicture ? { uri: userInfo?.picture || userInfo?.profilePicture } : images.defaultpfp}
           style={styles.avatar}
         />
       </View>
