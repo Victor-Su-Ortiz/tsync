@@ -110,6 +110,8 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
       // Get the current friend requests cache state
       // This ensures we use the latest state
       const currentCache = friendRequestsCache;
+      console.log("Current Cache:", currentCache);
+      console.log("Searched Users:", searchedUsers);
 
       // Apply friend statuses from our cache
       const updatedUsers = searchedUsers.map((user: User) => {
@@ -133,6 +135,7 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
           friendStatus = 'pending';
           requestId = currentCache.outgoing[userId];
         }
+        console.log("User:", user.name, "Status:", friendStatus);
 
         return { 
           ...user, 
@@ -207,7 +210,7 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
     try {
       // Fetch all friend relationships in parallel for efficiency
       const [incomingResponse, outgoingResponse, friendsResponse] = await Promise.all([
-        api.get('/friends/requests/received', {
+        api.get('/friends/requests/received/pending', {
           headers: { Authorization: `Bearer ${accessToken}` }
         }),
         api.get('/friends/requests/sent', {
@@ -217,6 +220,9 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
           headers: { Authorization: `Bearer ${accessToken}` }
         })
       ]);
+      console.log('incoming request data:', incomingResponse.data);
+      console.log('outgoing request data:', outgoingResponse.data);
+      console.log('friends data:', friendsResponse.data);
 
       // Process incoming requests
       const incomingRequests: Record<string, string> = {};
@@ -310,7 +316,6 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
 
   // Handle text input changes
   const handleSearchChange = (text: string) => {
-    console.log("Setting search query:", text);
     setSearchQuery(text);
   };
 

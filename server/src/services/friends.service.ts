@@ -62,6 +62,22 @@ export class FriendService {
 
     return requests;
   }
+  /**
+   * Get all sent requests that are pending
+   */
+  public static async getSentPendingRequests(userId: string): Promise<(IFriendRequest & Document)[]> {
+    const pendingRequests = await FriendRequest.find({
+      sender: userId,
+      status: 'pending'
+    }).populate('receiver', 'name email profilePicture');
+
+    if (!pendingRequests || pendingRequests.length === 0) {
+      return []; // Return an empty array instead of throwing an error
+    }
+
+    // Format the requests into the response format
+    return pendingRequests;
+  }
 
   /**
    * Get all incoming requests

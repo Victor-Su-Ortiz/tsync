@@ -52,6 +52,20 @@ export class FriendController {
       next(error);
     }
   }
+  /**
+   * Get all sent pending friend requests for the current user
+   */
+  static async getSentPendingRequests(req: Request, res: Response, next: NextFunction) {
+    try {
+      const requests = await FriendService.getSentPendingRequests(req.userId!.toString());
+      res.status(200).json({
+        success: true,
+        requests
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 
   /**
    * Get all received friend requests for the current user

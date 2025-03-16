@@ -21,6 +21,8 @@ router.get("/requests/received/pending", FriendController.getReceivedPendingRequ
 // Get outgoing friend requests
 router.get("/requests/sent", FriendController.getSentRequests);
 
+router.get("/requests/sent/pending", FriendController.getSentPendingRequests);
+
 
 // Check if there exists a friend request between two users
 router.get("/requests/:userId",
