@@ -157,8 +157,8 @@ const UserProfile = ({
   };
 
   const handleAcceptFriendRequest = async () => {
+    console.log("accepting friend request")
     if (!user || !requestId) return;
-
     setIsLoading(true);
 
     try {

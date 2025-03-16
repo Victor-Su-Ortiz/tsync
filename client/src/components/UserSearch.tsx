@@ -422,6 +422,7 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
               onClose={handleProfileClose}
               user={selectedUser}
               onFriendStatusChange={handleFriendStatusChange}
+              requestId={selectedUser.requestId}
             />
           )}
         </View>
