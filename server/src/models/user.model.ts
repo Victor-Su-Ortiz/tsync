@@ -68,8 +68,6 @@ const userSchema = new Schema<IUser, IUserModel, IUserMethods>(
       ref: 'User'
     }],
 
-    // Removed the embedded friendRequests array since we're now using a separate model
-
     blockedUsers: [{
       type: Schema.Types.ObjectId,
       ref: 'User',

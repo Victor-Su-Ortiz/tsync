@@ -65,6 +65,8 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [profileVisible, setProfileVisible] = useState(false);
   const inputRef = useRef<TextInput>(null);
+
+  console.log("component is being loaded");
   
   // Cache of friend requests to avoid repeated API calls
   const [friendRequestsCache, setFriendRequestsCache] = useState<{
@@ -77,115 +79,9 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
     friends: []
   });
 
-  // Create a debounced search function to prevent too many searches as user types
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const debouncedSearch = useCallback(
-    debounce((query: string) => {
-      if (query.trim().length > 0) {
-        searchUsers(query);
-      } else {
-        // Clear results if search query is empty
-        setUsers([]);
-        setHasSearched(false);
-      }
-    }, 300), // 300ms delay
-    []
-  );
-
-  // Fetch all friend-related data at component mount and when modal opens
-  useEffect(() => {
-    if (visible && accessToken) {
-      fetchFriendData();
-    }
-  }, [visible, accessToken]);
-
-  useEffect(() => {
-    // Reset state when modal opens
-    if (visible) {
-      setSearchQuery('');
-      setHasSearched(false);
-
-      // Focus the input field when the modal opens
-      setTimeout(() => {
-        if (inputRef.current) {
-          inputRef.current.focus();
-        }
-      }, 100);
-    }
-  }, [visible]);
-
-  // Trigger the debounced search when searchQuery changes
-  useEffect(() => {
-    debouncedSearch(searchQuery);
-
-    // Cancel any pending debounced searches on cleanup
-    return () => {
-      debouncedSearch.cancel();
-    };
-  }, [searchQuery, debouncedSearch]);
-
-  // Efficiently fetch all friend data in a single batch
-  const fetchFriendData = async () => {
-    if (!accessToken) return;
-
-    try {
-      // Fetch all friend relationships in parallel for efficiency
-      const [incomingResponse, outgoingResponse, friendsResponse] = await Promise.all([
-        api.get('/friends/requests/received', {
-          headers: { Authorization: `Bearer ${accessToken}` }
-        }),
-        api.get('/friends/requests/sent', {
-          headers: { Authorization: `Bearer ${accessToken}` }
-        }),
-        api.get('/friends', {
-          headers: { Authorization: `Bearer ${accessToken}` }
-        })
-      ]);
-
-      // Process incoming requests
-      const incomingRequests: Record<string, string> = {};
-      if (incomingResponse.data.requests && Array.isArray(incomingResponse.data.requests)) {
-        incomingResponse.data.requests.forEach((request: FriendRequestData) => {
-          const senderId = request.sender._id;
-          incomingRequests[senderId] = request._id; // Store request ID for accept/reject operations
-        });
-      }
-
-      // Process outgoing requests
-      const outgoingRequests: Record<string, string> = {};
-      if (outgoingResponse.data.requests && Array.isArray(outgoingResponse.data.requests)) {
-        outgoingResponse.data.requests.forEach((request: FriendRequestData) => {
-          const recipientId = request.receiver._id;
-          outgoingRequests[recipientId] = request._id; // Store request ID for cancel operations
-        });
-      }
-
-      // Process friends list
-      const friendsList: string[] = [];
-      if (friendsResponse.data.friends && Array.isArray(friendsResponse.data.friends)) {
-        friendsResponse.data.friends.forEach((friend: any) => {
-          friendsList.push(friend._id);
-        });
-      }
-
-      // Update cache
-      setFriendRequestsCache({
-        incoming: incomingRequests,
-        outgoing: outgoingRequests,
-        friends: friendsList
-      });
-
-      console.log('Friend data loaded:', {
-        incomingCount: Object.keys(incomingRequests).length,
-        outgoingCount: Object.keys(outgoingRequests).length,
-        friendsCount: friendsList.length
-      });
-    } catch (error) {
-      console.error('Error fetching friend data:', error);
-    }
-  };
-
-  const searchUsers = async (query: string = searchQuery) => {
+  // Define the searchUsers function without debounce first
+  const searchUsers = async (query: string) => {
+    console.log("friendRequestsCache beginning search:", friendRequestsCache);
     console.log("🔑 Auth Token Retrieved:", accessToken);
     console.log("🔎 searchUsers function is being called with query:", query);
 
@@ -221,28 +117,36 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
       const searchedUsers = searchResponse.data.users || [];
       console.log("👥 Users found:", searchedUsers.length);
 
+      // Get the current friend requests cache state
+      // This ensures we use the latest state
+      const currentCache = friendRequestsCache;
+      console.log("friendRequestsCache being used:", currentCache);
+
       // Apply friend statuses from our cache
       const updatedUsers = searchedUsers.map((user: User) => {
         const userId = user._id || user.id;
+        console.log("🔍 Processing user:", user.name, "ID:", userId);
 
         // Apply friend status based on our cached data
         let friendStatus: FriendStatus = 'none';
         let requestId: string | undefined = undefined;
 
         // Check if they're already friends
-        if (friendRequestsCache.friends.includes(userId)) {
+        if (currentCache.friends.includes(userId)) {
+          console.log("👫 User is already a friend");
           friendStatus = 'friends';
         }
         // Check if we have an incoming request from them
-        else if (userId in friendRequestsCache.incoming) {
+        else if (userId in currentCache.incoming) {
           friendStatus = 'incoming_request';
-          requestId = friendRequestsCache.incoming[userId];
+          requestId = currentCache.incoming[userId];
         }
         // Check if we sent them a request
-        else if (userId in friendRequestsCache.outgoing) {
+        else if (userId in currentCache.outgoing) {
           friendStatus = 'pending';
-          requestId = friendRequestsCache.outgoing[userId];
+          requestId = currentCache.outgoing[userId];
         }
+        console.log("👥 User:", user.name, "Status:", friendStatus);
 
         return { 
           ...user, 
@@ -262,6 +166,120 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
     } finally {
       console.log("⏳ Finished searching, updating UI...");
       setIsSearching(false);
+    }
+  };
+
+  // Create a debounced search function
+  // The key fix is to NOT use useCallback for this, as we need it to be recreated when dependencies change
+  useEffect(() => {
+    const debouncedSearchFn = debounce((query: string) => {
+      if (query.trim().length > 0) {
+        console.log("Searching for:", query);
+        console.log("friendRequestsCache before search:", friendRequestsCache);
+        searchUsers(query);
+      } else {
+        // Clear results if search query is empty
+        console.log("Clearing search results");
+        setUsers([]);
+        setHasSearched(false);
+      }
+    }, 300); // 300ms delay
+
+    // Trigger the debounced search when searchQuery changes
+    if (searchQuery) {
+      debouncedSearchFn(searchQuery);
+    }
+
+    // Cleanup
+    return () => {
+      debouncedSearchFn.cancel();
+    };
+  }, [searchQuery, friendRequestsCache, accessToken]); // Include dependencies
+
+  // Fetch all friend-related data at component mount and when modal opens
+  useEffect(() => {
+    console.log("use effect: fetch friend data")
+    if (visible && accessToken) {
+      fetchFriendData();
+    }
+  }, [visible, accessToken]);
+
+  useEffect(() => {
+    // Reset state when modal opens
+    console.log("use effect: modal visible")
+    if (visible) {
+      setSearchQuery('');
+      setHasSearched(false);
+
+      // Focus the input field when the modal opens
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+      }, 100);
+    }
+  }, [visible]);
+
+  // Efficiently fetch all friend data in a single batch
+  const fetchFriendData = async () => {
+    if (!accessToken) return;
+
+    try {
+      // Fetch all friend relationships in parallel for efficiency
+      const [incomingResponse, outgoingResponse, friendsResponse] = await Promise.all([
+        api.get('/friends/requests/received', {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        }),
+        api.get('/friends/requests/sent', {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        }),
+        api.get('/friends', {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        })
+      ]);
+
+      // Process incoming requests
+      const incomingRequests: Record<string, string> = {};
+      if (incomingResponse.data.requests && Array.isArray(incomingResponse.data.requests)) {
+        incomingResponse.data.requests.forEach((request: FriendRequestData) => {
+          const senderId = request.sender._id;
+          incomingRequests[senderId] = request._id; // Store request ID for accept/reject operations
+          console.log('Incoming request from id:', senderId);
+        });
+      }
+
+      // Process outgoing requests
+      const outgoingRequests: Record<string, string> = {};
+      if (outgoingResponse.data.requests && Array.isArray(outgoingResponse.data.requests)) {
+        outgoingResponse.data.requests.forEach((request: FriendRequestData) => {
+          const recipientId = request.receiver._id;
+          outgoingRequests[recipientId] = request._id; // Store request ID for cancel operations
+          console.log('Outgoing request to id:', recipientId);
+        });
+      }
+
+      // Process friends list
+      const friendsList: string[] = [];
+      if (friendsResponse.data.friends && Array.isArray(friendsResponse.data.friends)) {
+        friendsResponse.data.friends.forEach((friend: any) => {
+          friendsList.push(friend._id);
+        });
+      }
+
+      // Update cache
+      setFriendRequestsCache({
+        incoming: incomingRequests,
+        outgoing: outgoingRequests,
+        friends: friendsList
+      });
+
+      console.log('Friend data loaded:', {
+        incomingCount: Object.keys(incomingRequests).length,
+        outgoingCount: Object.keys(outgoingRequests).length,
+        friendsCount: friendsList.length
+      });
+    } catch (error) {
+      console.error('Error fetching friend data:', error);
     }
   };
 
@@ -316,8 +334,8 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
 
   // Handle text input changes
   const handleSearchChange = (text: string) => {
+    console.log("Setting search query:", text);
     setSearchQuery(text);
-    // The search will be triggered by the useEffect that watches searchQuery
   };
 
   return (
