@@ -24,6 +24,7 @@ import { api } from '@/src/utils/api';
 type Friend = {
   id: string;
   name: string;
+  email: string;
 };
 
 type Place = {
@@ -178,6 +179,7 @@ export default function AddEventScreen() {
       attendees: selectedFriends.map((friend) => ({
         userId: (friend as Friend).id,
         name: (friend as Friend).name,
+        email: (friend as Friend).email,
       }))
     };
 
