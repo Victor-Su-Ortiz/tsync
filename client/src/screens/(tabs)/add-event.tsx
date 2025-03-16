@@ -205,7 +205,12 @@ export default function AddEventScreen() {
       Alert.alert(
         'Success!',
         'Event has been created successfully.',
-        [{ text: 'OK', onPress: () => navigateBack() }]
+        [{
+          text: 'OK', onPress: () => {
+            navigateBack(), resetForm();
+          }
+        }]
+
       );
     } catch (error: any) {
       console.error('Error creating event:', error);
