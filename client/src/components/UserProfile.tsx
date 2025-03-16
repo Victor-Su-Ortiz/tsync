@@ -56,6 +56,7 @@ const UserProfile = ({
 
   // Function to check friend request status
   const checkFriendStatus = async () => {
+    console.log("checking friend status")
     if (!user) return;
     
     setLoadingStatus(true);
@@ -67,25 +68,29 @@ const UserProfile = ({
           'Authorization': `Bearer ${authToken}`
         }
       });
+
+      console.log("friend request data ", friendRequest.data)
       
       // The response format should be { exists: boolean, status?: string }
-      if (friendRequest.data.exists && friendRequest.data.receiver === user.id) {
+      if (friendRequest.data.exists) {
         const status = friendRequest.data.status;
         console.log("current status ", status)
         
         if (status === 'pending') {
-          // We sent the request
-          setFriendRequestStatus('pending');
-        } else if (status === 'friends') {
+          if (friendRequest.data.receiver === user.id) {
+            // We received the request
+            setFriendRequestStatus('incoming_request');
+          }
+          else {
+            // We sent the request
+            setFriendRequestStatus('pending');
+          }
+        } else if (status === 'accepted') {
           setFriendRequestStatus('friends');
-        } else if (requestId) {
+        } else {
           // If we have a request ID, it means we're receiving a request
-          setFriendRequestStatus('incoming_request');
+          setFriendRequestStatus('none');
         }
-      }
-      else if (friendRequest.data.exists) {
-        // We have a pending request from the user
-        setFriendRequestStatus('incoming_request');
       }
       else {
         // No request exists
