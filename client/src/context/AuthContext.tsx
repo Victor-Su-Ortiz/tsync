@@ -5,7 +5,8 @@ interface UserInfo {
   id?: string;
   name?: string | null;
   email?: string;
-  picture?: string | null; // URL to profile picture
+  profilePicture?: string | null; // URL to profile picture
+  picture?: string | null // URL for test accounts
   bio?: string;
 }
 

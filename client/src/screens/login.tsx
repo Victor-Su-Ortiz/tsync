@@ -13,7 +13,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { setAuthToken } = useAuth();
+  const { setUserInfo, setAuthToken } = useAuth();
 
   const handleForget = async () => {
 
@@ -42,12 +42,11 @@ const Login = () => {
     setLoading(true);
     try {
       const response = await api.post("/auth/login", { email, password });
-      const { token } = response.data;
+      const { user, token } = response.data;
 
-      // Store JWT token in AsyncStorage for authentication persistence
-      // await AsyncStorage.setItem("authToken", token);
+      console.log(user);
       setAuthToken(token);
-
+      setUserInfo(user);
       Alert.alert("Success", "Login successful!");
       router.push('./(tabs)/home');
     } catch (error: any) {

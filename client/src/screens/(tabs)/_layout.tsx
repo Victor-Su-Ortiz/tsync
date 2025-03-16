@@ -116,7 +116,7 @@ export default function TabsLayout() {
           title: "Profile",
           tabBarIcon: ({ focused }) => (
             <Image
-              source={userInfo?.picture ? { uri: userInfo.picture } : images.defaultpfp}
+              source={userInfo?.picture || userInfo?.profilePicture ? { uri: userInfo?.picture || userInfo?.profilePicture } : images.defaultpfp}
               style={{
                 width: 34,
                 height: 33,
