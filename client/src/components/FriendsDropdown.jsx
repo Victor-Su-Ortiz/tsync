@@ -11,10 +11,8 @@ import {
   ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { api } from '../utils/api'; // Import your API utility
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
-// import { useAuth } from '../context/AuthContext';
 
 const FriendsDropdown = ({ selectedFriends, setSelectedFriends }) => {
   const { authToken } = useAuth();
@@ -57,6 +55,7 @@ const FriendsDropdown = ({ selectedFriends, setSelectedFriends }) => {
     try {
       const response = await api.get('/friends', { headers: { Authorization: `Bearer ${authToken}` } });
       const { success, friends } = response.data;
+      console.log(friends);
 
       // Based on your controller, response should have a structure with success and data fields
       if (!response || !success || !Array.isArray(friends)) {

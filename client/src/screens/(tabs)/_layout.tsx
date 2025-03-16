@@ -1,5 +1,5 @@
-import React from 'react';
-import { Tabs, router } from "expo-router";
+import React, { useEffect, useState } from 'react';
+import { Tabs, router, usePathname } from "expo-router";
 import { View, TouchableOpacity, StyleSheet, GestureResponderEvent, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -9,6 +9,18 @@ import { useAuth } from '../../context/AuthContext';
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
   const { userInfo } = useAuth();
+  const pathname = usePathname();
+
+  // Track the current screen for returning to it after add-event
+  const [currentScreen, setCurrentScreen] = useState('/home');
+
+  // Update the current screen when the pathname changes
+  useEffect(() => {
+    // Only update for main tab screens, not for the add-event screen
+    if (pathname && !pathname.includes('add-event')) {
+      setCurrentScreen(pathname);
+    }
+  }, [pathname]);
 
   const CustomTabBarButton = ({ children, onPress }: { children: React.ReactNode; onPress?: (event: GestureResponderEvent) => void }) => (
     <TouchableOpacity
@@ -72,7 +84,15 @@ export default function TabsLayout() {
         options={{
           title: "Add Event",
           tabBarButton: (props) => (
-            <CustomTabBarButton onPress={() => router.push('./add-event')}>
+            <CustomTabBarButton
+              onPress={() => {
+                // Pass the current screen as a query parameter
+                router.push({
+                  pathname: './add-event',
+                  params: { sourceScreen: currentScreen }
+                });
+              }}
+            >
               <Ionicons name="add" size={30} color="#ffffff" />
             </CustomTabBarButton>
           ),
@@ -96,7 +116,7 @@ export default function TabsLayout() {
           title: "Profile",
           tabBarIcon: ({ focused }) => (
             <Image
-              source={userInfo?.picture ? { uri: userInfo.picture } : images.defaultpfp}
+              source={userInfo?.picture || userInfo?.profilePicture ? { uri: userInfo?.picture || userInfo?.profilePicture } : images.defaultpfp}
               style={{
                 width: 34,
                 height: 33,
