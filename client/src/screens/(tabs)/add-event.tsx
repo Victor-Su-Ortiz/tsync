@@ -301,12 +301,7 @@ export default function AddEventScreen() {
           <Ionicons name="arrow-back" size={24} color="#00cc99" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Add New Event</Text>
-        {formDirty && (
-          <TouchableOpacity onPress={resetForm} style={styles.resetButton}>
-            <Text style={styles.resetButtonText}>Reset</Text>
-          </TouchableOpacity>
-        )}
-        {!formDirty && <View style={styles.placeholder} />}
+        <View style={{ margin: 20 }}></View> {/* Empty view for centering and padding */}
       </View>
 
       <KeyboardAvoidingView
