@@ -82,7 +82,7 @@ export default function Notifications() {
     setLoading(true);
     try {
       // Call your API endpoint to get pending friend requests
-      const response = await api.get('/friends/requests', {
+      const response = await api.get('/friends/requests/received/pending', {
         headers: {
           'Authorization': `Bearer ${authToken}`
         }
@@ -208,7 +208,7 @@ export default function Notifications() {
     }
   };
 
-  const handleFriendStatusChange = (userId: string, newStatus: FriendStatus) => {
+  const handleFriendStatusChange = (userId: string, newStatus: FriendStatus, actionTaken: boolean = false) => {
     console.log(`Notifications - Friend status changed for ${userId}: ${newStatus}`);
 
     // Update the global friend status tracker
@@ -217,8 +217,13 @@ export default function Notifications() {
       [userId]: newStatus
     }));
 
-    // If status changed to friends or none, remove the corresponding notification
-    if (newStatus === 'friends' || newStatus === 'none') {
+
+    // From Claude: Good to know
+    // In UserProfile component when accept/reject is clicked
+    // onFriendStatusChange(userId, newStatus, true); // true indicates action was taken
+
+    // Only remove notifications when an explicit action was taken
+    if (actionTaken && (newStatus === 'friends' || newStatus === 'none')) {
       setNotifications(prevNotifications =>
         prevNotifications.filter(notif =>
           !(notif.type === 'friend_request' && notif.userData?.id === userId)
@@ -226,6 +231,8 @@ export default function Notifications() {
       );
     }
   };
+
+
 
   const getIconForType = (type: NotificationType) => {
     switch (type) {
@@ -287,16 +294,18 @@ export default function Notifications() {
       )}
 
       {/* User Profile Modal */}
-      <UserProfile
-        visible={userProfileVisible}
-        onClose={() => {
-          setUserProfileVisible(false);
-          setSelectedUser(null);
-        }}
-        user={selectedUser}
-        onFriendStatusChange={handleFriendStatusChange}
-        requestId={selectedRequestId}
-      />
+      {selectedUser && (
+        <UserProfile
+          visible={userProfileVisible}
+          onClose={() => {
+            setUserProfileVisible(false);
+            setSelectedUser(null);
+          }}
+          user={selectedUser}
+          onFriendStatusChange={handleFriendStatusChange}
+          requestId={selectedRequestId}
+        />
+      )}
     </SafeAreaView>
   );
 }
