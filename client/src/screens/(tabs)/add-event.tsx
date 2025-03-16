@@ -301,7 +301,7 @@ export default function AddEventScreen() {
           <Ionicons name="arrow-back" size={24} color="#00cc99" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Add New Event</Text>
-        <View style={{ margin: 20 }}></View> {/* Empty view for centering and padding */}
+        <View style={{ margin: 20 }}></View>
       </View>
 
       <KeyboardAvoidingView
