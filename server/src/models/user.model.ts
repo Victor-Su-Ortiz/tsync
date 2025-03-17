@@ -138,7 +138,7 @@ userSchema.methods.getPublicProfile = function (): PublicUser {
 
 // Updated friend-related methods to use the new FriendRequest model
 // Make sure these methods match the IUserMethods interface return types
-userSchema.methods.sendFriendRequest = async function (friendId: string): Promise<void> {
+userSchema.methods.sendFriendRequest = async function (friendId: string): Promise<IFriendRequest & Document> {
   if (this._id.toString() === friendId) {
     throw new Error('Cannot send friend request to self');
   }
@@ -179,6 +179,7 @@ userSchema.methods.sendFriendRequest = async function (friendId: string): Promis
     relatedId: friendRequest._id ? friendRequest._id.toString() : friendRequest.id,
     onModel: 'FriendRequest'
   });
+  return friendRequest;
 };
 
 userSchema.methods.acceptFriendRequest = async function (requestId: string): Promise<void> {

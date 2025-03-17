@@ -28,7 +28,7 @@ export interface IUser extends Document {
 export interface IUserMethods {
   comparePassword(candidatePassword: string): Promise<boolean>;
   getPublicProfile(): PublicUser;
-  sendFriendRequest(friendId: string): Promise<void>;
+  sendFriendRequest(friendId: string): Promise<(IFriendRequest & Document)>;
   acceptFriendRequest(requestId: string): Promise<void>;
   rejectFriendRequest(requestId: string): Promise<void>;
   removeFriend(friendId: string): Promise<void>;

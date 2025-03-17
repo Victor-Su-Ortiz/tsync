@@ -117,16 +117,17 @@ export class FriendService {
   public static async sendRequest(
     senderId: string,
     receiverId: string
-  ): Promise<{ success: boolean; message: string }> {
+  ): Promise<{ success: boolean; message: string, friendRequest: IFriendRequest }> {
 
     const user = await User.findById(senderId);
     if (!user) {
       throw new NotFoundError('User not found');
     }
-    user.sendFriendRequest(receiverId);
+    const friendRequest = await user.sendFriendRequest(receiverId);
     return {
       success: true,
-      message: 'Friend request sent successfully'
+      message: 'Friend request sent successfully',
+      friendRequest
     };
   }
 

@@ -43,78 +43,19 @@ const UserProfile = ({
   requestId, 
   requestStatus
 }: UserProfileProps) => {
-  // const [friendRequestStatus, setFriendRequestStatus] = useState<FriendStatus>('none');
   const [isLoading, setIsLoading] = useState(false);
   const [loadingStatus, setLoadingStatus] = useState(false);
+  // Add local state to track friend status
+  const [currentStatus, setCurrentStatus] = useState<FriendStatus>('none');
 
   const { authToken } = useAuth();
 
-  // Check friendship status on component mount
-  // useEffect(() => {
-  //   if (user) {
-  //     checkFriendStatus();
-  //   }
-  // }, [user, authToken]);
-
-  // Function to check friend request status
-  // const checkFriendStatus = async () => {
-  //   console.log("checking friend status")
-  //   if (!user) return;
-    
-  //   setLoadingStatus(true);
-    
-  //   try {
-  //     // Check friend request status of the user in profile
-  //     const friendRequest = await api.get(`/friends/requests/${user.id}`, {
-  //       headers: {
-  //         'Authorization': `Bearer ${authToken}`
-  //       }
-  //     });
-
-  //     console.log("friend request data ", friendRequest.data)
-      
-  //     // The response format should be { exists: boolean, status?: string }
-  //     if (friendRequest.data.exists) {
-  //       const status = friendRequest.data.status;
-  //       console.log("current status ", status)
-        
-  //       if (status === 'pending') {
-  //         if (friendRequest.data.sender === user.id) {
-  //           // We received the request
-  //           updateFriendStatus(user.id, 'incoming_request');
-  //         }
-  //         else {
-  //           // We sent the request
-  //           updateFriendStatus(user.id, 'pending');
-  //         }
-  //       } else if (status === 'accepted') {
-  //         updateFriendStatus(user.id, 'friends');
-  //       } else {
-  //         // If we have a request ID, it means we're receiving a request
-  //         updateFriendStatus(user.id, 'none');
-  //       }
-  //     }
-  //     else {
-  //       // No request exists
-  //       updateFriendStatus(user.id, 'none');
-  //     }
-  
-  //   } catch (error) {
-  //     console.error("Error checking friend status:", error);
-  //     // Fall back to using the status from props
-  //     setFriendRequestStatus(user.friendStatus || 'none');
-  //   } finally {
-  //     setLoadingStatus(false);
-  //   }
-  // };
-
-  // This function updates both the local state and calls the parent callback
-  // const updateFriendStatus = (userId: string, newStatus: FriendStatus) => {
-  //   setFriendRequestStatus(newStatus);
-  //   if (onFriendStatusChange) {
-  //     onFriendStatusChange(userId, newStatus);
-  //   }
-  // };
+  // Set initial status from props when component mounts or props change
+  useEffect(() => {
+    if (requestStatus) {
+      setCurrentStatus(requestStatus as FriendStatus);
+    }
+  }, [requestStatus]);
 
   const handleSendFriendRequest = async () => {
     if (!user) return;
@@ -123,18 +64,19 @@ const UserProfile = ({
 
     try {
       // Send friend request using our API route
-      await api.post(`/friends/requests/${user.id}`, {}, {
+      const request = await api.post(`/friends/requests/${user.id}`, {}, {
         headers: {
           'Authorization': `Bearer ${authToken}`
         }
       });
 
-      // Update the friend status to pending
-      // updateFriendStatus(user.id, 'pending');
-      if (onFriendStatusChange) {
-        onFriendStatusChange(user.id, 'pending', requestId);
-      }
+      // Update local status
+      setCurrentStatus('pending');
       
+      // Notify parent component
+      if (onFriendStatusChange) {
+        onFriendStatusChange(user.id, 'pending', request.data.friendRequest._id); 
+      }
 
       // Show success message
       Alert.alert("Friend Request Sent", `Your friend request to ${user.name} has been sent.`);
@@ -153,18 +95,35 @@ const UserProfile = ({
   };
 
   const handleCancelFriendRequest = async () => {
-    // For a proper implementation, we would need a way to get the request ID
-    // Since our backend doesn't have a direct "cancel request" endpoint,
-    // we'd need to implement that first or use a workaround
-    Alert.alert(
-      "Cancel Request",
-      "This feature is not fully implemented yet.",
-      [{ text: "OK" }]
-    );
+    if (!user || !requestId) return;
+    setIsLoading(true);
+    
+    try {
+      // You'll need to implement a cancel request endpoint on your backend
+      await api.delete(`/friends/requests/${requestId}`, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+      
+      // Update local status
+      setCurrentStatus('none');
+      
+      // Notify parent component
+      if (onFriendStatusChange) {
+        onFriendStatusChange(user.id, 'none', requestId);
+      }
+      
+      Alert.alert("Request Cancelled", "Friend request has been cancelled.");
+    } catch (error: any) {
+      console.error("Error cancelling request:", error);
+      Alert.alert("Error", "Failed to cancel request. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleAcceptFriendRequest = async () => {
-    console.log("accepting friend request")
     if (!user || !requestId) return;
     setIsLoading(true);
 
@@ -176,8 +135,10 @@ const UserProfile = ({
         }
       });
 
-      // Update the friend status to friends
-      // updateFriendStatus(user.id, 'friends');
+      // Update local status
+      setCurrentStatus('friends');
+      
+      // Notify parent component
       if (onFriendStatusChange) {
         onFriendStatusChange(user.id, 'friends', requestId);
       }
@@ -214,8 +175,10 @@ const UserProfile = ({
         }
       });
 
-      // Update the friend status to none
-      // updateFriendStatus(user.id, 'none');
+      // Update local status
+      setCurrentStatus('none');
+      
+      // Notify parent component
       if (onFriendStatusChange) {
         onFriendStatusChange(user.id, 'none', requestId);
       }
@@ -280,7 +243,7 @@ const UserProfile = ({
                   <ActivityIndicator size="small" color="#00cc99" />
                   <Text style={styles.loadingText}>Checking status...</Text>
                 </View>
-              ) : requestStatus === 'incoming_request' ? (
+              ) : currentStatus === 'incoming_request' ? (
                 <View style={styles.requestButtonsContainer}>
                   <TouchableOpacity
                     style={styles.acceptButton}
@@ -312,7 +275,7 @@ const UserProfile = ({
                     )}
                   </TouchableOpacity>
                 </View>
-              ) : requestStatus === 'none' ? (
+              ) : currentStatus === 'none' ? (
                 <TouchableOpacity
                   style={styles.friendRequestButton}
                   onPress={handleSendFriendRequest}
@@ -327,7 +290,7 @@ const UserProfile = ({
                     </>
                   )}
                 </TouchableOpacity>
-              ) : requestStatus === 'pending' ? (
+              ) : currentStatus === 'pending' ? (
                 <TouchableOpacity
                   style={[styles.friendRequestButton, styles.pendingButton]}
                   onPress={handleCancelFriendRequest}
