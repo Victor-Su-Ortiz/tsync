@@ -4,16 +4,18 @@ import { FriendService } from '../services/friends.service';
 
 export class FriendController {
 
+
+
   /**
    * Check if a friend request exists between users
    * returns a boolean indicating if a request exists and its status
    */
   static async checkFriendRequest(req: Request, res: Response, next: NextFunction) {
     try {
-      const { receiverId } = req.params;
+      const { userId } = req.params;
       const senderId = req.userId; // From auth middleware
 
-      const result = await FriendService.checkFriendRequestExists(senderId!.toString(), receiverId);
+      const result = await FriendService.checkFriendRequestExists(senderId!.toString(), userId);
       res.status(200).json(result);
     } catch (error) {
       next(error);
@@ -26,6 +28,7 @@ export class FriendController {
   static async getFriends(req: Request, res: Response, next: NextFunction) {
     try {
       const friends = await FriendService.getFriends(req.userId!.toString());
+      console.log("we have been hit by friends")
       res.status(200).json({
         success: true,
         friends
@@ -34,13 +37,57 @@ export class FriendController {
       next(error);
     }
   }
+  /**
+   * Get all sent friend requests for the current user
+   */
+  static async getSentRequests(req: Request, res: Response, next: NextFunction) {
+    try {
+      const requests = await FriendService.getSentRequests(req.userId!.toString());
+      console.log("we have been hit by sent requests")
+      res.status(200).json({
+        success: true,
+        requests
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+  /**
+   * Get all sent pending friend requests for the current user
+   */
+  static async getSentPendingRequests(req: Request, res: Response, next: NextFunction) {
+    try {
+      const requests = await FriendService.getSentPendingRequests(req.userId!.toString());
+      res.status(200).json({
+        success: true,
+        requests
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 
   /**
-   * Get all pending friend requests for the current user
+   * Get all received friend requests for the current user
    */
-  static async getPendingRequests(req: Request, res: Response, next: NextFunction) {
+  static async getReceivedRequests(req: Request, res: Response, next: NextFunction) {
     try {
-      const requests = await FriendService.getPendingRequests(req.userId!.toString());
+      const requests = await FriendService.getReceivedRequests(req.userId!.toString());
+      res.status(200).json({
+        success: true,
+        requests
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Get all received pending friend requests for the current user
+   */
+  static async getReceivedPendingRequests(req: Request, res: Response, next: NextFunction) {
+    try {
+      const requests = await FriendService.getReceivedPendingRequests(req.userId!.toString());
       res.status(200).json({
         success: true,
         requests

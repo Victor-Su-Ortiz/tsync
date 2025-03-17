@@ -5,9 +5,6 @@ import User from "../models/user.model";
 // Load environment variables
 dotenv.config();
 
-
-
-
 // Assert that MONGODB_URI exists and is a string
 const MONGODB_URI: string = process.env.MONGODB_URI ?? "";
 

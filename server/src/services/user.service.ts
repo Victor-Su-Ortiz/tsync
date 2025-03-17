@@ -2,6 +2,15 @@ import User from "../models/user.model";
 import crypto from "crypto";
 import { sendEmail } from "../utils/email";
 import { NotFoundError } from "../utils/errors";
+import FriendRequest from "../models/friendRequest.model";
+
+export interface UserSearchResult {
+  _id: string;
+  name: string;
+  email: string;
+  profilePicture?: string;
+  friendStatus: 'none' | 'friends' | 'pending_sent' | 'pending_received';
+}
 
 export class UserService {
 
@@ -86,7 +95,7 @@ export class UserService {
   /**
    * Search users by name or email
    */
-  public static async searchUsers(query: string, limit: number = 10, currentUserId?: string): Promise<any[]> {
+  public static async searchUsers(query: string, limit: number = 10, currentUserId?: string): Promise<UserSearchResult[]> {
     if (!query || query.length < 3) {
       return [];
     }
@@ -106,11 +115,75 @@ export class UserService {
     
     const users = await User.find(searchQuery)
         .limit(limit)
-        .select('_id name email profilePicture friendRequests friends')
+        .select('_id name email profilePicture friends')
         .sort({ name: 1 });
-    
-    return users;
-  }
+
+    // If currentUserId is provided, fetch relationship information
+    if (currentUserId && users.length > 0) {
+      // Get the current user with friends list
+      const currentUser = await User.findById(currentUserId);
+      if (!currentUser) {
+        throw new NotFoundError('Current user not found');
+      }
+
+      // Get user IDs from search results
+      const userIds = users.map(user => user._id);
+
+      // Find all friend requests between current user and result users
+      const friendRequests = await FriendRequest.find({
+        $or: [
+          { sender: currentUserId, receiver: { $in: userIds } },
+          { receiver: currentUserId, sender: { $in: userIds } }
+        ]
+      });
+
+      // Create lookup maps for faster access
+      const friendsSet = new Set(currentUser.friends.map(id => id.toString()));
+      const sentRequestsMap = new Map();
+      const receivedRequestsMap = new Map();
+
+      friendRequests.forEach(request => {
+        const senderId = request.sender.toString();
+        const receiverId = request.receiver.toString();
+
+        if (senderId === currentUserId) {
+          sentRequestsMap.set(receiverId, request.status);
+        } else if (receiverId === currentUserId) {
+          receivedRequestsMap.set(senderId, request.status);
+        }
+      });
+
+      // Add relationship status to each user
+      return users.map(user => {
+        const userId = user._id.toString();
+        let friendStatus: 'none' | 'friends' | 'pending_sent' | 'pending_received' = 'none';
+
+        if (friendsSet.has(userId)) {
+          friendStatus = 'friends';
+        } else if (sentRequestsMap.has(userId) && sentRequestsMap.get(userId) === 'pending') {
+          friendStatus = 'pending_sent';
+        } else if (receivedRequestsMap.has(userId) && receivedRequestsMap.get(userId) === 'pending') {
+          friendStatus = 'pending_received';
+        }
+
+        return {
+          _id: userId,
+          name: user.name,
+          email: user.email,
+          profilePicture: user.profilePicture,
+          friendStatus
+        };
+      });
+    }
+      // If no current user provided, return users without relationship info
+    return users.map(user => ({
+      _id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      profilePicture: user.profilePicture,
+      friendStatus: 'none'
+    }));
+}
 
   /**
    * Get users with friend status for current user

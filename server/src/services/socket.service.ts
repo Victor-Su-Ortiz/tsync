@@ -24,7 +24,7 @@ export class SocketService {
   public initialize(httpServer: HttpServer): void {
     this.io = new Server(httpServer, {
       cors: {
-        origin: process.env.CLIENT_URL,
+        origin: '*',
         methods: ["GET", "POST"],
         credentials: true
       }

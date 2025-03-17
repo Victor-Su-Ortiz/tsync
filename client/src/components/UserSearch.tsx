@@ -19,17 +19,36 @@ import UserProfile from './UserProfile';
 import { debounce } from 'lodash';
 import { api } from '../utils/api'; // Import your API utility
 
-// Make sure this type matches the type in UserProfile.tsx
-type FriendStatus = 'none' | 'pending' | 'friends' | 'incoming_request';
+// Unified Friend Status type
+export type FriendStatus = 'none' | 'pending' | 'friends' | 'incoming_request';
 
-type User = {
+// Define request interface for consistency
+export interface FriendRequestData {
+  _id: string;
+  sender: {
+    _id: string;
+    name: string;
+    profilePicture?: string;
+  };
+  receiver: {
+    _id: string;
+    name: string;
+    profilePicture?: string;
+  };
+  status: 'pending' | 'accepted' | 'rejected';
+  createdAt: string;
+}
+
+export type User = {
   id: string;
+  _id?: string;
   name: string;
   profilePicture?: string;
   bio?: string;
   favoriteTea?: string;
   joinedDate?: string;
   friendStatus?: FriendStatus;
+  requestId?: string; // Store requestId when relevant
 };
 
 type UserSearchProps = {
@@ -38,9 +57,7 @@ type UserSearchProps = {
   accessToken: string;
 };
 
-
 const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
-
   const [searchQuery, setSearchQuery] = useState('');
   const [users, setUsers] = useState<User[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -48,14 +65,102 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [profileVisible, setProfileVisible] = useState(false);
   const inputRef = useRef<TextInput>(null);
+  
+  // Cache of friend requests to avoid repeated API calls
+  const [friendRequestsCache, setFriendRequestsCache] = useState<{
+    incoming: Record<string, string>, // userId -> requestId
+    outgoing: Record<string, string>, // userId -> requestId
+    friends: string[] // array of friend userIds
+  }>({
+    incoming: {},
+    outgoing: {},
+    friends: []
+  });
 
-  // Keep track of friend statuses - using the unified FriendStatus type
-  const [friendStatuses, setFriendStatuses] = useState<Record<string, FriendStatus>>({});
+  // Define the searchUsers function without debounce first
+  const searchUsers = async (query: string) => {
 
-  // Create a debounced search function to prevent too many searches as user types
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const debouncedSearch = useCallback(
-    debounce((query: string) => {
+    if (!query.trim()) {
+      console.log("⚠️ Empty query, exiting searchUsers");
+      return;
+    }
+
+    setIsSearching(true);
+    setHasSearched(true);
+
+    if (!accessToken) {
+      setIsSearching(false);
+      return;
+    }
+
+    try {
+      // Get search results
+      const searchResponse = await api.get(
+        '/users/search',
+        {
+          params: { q: query, limit: 10 },
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      const searchedUsers = searchResponse.data.users || [];
+
+      // Get the current friend requests cache state
+      // This ensures we use the latest state
+      const currentCache = friendRequestsCache;
+      console.log("Current Cache:", currentCache);
+      // console.log("Searched Users:", searchedUsers);
+
+      // Apply friend statuses from our cache
+      const updatedUsers = searchedUsers.map((user: User) => {
+        const userId = user._id || user.id;
+
+        // Apply friend status based on our cached data
+        let friendStatus: FriendStatus = 'none';
+        let requestId: string | undefined = undefined;
+
+        // Check if they're already friends
+        if (currentCache.friends.includes(userId)) {
+          friendStatus = 'friends';
+        }
+        // Check if we have an incoming request from them
+        else if (userId in currentCache.incoming) {
+          friendStatus = 'incoming_request';
+          requestId = currentCache.incoming[userId];
+        }
+        // Check if we sent them a request
+        else if (userId in currentCache.outgoing) {
+          friendStatus = 'pending';
+          requestId = currentCache.outgoing[userId];
+        }
+        console.log("User:", user.name, "Status:", friendStatus);
+
+        return { 
+          ...user, 
+          id: userId, // Ensure id is consistently available
+          friendStatus,
+          requestId
+        };
+      });
+
+      setUsers(updatedUsers);
+    } catch (error: any) {
+      console.error("❌ Error searching for users:", error);
+      console.error("⚠️ API Error Response:", error.response?.status, error.response?.data);
+
+      // Just show empty results if there's an error
+      setUsers([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Create a debounced search function
+  // The key fix is to NOT use useCallback for this, as we need it to be recreated when dependencies change
+  useEffect(() => {
+    const debouncedSearchFn = debounce((query: string) => {
       if (query.trim().length > 0) {
         searchUsers(query);
       } else {
@@ -63,9 +168,25 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
         setUsers([]);
         setHasSearched(false);
       }
-    }, 300), // 300ms delay
-    []
-  );
+    }, 300); // 300ms delay
+
+    // Trigger the debounced search when searchQuery changes
+    if (searchQuery) {
+      debouncedSearchFn(searchQuery);
+    }
+
+    // Cleanup
+    return () => {
+      debouncedSearchFn.cancel();
+    };
+  }, [searchQuery, friendRequestsCache, accessToken]); // Include dependencies
+
+  // Fetch all friend-related data at component mount and when modal opens
+  useEffect(() => {
+    if (visible && accessToken) {
+      fetchFriendData();
+    }
+  }, [visible, accessToken]);
 
   useEffect(() => {
     // Reset state when modal opens
@@ -82,173 +203,107 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
     }
   }, [visible]);
 
-  // Trigger the debounced search when searchQuery changes
-  useEffect(() => {
-    debouncedSearch(searchQuery);
-
-    // Cancel any pending debounced searches on cleanup
-    return () => {
-      debouncedSearch.cancel();
-    };
-  }, [searchQuery, debouncedSearch]);
-
-
-
-  const searchUsers = async (query: string = searchQuery) => {
-    console.log("🔑 Auth Token Retrieved:", accessToken);
-    console.log("🔎 searchUsers function is being called with query:", query);
-
-    if (!query.trim()) {
-      console.log("⚠️ Empty query, exiting searchUsers");
-      return;
-    }
-
-    setIsSearching(true);
-    setHasSearched(true);
-
-    if (!accessToken) {
-      console.log("🚨 No access token found! Exiting search.");
-      setIsSearching(false);
-      return;
-    }
+  // Efficiently fetch all friend data in a single batch
+  const fetchFriendData = async () => {
+    if (!accessToken) return;
 
     try {
-      console.log("📡 Making API request...");
-      // First get search results
-      const searchResponse = await api.get(
-        '/users/search',
-        {
-          params: { q: query, limit: 10 },
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
+      // Fetch all friend relationships in parallel for efficiency
+      const [incomingResponse, outgoingResponse, friendsResponse] = await Promise.all([
+        api.get('/friends/requests/received/pending', {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        }),
+        api.get('/friends/requests/sent/pending', {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        }),
+        api.get('/friends', {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        })
+      ]);
+      // console.log('incoming request data:', incomingResponse.data);
+      // console.log('outgoing request data:', outgoingResponse.data);
+      // console.log('friends data:', friendsResponse.data);
 
-      console.log("✅ API Response:", searchResponse.data);
-
-      const searchedUsers = searchResponse.data.users || [];
-      console.log("👥 Users found:", searchedUsers.length);
-
-      // Then check for any pending friend requests to/from these users
-      const incomingRequestsResponse = await api.get('/friends/requests', {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        }
-      });
-
-      // Also check for outgoing friend requests that the current user has sent
-      const outgoingRequestsResponse = await api.get('/friends/requests/', {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        }
-      });
-
-      console.log("✅ Incoming friend requests:", incomingRequestsResponse.data);
-      console.log("✅ Outgoing friend requests:", outgoingRequestsResponse.data);
-
-      // Create a map of user IDs to incoming request status
-      const incomingRequestMap: Record<string, boolean> = {};
-      if (incomingRequestsResponse.data.requests && Array.isArray(incomingRequestsResponse.data.requests)) {
-        incomingRequestsResponse.data.requests.forEach((request: any) => {
-          if (request.from && (request.from._id || request.from.id)) {
-            // This is a request FROM someone else TO the current user
-            const requesterId = request.from._id || request.from.id;
-            incomingRequestMap[requesterId] = true;
-          }
+      // Process incoming requests
+      const incomingRequests: Record<string, string> = {};
+      if (incomingResponse.data.requests && Array.isArray(incomingResponse.data.requests)) {
+        incomingResponse.data.requests.forEach((request: FriendRequestData) => {
+          const senderId = request.sender._id;
+          incomingRequests[senderId] = request._id; // Store request ID for accept/reject operations
         });
       }
 
-      // Create a map of user IDs that the current user has sent requests to
-      const outgoingRequestMap: Record<string, boolean> = {};
-      if (outgoingRequestsResponse.data.requests && Array.isArray(outgoingRequestsResponse.data.requests)) {
-        outgoingRequestsResponse.data.requests.forEach((request: any) => {
-          if (request.to && (request.to._id || request.to.id)) {
-            // This is a request FROM the current user TO someone else
-            const recipientId = request.to._id || request.to.id;
-            outgoingRequestMap[recipientId] = true;
-          }
+      // Process outgoing requests
+      const outgoingRequests: Record<string, string> = {};
+      if (outgoingResponse.data.requests && Array.isArray(outgoingResponse.data.requests)) {
+        outgoingResponse.data.requests.forEach((request: FriendRequestData) => {
+          const recipientId = request.receiver._id;
+          outgoingRequests[recipientId] = request._id; // Store request ID for cancel operations
         });
       }
 
-      // Apply statuses from these sources in order of priority:
-      // 1. Local friend status state (most up-to-date in current session)
-      // 2. Incoming friend requests detected from API
-      // 3. Outgoing friend requests detected from API
-      // 4. Original status from search API
-      const updatedUsers = searchedUsers.map((user: User) => {
-        // Check if we have a stored status first (for this session)
-        const storedStatus = friendStatuses[user.id];
-        if (storedStatus) {
-          return { ...user, friendStatus: storedStatus };
-        }
+      // Process friends list
+      const friendsList: string[] = [];
+      if (friendsResponse.data.friends && Array.isArray(friendsResponse.data.friends)) {
+        friendsResponse.data.friends.forEach((friend: any) => {
+          friendsList.push(friend._id);
+        });
+      }
 
-        // Check if this user has an incoming request to us
-        if (incomingRequestMap[user.id]) {
-          return { ...user, friendStatus: 'incoming_request' as FriendStatus };
-        }
-
-        // Check if we have sent a request to this user
-        if (outgoingRequestMap[user.id]) {
-          return { ...user, friendStatus: 'pending' as FriendStatus };
-        }
-
-        // Fall back to the status from the API or 'none'
-        return { ...user, friendStatus: user.friendStatus || 'none' };
+      // Update cache
+      setFriendRequestsCache({
+        incoming: incomingRequests,
+        outgoing: outgoingRequests,
+        friends: friendsList
       });
 
-      setUsers(updatedUsers);
-    } catch (error: any) {
-      console.error("❌ Error searching for users:", error);
-      console.error("⚠️ API Error Response:", error.response?.status, error.response?.data);
-
-      // Just show empty results if there's an error
-      setUsers([]);
-    } finally {
-      console.log("⏳ Finished searching, updating UI...");
-      setIsSearching(false);
+      console.log('Friend data loaded:', {
+        incomingCount: Object.keys(incomingRequests).length,
+        outgoingCount: Object.keys(outgoingRequests).length,
+        friendsCount: friendsList.length
+      });
+    } catch (error) {
+      console.error('Error fetching friend data:', error);
     }
   };
 
   // Handle friend status changes from the UserProfile component
-  const handleFriendStatusChange = (userId: string, newStatus: FriendStatus) => {
-    console.log(`Updating friend status for user ${userId} to ${newStatus}`);
-
-    // Update our local state to remember this status
-    setFriendStatuses(prev => ({
-      ...prev,
-      [userId]: newStatus
-    }));
+  const handleFriendStatusChange = (userId: string, newStatus: FriendStatus, requestId?: string) => {
+    console.log("updating friend status for user:", userId, "to:", newStatus, "requestId:", requestId);
+    // Update our cache based on the new status
+    const newCache = { ...friendRequestsCache };
+    
+    // Remove from all categories first
+    delete newCache.incoming[userId];
+    delete newCache.outgoing[userId];
+    newCache.friends = newCache.friends.filter(id => id !== userId);
+    
+    // Then add to the appropriate category
+    if (newStatus === 'friends') {
+      newCache.friends.push(userId);
+    } else if (newStatus === 'pending' && requestId) {
+      newCache.outgoing[userId] = requestId;
+    } else if (newStatus === 'incoming_request' && requestId) {
+      newCache.incoming[userId] = requestId;
+    }
+    console.log("Updated Cache:", newCache);
+    
+    setFriendRequestsCache(newCache);
 
     // Also update the search results list if this user is in it
     setUsers(prev =>
       prev.map(user =>
         user.id === userId
-          ? { ...user, friendStatus: newStatus }
+          ? { ...user, friendStatus: newStatus, requestId }
           : user
       )
     );
-
-    // Update the selected user if it's the one we're viewing
-    // if (selectedUser && selectedUser.id === userId) {
-    //   setSelectedUser({
-    //     ...selectedUser,
-    //     friendStatus: newStatus
-    //   });
-    // }
   };
 
   const handleUserPress = (user: User) => {
-    console.log('User pressed:', user.name, 'with status:', user.friendStatus || 'none');
-
-    // Apply any known friend status before opening the profile
-    const updatedUser = {
-      ...user,
-      friendStatus: friendStatuses[user.id] || user.friendStatus || 'none'
-    };
-
-    // Set the selected user and show their profile
-    setSelectedUser(updatedUser);
+    console.log("Selected user:", user);
+    setSelectedUser(user);
+    
     // Add a slight delay to ensure the state updates before showing the profile
     setTimeout(() => {
       setProfileVisible(true);
@@ -264,7 +319,6 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
   // Handle text input changes
   const handleSearchChange = (text: string) => {
     setSearchQuery(text);
-    // The search will be triggered by the useEffect that watches searchQuery
   };
 
   return (
@@ -368,13 +422,15 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
             </View>
           )}
 
-          {/* User Profile Modal - Now rendered inside the search modal */}
+          {/* User Profile Modal */}
           {selectedUser && (
             <UserProfile
               visible={profileVisible}
               onClose={handleProfileClose}
               user={selectedUser}
               onFriendStatusChange={handleFriendStatusChange}
+              requestId={selectedUser.requestId}
+              requestStatus={selectedUser.friendStatus}
             />
           )}
         </View>

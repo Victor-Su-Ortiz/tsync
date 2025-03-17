@@ -24,6 +24,8 @@ import eventRoutes from "./routes/event.routes";
 // Middleware
 import { errorHandler } from "./middleware/error.middleware";
 import { NotFoundError } from "./utils/errors";
+import { requestCounter, getRequestStats, resetRequestStats } from "./middleware/counter.middleware";
+
 
 class App {
   public app: Application;
@@ -31,6 +33,7 @@ class App {
   constructor() {
     this.app = express();
     this.configureMiddleware();
+    this.configureRequestMonitoring();
     this.configureRoutes();
     this.configureErrorHandling();
   }
@@ -74,6 +77,14 @@ class App {
       "/uploads",
       express.static(path.join(__dirname, "../uploads"))
     );
+  }
+  private configureRequestMonitoring(): void {
+    // Apply the request counter middleware to all routes
+    this.app.use(requestCounter);
+    
+    // Add routes to view request statistics
+    this.app.get("/api/v1/monitoring/stats", getRequestStats);
+    this.app.post("/api/v1/monitoring/reset", resetRequestStats);
   }
 
   private configureRoutes(): void {
