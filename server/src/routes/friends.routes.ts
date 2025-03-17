@@ -12,13 +12,22 @@ router.use(protect);
 // Get friend lists
 router.get("/", FriendController.getFriends);
 
-// Get pending friend requests
-router.get("/requests", FriendController.getPendingRequests);
+// Get incoming friend requests
+router.get("/requests/received", FriendController.getReceivedRequests);
 
-// Check friend request
-router.get("/requests/:receiverId",
+// Get pending friend requests
+router.get("/requests/received/pending", FriendController.getReceivedPendingRequests);
+
+// Get outgoing friend requests
+router.get("/requests/sent", FriendController.getSentRequests);
+
+router.get("/requests/sent/pending", FriendController.getSentPendingRequests);
+
+
+// Check if there exists a friend request between two users
+router.get("/requests/:userId",
   validateRequest(friendValidation.checkFriendRequest),
-   FriendController.checkFriendRequest);
+  FriendController.checkFriendRequest);
 
 // Friend request operations
 router.post(

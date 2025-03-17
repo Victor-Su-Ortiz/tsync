@@ -1,7 +1,10 @@
 import User from '../models/user.model';
-import { Types } from 'mongoose';
+import FriendRequest from '../models/friendRequest.model';
+import { Types, Document } from 'mongoose';
 import { NotFoundError, ValidationError, BadRequestError } from '../utils/errors';
-import { FriendRequestResponse, PublicUser } from '../types/user.types';
+import { PublicUser } from '../types/user.types';
+import { IFriendRequest } from '../types/friendRequest.types';
+
 
 export class FriendService {
   /**
@@ -10,34 +13,20 @@ export class FriendService {
    * @param receiverId ID of the user who received the request
    * @returns Boolean indicating if a request exists and its status
    */
-  public static async checkFriendRequestExists(senderId: string, receiverId: string): Promise<{exists: boolean, status?: string}> {
+  public static async checkFriendRequestExists(senderId: string, receiverId: string): Promise<{ exists: boolean, status?: string, receiver?: string, sender?: string }> {
     try {
       // Validate IDs
       if (!Types.ObjectId.isValid(senderId) || !Types.ObjectId.isValid(receiverId)) {
         throw new BadRequestError('Invalid user ID');
       }
 
-      // Get the receiver user to check their friend requests
-      const receiver = await User.findById(receiverId);
-      if (!receiver) {
-        throw new NotFoundError('Receiver user not found');
+      // Check if the request exists
+      const request = await FriendRequest.findBetweenUsers(senderId, receiverId);
+      if (!request) {
+        return { exists: false };
       }
 
-      // Check if a request from sender exists in receiver's friendRequests
-      // Using the friendRequestsWithSenderId map from your model
-      const request = receiver.friendRequestsWithSenderId?.get(senderId);
-      
-      if (request) {
-        return { exists: true, status: request.status };
-      }
-
-      // Also check if they're already friends (bidirectional check)
-      const isFriend = receiver.friends.some(id => id.toString() === senderId);
-      if (isFriend) {
-        return { exists: true, status: 'friends' };
-      }
-
-      return { exists: false };
+      return { exists: true, status: request.status, receiver: request.receiver.toString() , sender: request.sender.toString() };
     } catch (error) {
       if (error instanceof NotFoundError || error instanceof BadRequestError) {
         throw error;
@@ -59,47 +48,86 @@ export class FriendService {
 
     return user.friends as unknown as PublicUser[];
   }
-
   /**
-   * Get all pending friend requests for a user
+   * Get all sent friend requests
    */
-  public static async getPendingRequests(userId: string): Promise<FriendRequestResponse[]> {
-    const user = await User.findById(userId)
-      .populate('friendRequests.from', 'name email profilePicture');
+  public static async getSentRequests(userId: string): Promise<(IFriendRequest & Document)[]> {
+    const requests = await FriendRequest.find({
+      sender: userId
+    }).populate('receiver', 'name email profilePicture');
 
-    if (!user) {
-      throw new NotFoundError('User not found');
+    if (!requests || requests.length === 0) {
+      return [];
     }
 
-    // Filter pending requests and format them
-    const pendingRequests = user.friendRequests
-      .filter(request => request.status === 'pending')
-      .map(request => ({
-        _id: request._id.toString(),
-        from: request.from as unknown as PublicUser,
-        status: request.status,
-        createdAt: request.createdAt.toISOString()
-      }));
+    return requests;
+  }
+  /**
+   * Get all sent requests that are pending
+   */
+  public static async getSentPendingRequests(userId: string): Promise<(IFriendRequest & Document)[]> {
+    const pendingRequests = await FriendRequest.find({
+      sender: userId,
+      status: 'pending'
+    }).populate('receiver', 'name email profilePicture');
 
+    if (!pendingRequests || pendingRequests.length === 0) {
+      return []; // Return an empty array instead of throwing an error
+    }
+
+    // Format the requests into the response format
     return pendingRequests;
+  }
+
+  /**
+   * Get all incoming requests
+   * */
+  public static async getReceivedRequests(userId: string): Promise<(IFriendRequest & Document)[]> {
+    const requests = await FriendRequest.find({
+      receiver: userId
+    }).populate('sender', 'name email profilePicture');
+
+    if (!requests || requests.length === 0) {
+      return [];
+    }
+
+    return requests;
+  }
+
+  /**
+   * Get all incoming requests that are pending
+   */
+  public static async getReceivedPendingRequests(userId: string): Promise<(IFriendRequest & Document)[]> {
+    const pendingRequests = await FriendRequest.find({
+      receiver: userId, 
+      status: 'pending'
+    }).populate('sender', 'name email profilePicture');
+
+    if (!pendingRequests || pendingRequests.length === 0) {
+      return []; // Return an empty array instead of throwing an error
+    }
+
+    // Format the requests into the response format
+    return pendingRequests
   }
 
   /**
    * Send a friend request to another user
    */
   public static async sendRequest(
-    senderId: string, 
+    senderId: string,
     receiverId: string
-  ): Promise<{ success: boolean; message: string }> {
-    
+  ): Promise<{ success: boolean; message: string, friendRequest: IFriendRequest }> {
+
     const user = await User.findById(senderId);
     if (!user) {
       throw new NotFoundError('User not found');
     }
-    user.sendFriendRequest(receiverId);
+    const friendRequest = await user.sendFriendRequest(receiverId);
     return {
       success: true,
-      message: 'Friend request sent successfully'
+      message: 'Friend request sent successfully',
+      friendRequest
     };
   }
 
@@ -107,16 +135,16 @@ export class FriendService {
    * Accept a friend request
    */
   public static async acceptRequest(
-    userId: string, 
+    userId: string,
     requestId: string
   ): Promise<{ success: boolean; message: string }> {
     const user = await User.findById(userId);
-    
+
     if (!user) {
       throw new NotFoundError('User not found');
     }
 
-   user.acceptFriendRequest(requestId);
+    user.acceptFriendRequest(requestId);
 
     return {
       success: true,
@@ -128,11 +156,11 @@ export class FriendService {
    * Reject a friend request
    */
   public static async rejectRequest(
-    userId: string, 
+    userId: string,
     requestId: string
   ): Promise<{ success: boolean; message: string }> {
     const user = await User.findById(userId);
-    
+
     if (!user) {
       throw new NotFoundError('User not found');
     }
@@ -149,7 +177,7 @@ export class FriendService {
    * Remove a friend
    */
   public static async removeFriend(
-    userId: string, 
+    userId: string,
     friendId: string
   ): Promise<{ success: boolean; message: string }> {
     const [user, friend] = await Promise.all([

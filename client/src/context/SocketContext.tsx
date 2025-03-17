@@ -102,10 +102,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       });
 
       // Force an immediate test notification for debugging (remove in production)
-      setTimeout(() => {
-        console.log('Triggering test notification');
-        incrementNotificationCount();
-      }, 5000);
+      // setTimeout(() => {
+      //   console.log('Triggering test notification');
+      //   incrementNotificationCount();
+      // }, 5000);
 
       // Clean up on unmount
       return () => {
