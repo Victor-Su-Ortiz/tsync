@@ -110,7 +110,7 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
       // Get the current friend requests cache state
       // This ensures we use the latest state
       const currentCache = friendRequestsCache;
-      // console.log("Current Cache:", currentCache);
+      console.log("Current Cache:", currentCache);
       // console.log("Searched Users:", searchedUsers);
 
       // Apply friend statuses from our cache
@@ -286,6 +286,7 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
     } else if (newStatus === 'incoming_request' && requestId) {
       newCache.incoming[userId] = requestId;
     }
+    console.log("Updated Cache:", newCache);
     
     setFriendRequestsCache(newCache);
 
@@ -429,6 +430,7 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
               user={selectedUser}
               onFriendStatusChange={handleFriendStatusChange}
               requestId={selectedUser.requestId}
+              requestStatus={selectedUser.friendStatus}
             />
           )}
         </View>
