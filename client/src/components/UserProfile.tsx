@@ -79,28 +79,24 @@ const UserProfile = ({
         if (status === 'pending') {
           if (friendRequest.data.receiver === user.id) {
             // We received the request
-            setFriendRequestStatus('incoming_request');
+            updateFriendStatus(user.id, 'incoming_request');
           }
           else {
             // We sent the request
-            setFriendRequestStatus('pending');
+            updateFriendStatus(user.id, 'pending');
           }
         } else if (status === 'accepted') {
-          setFriendRequestStatus('friends');
+          updateFriendStatus(user.id, 'friends');
         } else {
           // If we have a request ID, it means we're receiving a request
-          setFriendRequestStatus('none');
+          updateFriendStatus(user.id, 'none');
         }
       }
       else {
         // No request exists
-        setFriendRequestStatus('none');
+        updateFriendStatus(user.id, 'none');
       }
-      
-      // Notify parent component
-      if (onFriendStatusChange) {
-        onFriendStatusChange(user.id, friendRequestStatus);
-      }
+  
     } catch (error) {
       console.error("Error checking friend status:", error);
       // Fall back to using the status from props

@@ -110,8 +110,8 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
       // Get the current friend requests cache state
       // This ensures we use the latest state
       const currentCache = friendRequestsCache;
-      console.log("Current Cache:", currentCache);
-      console.log("Searched Users:", searchedUsers);
+      // console.log("Current Cache:", currentCache);
+      // console.log("Searched Users:", searchedUsers);
 
       // Apply friend statuses from our cache
       const updatedUsers = searchedUsers.map((user: User) => {
@@ -213,16 +213,16 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
         api.get('/friends/requests/received/pending', {
           headers: { Authorization: `Bearer ${accessToken}` }
         }),
-        api.get('/friends/requests/sent', {
+        api.get('/friends/requests/sent/pending', {
           headers: { Authorization: `Bearer ${accessToken}` }
         }),
         api.get('/friends', {
           headers: { Authorization: `Bearer ${accessToken}` }
         })
       ]);
-      console.log('incoming request data:', incomingResponse.data);
-      console.log('outgoing request data:', outgoingResponse.data);
-      console.log('friends data:', friendsResponse.data);
+      // console.log('incoming request data:', incomingResponse.data);
+      // console.log('outgoing request data:', outgoingResponse.data);
+      // console.log('friends data:', friendsResponse.data);
 
       // Process incoming requests
       const incomingRequests: Record<string, string> = {};
@@ -269,7 +269,7 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
 
   // Handle friend status changes from the UserProfile component
   const handleFriendStatusChange = (userId: string, newStatus: FriendStatus, requestId?: string) => {
-
+    console.log("updating friend status for user:", userId, "to:", newStatus, "requestId:", requestId);
     // Update our cache based on the new status
     const newCache = { ...friendRequestsCache };
     
@@ -300,6 +300,7 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
   };
 
   const handleUserPress = (user: User) => {
+    console.log("Selected user:", user);
     setSelectedUser(user);
     
     // Add a slight delay to ensure the state updates before showing the profile
