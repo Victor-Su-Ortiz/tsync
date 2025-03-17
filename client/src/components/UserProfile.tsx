@@ -57,11 +57,11 @@ const UserProfile = ({
   // Function to check friend request status
   const checkFriendStatus = async () => {
     if (!user) return;
-    
+
     setLoadingStatus(true);
 
     console.log(user.id)
-    
+
     try {
       // Use our new API endpoint to check friend request status
       const response = await api.get(`/friends/requests/${user.id}`, {
@@ -69,11 +69,11 @@ const UserProfile = ({
           'Authorization': `Bearer ${authToken}`
         }
       });
-      
+
       // The response format should be { exists: boolean, status?: string }
       if (response.data.exists) {
         const status = response.data.status;
-        
+
         if (status === 'pending') {
           // We sent the request
           setFriendRequestStatus('pending');
@@ -87,7 +87,7 @@ const UserProfile = ({
         // No request exists
         setFriendRequestStatus('none');
       }
-      
+
       // Notify parent component
       if (onFriendStatusChange) {
         onFriendStatusChange(user.id, friendRequestStatus);
@@ -129,7 +129,7 @@ const UserProfile = ({
       Alert.alert("Friend Request Sent", `Your friend request to ${user.name} has been sent.`);
     } catch (error: any) {
       console.error("Error sending friend request:", error.response?.data || error);
-      
+
       // Show a more specific error message based on the error response
       if (error.response?.data?.message) {
         Alert.alert("Error", error.response.data.message);
@@ -175,7 +175,7 @@ const UserProfile = ({
       setTimeout(() => onClose(), 1500);
     } catch (error: any) {
       console.error("Error accepting friend request:", error);
-      
+
       // Show a more specific error message
       if (error.response?.data?.message) {
         Alert.alert("Error", error.response.data.message);
@@ -210,7 +210,7 @@ const UserProfile = ({
       setTimeout(() => onClose(), 1500);
     } catch (error: any) {
       console.error("Error declining friend request:", error);
-      
+
       // Show a more specific error message
       if (error.response?.data?.message) {
         Alert.alert("Error", error.response.data.message);
@@ -242,7 +242,7 @@ const UserProfile = ({
             >
               <Ionicons name="arrow-back" size={24} color="#333" />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>Profile</Text>
+            <Text style={styles.headerTitle}>{user.name}</Text>
             <View style={{ width: 40 }} />
           </View>
 
