@@ -123,6 +123,16 @@ export class FriendController {
     }
   }
 
+  static async cancelRequest(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { requestId } = req.params;
+      const result = await FriendService.cancelRequest(req.userId!.toString(), requestId);
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
   /**
    * Reject a friend request
    */
