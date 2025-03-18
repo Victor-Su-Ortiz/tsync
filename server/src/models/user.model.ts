@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { IUser, IUserMethods, IUserModel, PublicUser } from "../types/user.types";
 import { IFriendRequest } from "../types/friendRequest.types";
 import FriendRequest from "./friendRequest.model"; // Import the FriendRequest model
+import { FriendEventType, FriendRequestStatus } from "../utils/enums";
 
 const userSchema = new Schema<IUser, IUserModel, IUserMethods>(
   {
@@ -163,19 +164,19 @@ userSchema.methods.sendFriendRequest = async function (friendId: string): Promis
   let friendRequest = await FriendRequest.findOne({
     sender: this._id,
     receiver: friendId,
-    status: 'rejected'
+    status: FriendRequestStatus.REJECTED
   });
 
   // If there is a rejected request, update it to pending
   if (friendRequest) {
-    friendRequest.status = 'pending';
+    friendRequest.status = FriendRequestStatus.PENDING;
     await friendRequest.save();
   } else {
     // Create a new friend request
     friendRequest = new FriendRequest({
       sender: this._id,
       receiver: friendId,
-      status: 'pending'
+      status: FriendRequestStatus.PENDING
     });
 
     await friendRequest.save();
@@ -193,6 +194,10 @@ userSchema.methods.sendFriendRequest = async function (friendId: string): Promis
     relatedId: friendRequest._id ? friendRequest._id.toString() : friendRequest.id,
     onModel: 'FriendRequest'
   });
+
+  const { default: SocketService } = await import('../services/socket.service');
+  SocketService.sendToUser(friendId, FriendEventType.FRIEND_REQUEST_RECEIVED, friendRequest);
+
   return friendRequest;
 };
 
@@ -209,13 +214,16 @@ userSchema.methods.cancelFriendRequest = async function (requestId: string): Pro
   }
 
   await FriendRequest.deleteOne({ _id: requestId });
+  
+  const { default: SocketService } = await import('../services/socket.service');
+  SocketService.sendToUser(request.receiver.toString(), FriendEventType.FRIEND_REQUEST_CANCELED, request);
 }
 
 userSchema.methods.acceptFriendRequest = async function (requestId: string): Promise<void> {
   const request = await FriendRequest.findOne({
     _id: requestId,
     receiver: this._id,
-    status: 'pending'
+    status: FriendRequestStatus.PENDING
   });
 
   if (!request) {
@@ -223,7 +231,7 @@ userSchema.methods.acceptFriendRequest = async function (requestId: string): Pro
   }
 
   // Update request status
-  request.status = 'accepted';
+  request.status = FriendRequestStatus.ACCEPTED;
   await request.save();
 
   // Add to friends list for both users
@@ -244,21 +252,26 @@ userSchema.methods.acceptFriendRequest = async function (requestId: string): Pro
     relatedId: request._id ? request._id.toString() : request.id,
     onModel: 'FriendRequest'
   });
+
+  const { default: SocketService } = await import('../services/socket.service');
+  SocketService.sendToUser(request.sender.toString(), FriendEventType.FRIEND_ACCEPTED, request);
 };
 
 userSchema.methods.rejectFriendRequest = async function (requestId: string): Promise<void> {
   const request = await FriendRequest.findOne({
     _id: requestId,
     receiver: this._id,
-    status: 'pending'
+    status: FriendRequestStatus.PENDING
   });
 
   if (!request) {
     throw new Error('Invalid friend request');
   }
 
-  request.status = 'rejected';
+  request.status = FriendRequestStatus.REJECTED;
   await request.save();
+  const {default: SocketService} = await import('../services/socket.service');
+  SocketService.sendToUser(request.sender.toString(), FriendEventType.FRIEND_REJECTED, request);
 };
 
 userSchema.methods.removeFriend = async function (friendId: string) {
@@ -287,7 +300,7 @@ userSchema.methods.removeFriend = async function (friendId: string) {
 userSchema.methods.getPendingFriendRequests = async function (): Promise<(IFriendRequest & Document)[]> {
   return FriendRequest.find({
     receiver: this._id,
-    status: 'pending'
+    status: FriendRequestStatus.PENDING
   });
 };
 

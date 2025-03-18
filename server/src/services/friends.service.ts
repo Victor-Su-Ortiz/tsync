@@ -4,6 +4,7 @@ import { Types, Document } from 'mongoose';
 import { NotFoundError, ValidationError, BadRequestError } from '../utils/errors';
 import { PublicUser } from '../types/user.types';
 import { IFriendRequest } from '../types/friendRequest.types';
+import { FriendRequestStatus } from '../utils/enums';
 
 
 export class FriendService {
@@ -68,7 +69,7 @@ export class FriendService {
   public static async getSentPendingRequests(userId: string): Promise<(IFriendRequest & Document)[]> {
     const pendingRequests = await FriendRequest.find({
       sender: userId,
-      status: 'pending'
+      status: FriendRequestStatus.PENDING
     }).populate('receiver', 'name email profilePicture');
 
     if (!pendingRequests || pendingRequests.length === 0) {
@@ -100,7 +101,7 @@ export class FriendService {
   public static async getReceivedPendingRequests(userId: string): Promise<(IFriendRequest & Document)[]> {
     const pendingRequests = await FriendRequest.find({
       receiver: userId, 
-      status: 'pending'
+      status: FriendRequestStatus.PENDING
     }).populate('sender', 'name email profilePicture');
 
     if (!pendingRequests || pendingRequests.length === 0) {

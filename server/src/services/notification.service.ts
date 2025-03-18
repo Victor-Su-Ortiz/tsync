@@ -1,7 +1,4 @@
-// src/services/notification.service.ts
-// import { read } from 'fs';
 import Notification from '../models/notification.model';
-// import User from '../models/user.model';
 import socketService from './socket.service';
 import { Types } from 'mongoose';
 

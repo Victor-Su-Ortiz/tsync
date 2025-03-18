@@ -18,9 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import UserProfile from './UserProfile';
 import { debounce } from 'lodash';
 import { api } from '../utils/api'; // Import your API utility
-
-// Unified Friend Status type
-export type FriendStatus = 'none' | 'pending' | 'friends' | 'incoming_request';
+import { FriendStatus } from '../utils/enums';
 
 // Define request interface for consistency
 export interface FriendRequestData {
@@ -118,21 +116,21 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
         const userId = user._id || user.id;
 
         // Apply friend status based on our cached data
-        let friendStatus: FriendStatus = 'none';
+        let friendStatus = FriendStatus.NONE;
         let requestId: string | undefined = undefined;
 
         // Check if they're already friends
         if (currentCache.friends.includes(userId)) {
-          friendStatus = 'friends';
+          friendStatus = FriendStatus.FRIENDS;
         }
         // Check if we have an incoming request from them
         else if (userId in currentCache.incoming) {
-          friendStatus = 'incoming_request';
+          friendStatus = FriendStatus.INCOMING_REQUEST;
           requestId = currentCache.incoming[userId];
         }
         // Check if we sent them a request
         else if (userId in currentCache.outgoing) {
-          friendStatus = 'pending';
+          friendStatus = FriendStatus.PENDING;
           requestId = currentCache.outgoing[userId];
         }
         console.log("User:", user.name, "Status:", friendStatus);
@@ -279,11 +277,11 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
     newCache.friends = newCache.friends.filter(id => id !== userId);
     
     // Then add to the appropriate category
-    if (newStatus === 'friends') {
+    if (newStatus === FriendStatus.FRIENDS) {
       newCache.friends.push(userId);
-    } else if (newStatus === 'pending' && requestId) {
+    } else if (newStatus === FriendStatus.PENDING && requestId) {
       newCache.outgoing[userId] = requestId;
-    } else if (newStatus === 'incoming_request' && requestId) {
+    } else if (newStatus === FriendStatus.INCOMING_REQUEST && requestId) {
       newCache.incoming[userId] = requestId;
     }
     

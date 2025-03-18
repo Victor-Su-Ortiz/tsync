@@ -6,6 +6,8 @@ import { createAdapter } from '@socket.io/redis-adapter';
 import { createClient } from 'redis';
 import User from '../models/user.model';
 
+
+
 export class SocketService {
   private static instance: SocketService;
   private io: Server | null = null;

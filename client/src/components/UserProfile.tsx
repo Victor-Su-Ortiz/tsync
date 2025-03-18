@@ -14,9 +14,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
-
-// Define all possible friend statuses
-type FriendStatus = 'none' | 'pending' | 'friends' | 'incoming_request';
+import { useSocket } from '../context/SocketContext';
+import { FriendRequestEventType, FriendStatus } from '../utils/enums';
 
 type User = {
   id: string;
@@ -46,11 +45,13 @@ const UserProfile = ({
   const [isLoading, setIsLoading] = useState(false);
   const [loadingStatus, setLoadingStatus] = useState(false);
   // Add local state to track friend status
-  const [currentStatus, setCurrentStatus] = useState<FriendStatus>('none');
+  const [currentStatus, setCurrentStatus] = useState<FriendStatus>(FriendStatus.NONE);
    // Add local state to store the request ID
    const [requestId, setRequestId] = useState<string | undefined>(initialRequestId);
 
   const { authToken } = useAuth();
+
+  const { socket } = useSocket();
 
   // Set initial status from props when component mounts or props change
   useEffect(() => {
@@ -63,6 +64,37 @@ const UserProfile = ({
   useEffect(() => {
     setRequestId(initialRequestId);
   }, [initialRequestId]);
+
+  // Update local status when friend status changes
+  useEffect(() => {
+    if (!user && !socket) return;
+    const handleFriendStatusChange = (event: FriendRequestEventType, data: any) => {
+      console.log('Received friend_status_changed event:', event);
+
+      switch(event) {
+        case "FRIEND_REQUEST_RECEIVED":
+          setCurrentStatus(FriendStatus.INCOMING_REQUEST);
+          setRequestId(data._id);
+          if (onFriendStatusChange) {
+            onFriendStatusChange(user.id, FriendStatus.INCOMING_REQUEST, data._id);
+          }
+          break;
+        case "FRIEND_ACCEPTED":
+          setCurrentStatus(FriendStatus.FRIENDS);
+          if (onFriendStatusChange) {
+            onFriendStatusChange(user.id, FriendStatus.FRIENDS, undefined);
+          }
+          break;
+        case "FRIEND_REJECTED":
+          setCurrentStatus(FriendStatus.NONE);
+          if (onFriendStatusChange) {
+            onFriendStatusChange(user.id, FriendStatus.NONE, undefined);
+          }
+          break;
+      }
+    }
+
+  }, [socket]);
 
   const handleSendFriendRequest = async () => {
     if (!user) return;
@@ -78,14 +110,14 @@ const UserProfile = ({
       });
 
       // Update local status
-      setCurrentStatus('pending');
+      setCurrentStatus(FriendStatus.PENDING);
 
       // Update local requestId
       setRequestId(request.data.friendRequest._id);
       
       // Notify parent component
       if (onFriendStatusChange) {
-        onFriendStatusChange(user.id, 'pending', request.data.friendRequest._id); 
+        onFriendStatusChange(user.id, FriendStatus.PENDING, request.data.friendRequest._id); 
       }
 
       // Show success message
@@ -123,14 +155,14 @@ const UserProfile = ({
       console.log("Request cancelled")
       
       // Update local status
-      setCurrentStatus('none');
+      setCurrentStatus(FriendStatus.NONE);
 
       // Clear the requestId
       setRequestId(undefined);
       
       // Notify parent component
       if (onFriendStatusChange) {
-        onFriendStatusChange(user.id, 'none', requestId);
+        onFriendStatusChange(user.id, FriendStatus.NONE, requestId);
       }
       
       Alert.alert("Request Cancelled", "Friend request has been cancelled.");
@@ -159,11 +191,11 @@ const UserProfile = ({
       });
 
       // Update local status
-      setCurrentStatus('friends');
+      setCurrentStatus(FriendStatus.FRIENDS);
       
       // Notify parent component
       if (onFriendStatusChange) {
-        onFriendStatusChange(user.id, 'friends', requestId);
+        onFriendStatusChange(user.id, FriendStatus.FRIENDS, requestId);
       }
 
       // Show success message
@@ -203,11 +235,11 @@ const UserProfile = ({
       });
 
       // Update local status
-      setCurrentStatus('none');
+      setCurrentStatus(FriendStatus.NONE);
       
       // Notify parent component
       if (onFriendStatusChange) {
-        onFriendStatusChange(user.id, 'none', requestId);
+        onFriendStatusChange(user.id, FriendStatus.NONE, requestId);
       }
 
       // Show success message
