@@ -50,12 +50,30 @@ const UserProfile = ({
 
   const { authToken } = useAuth();
 
+  // Logging for debugging component props
+  useEffect(() => {
+    if (visible) {
+      console.log('UserProfile rendered with:', {
+        userId: user?.id,
+        userFriendStatus: user?.friendStatus,
+        requestStatus,
+        currentStatus,
+        requestId
+      });
+    }
+  }, [visible, user, requestStatus, currentStatus, requestId]);
+
   // Set initial status from props when component mounts or props change
   useEffect(() => {
+    // First check requestStatus (direct prop)
     if (requestStatus) {
       setCurrentStatus(requestStatus as FriendStatus);
     }
-  }, [requestStatus]);
+    // Then check user.friendStatus if requestStatus is not provided
+    else if (user.friendStatus) {
+      setCurrentStatus(user.friendStatus);
+    }
+  }, [requestStatus, user.friendStatus]);
 
   const handleSendFriendRequest = async () => {
     if (!user) return;
