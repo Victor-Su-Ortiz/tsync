@@ -152,6 +152,24 @@ export class FriendService {
     };
   }
 
+  public static async cancelRequest(
+    userId: string,
+    requestId: string
+  ): Promise<{ success: boolean; message: string }> {
+    const user = await User.findById(userId)
+
+    if (!user) {
+      throw new NotFoundError('User not found')
+    }
+
+    user.cancelFriendRequest(requestId)
+    return {
+      success: true,
+      message: 'Friend request cancelled successfully'
+    }
+  }
+
+
   /**
    * Reject a friend request
    */

@@ -159,15 +159,29 @@ userSchema.methods.sendFriendRequest = async function (friendId: string): Promis
   if (existingRequest) {
     throw new Error('Friend request already exists between users');
   }
-
-  // Create a new friend request
-  const friendRequest = new FriendRequest({
+  // check if there is a rejected friend request
+  let friendRequest = await FriendRequest.findOne({
     sender: this._id,
     receiver: friendId,
-    status: 'pending'
+    status: 'rejected'
   });
 
-  await friendRequest.save();
+  // If there is a rejected request, update it to pending
+  if (friendRequest) {
+    friendRequest.status = 'pending';
+    await friendRequest.save();
+  } else {
+    // Create a new friend request
+    friendRequest = new FriendRequest({
+      sender: this._id,
+      receiver: friendId,
+      status: 'pending'
+    });
+
+    await friendRequest.save();
+  }
+
+  
 
   // Create notification
   const { default: NotificationService } = await import('../services/notification.service');
@@ -181,6 +195,21 @@ userSchema.methods.sendFriendRequest = async function (friendId: string): Promis
   });
   return friendRequest;
 };
+
+/**
+ * Cancel a friend request
+ */
+userSchema.methods.cancelFriendRequest = async function (requestId: string): Promise<void> {
+  const request = await FriendRequest.findOne({
+    _id: requestId
+  });
+
+  if (!request) {
+    throw new Error('Invalid friend request');
+  }
+
+  await FriendRequest.deleteOne({ _id: requestId });
+}
 
 userSchema.methods.acceptFriendRequest = async function (requestId: string): Promise<void> {
   const request = await FriendRequest.findOne({

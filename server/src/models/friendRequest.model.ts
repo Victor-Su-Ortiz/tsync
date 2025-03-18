@@ -38,8 +38,8 @@ friendRequestSchema.statics.findBetweenUsers = async function (
 ) {
   return this.findOne({
     $or: [
-      { sender: senderId, receiver: receiverId },
-      { sender: receiverId, receiver: senderId }
+      { sender: senderId, receiver: receiverId, status: 'pending' },
+      { sender: receiverId, receiver: senderId, status: 'pending' }
     ]
   });
 };

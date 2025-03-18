@@ -33,6 +33,7 @@ export interface IUserMethods {
   rejectFriendRequest(requestId: string): Promise<void>;
   removeFriend(friendId: string): Promise<void>;
   getPendingFriendRequests(): Promise<(IFriendRequest & Document)[]>;
+  cancelFriendRequest(requestId: string): Promise<void>;
 }
 
 // Public user data type (for API responses)

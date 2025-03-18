@@ -286,7 +286,6 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
     } else if (newStatus === 'incoming_request' && requestId) {
       newCache.incoming[userId] = requestId;
     }
-    console.log("Updated Cache:", newCache);
     
     setFriendRequestsCache(newCache);
 

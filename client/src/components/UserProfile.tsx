@@ -40,13 +40,15 @@ const UserProfile = ({
   onClose,
   user,
   onFriendStatusChange,
-  requestId, 
+  requestId: initialRequestId, 
   requestStatus
 }: UserProfileProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingStatus, setLoadingStatus] = useState(false);
   // Add local state to track friend status
   const [currentStatus, setCurrentStatus] = useState<FriendStatus>('none');
+   // Add local state to store the request ID
+   const [requestId, setRequestId] = useState<string | undefined>(initialRequestId);
 
   const { authToken } = useAuth();
 
@@ -56,6 +58,11 @@ const UserProfile = ({
       setCurrentStatus(requestStatus as FriendStatus);
     }
   }, [requestStatus]);
+
+  // Update local requestId when prop changes
+  useEffect(() => {
+    setRequestId(initialRequestId);
+  }, [initialRequestId]);
 
   const handleSendFriendRequest = async () => {
     if (!user) return;
@@ -72,6 +79,9 @@ const UserProfile = ({
 
       // Update local status
       setCurrentStatus('pending');
+
+      // Update local requestId
+      setRequestId(request.data.friendRequest._id);
       
       // Notify parent component
       if (onFriendStatusChange) {
@@ -95,19 +105,28 @@ const UserProfile = ({
   };
 
   const handleCancelFriendRequest = async () => {
-    if (!user || !requestId) return;
+    if (!user || !requestId) {
+      console.error("Missing user or requestId");
+      Alert.alert("Error", "Cannot cancel request: Missing information");
+      return;
+    }
     setIsLoading(true);
     
     try {
+      console.log("Trying to cancel request")
       // You'll need to implement a cancel request endpoint on your backend
       await api.delete(`/friends/requests/${requestId}`, {
         headers: {
           'Authorization': `Bearer ${authToken}`
         }
       });
+      console.log("Request cancelled")
       
       // Update local status
       setCurrentStatus('none');
+
+      // Clear the requestId
+      setRequestId(undefined);
       
       // Notify parent component
       if (onFriendStatusChange) {
@@ -124,7 +143,11 @@ const UserProfile = ({
   };
 
   const handleAcceptFriendRequest = async () => {
-    if (!user || !requestId) return;
+    if (!user || !requestId) {
+      console.error("Missing user or requestId");
+      Alert.alert("Error", "Cannot accept request: Missing information");
+      return;
+    }
     setIsLoading(true);
 
     try {
@@ -163,7 +186,11 @@ const UserProfile = ({
   };
 
   const handleDeclineFriendRequest = async () => {
-    if (!user || !requestId) return;
+    if (!user || !requestId) {
+      console.error("Missing user or requestId");
+      Alert.alert("Error", "Cannot decline request: Missing information");
+      return;
+    }
 
     setIsLoading(true);
 
