@@ -28,7 +28,6 @@ export class FriendController {
   static async getFriends(req: Request, res: Response, next: NextFunction) {
     try {
       const friends = await FriendService.getFriends(req.userId!.toString());
-      console.log("we have been hit by friends")
       res.status(200).json({
         success: true,
         friends
@@ -43,7 +42,6 @@ export class FriendController {
   static async getSentRequests(req: Request, res: Response, next: NextFunction) {
     try {
       const requests = await FriendService.getSentRequests(req.userId!.toString());
-      console.log("we have been hit by sent requests")
       res.status(200).json({
         success: true,
         requests
@@ -117,6 +115,16 @@ export class FriendController {
     try {
       const { requestId } = req.params;
       const result = await FriendService.acceptRequest(req.userId!.toString(), requestId);
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async cancelRequest(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { requestId } = req.params;
+      const result = await FriendService.cancelRequest(req.userId!.toString(), requestId);
       res.status(200).json(result);
     } catch (error) {
       next(error);

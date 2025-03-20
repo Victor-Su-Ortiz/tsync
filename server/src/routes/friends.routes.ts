@@ -48,6 +48,12 @@ router.put(
   FriendController.rejectRequest
 );
 
+router.delete(
+  "/requests/:requestId",
+  validateRequest(friendValidation.handleRequest),
+  FriendController.cancelRequest
+)
+
 // Friend removal
 router.delete(
   "/:friendId",
