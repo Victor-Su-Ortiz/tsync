@@ -67,9 +67,13 @@ const UserProfile = ({
 
   // Update local status when friend status changes
   useEffect(() => {
+    console.log('setting up socket listener with user:', user);
     if (!user && !socket) return;
-    const handleFriendStatusChange = (event: FriendRequestEventType, data: any) => {
-      console.log('Received friend_status_changed event:', event);
+    console.log('is ready to set up socket listener');
+    const handleFriendStatusChange = (payload: any) => {
+      const event = payload.event;
+      const data = payload.data;
+      console.log('Received friend_status_changed event:', event, data);
 
       switch(event) {
         case "FRIEND_REQUEST_RECEIVED":
@@ -100,6 +104,7 @@ const UserProfile = ({
       }
     }
     if (socket) {
+      console.log('Setting up socket listener for friend_request_status_changed');
       socket.on('friend_request_status_changed', handleFriendStatusChange);
     }
 
