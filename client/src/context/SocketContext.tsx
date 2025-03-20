@@ -1,10 +1,8 @@
-// src/context/SocketContext.tsx
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuth } from './AuthContext';
-import { Alert } from 'react-native'; // For debugging
 import { SOCKET_URL } from '@env';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Define the socket context structure
 type SocketContextType = {
@@ -12,6 +10,7 @@ type SocketContextType = {
   notificationCount: number;
   incrementNotificationCount: () => void;
   resetNotificationCount: () => void;
+  updateNotificationCount: (count: number) => void;
 };
 
 // Create the context
@@ -20,6 +19,7 @@ const SocketContext = createContext<SocketContextType>({
   notificationCount: 0,
   incrementNotificationCount: () => { },
   resetNotificationCount: () => { },
+  updateNotificationCount: () => { },
 });
 
 // Create the provider component
@@ -28,8 +28,49 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const [notificationCount, setNotificationCount] = useState(0);
   const { authToken, userInfo } = useAuth();
 
-  const incrementNotificationCount = () => setNotificationCount(prev => prev + 1);
-  const resetNotificationCount = () => setNotificationCount(0);
+  // Load saved notification count on initial render
+  useEffect(() => {
+    const loadNotificationCount = async () => {
+      try {
+        const savedCount = await AsyncStorage.getItem('notificationCount');
+        if (savedCount !== null) {
+          setNotificationCount(parseInt(savedCount, 10));
+        }
+      } catch (error) {
+        console.error('Error loading notification count:', error);
+      }
+    };
+
+    loadNotificationCount();
+  }, []);
+
+  // Save notification count whenever it changes
+  useEffect(() => {
+    const saveNotificationCount = async () => {
+      try {
+        await AsyncStorage.setItem('notificationCount', notificationCount.toString());
+      } catch (error) {
+        console.error('Error saving notification count:', error);
+      }
+    };
+
+    saveNotificationCount();
+  }, [notificationCount]);
+
+  const incrementNotificationCount = () => {
+    console.log('Incrementing notification count');
+    setNotificationCount(prev => prev + 1);
+  };
+
+  const resetNotificationCount = () => {
+    console.log('Resetting notification count');
+    setNotificationCount(0);
+  };
+
+  const updateNotificationCount = (count: number) => {
+    console.log('Updating notification count to:', count);
+    setNotificationCount(count);
+  };
 
   useEffect(() => {
     if (!authToken) {
@@ -46,12 +87,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     // Get your backend URL from environment or use direct URL
-    // Don't include any path or namespace - connect to the root
     console.log('Connecting to socket server:', SOCKET_URL);
 
     // Initialize socket connection with error handling
     try {
-      // Important: Do NOT include a namespace in the URL (no '/socket.io' or similar)
       const newSocket = io(SOCKET_URL, {
         auth: {
           token: authToken
@@ -59,53 +98,39 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         autoConnect: true,
         reconnectionAttempts: 5,
         reconnectionDelay: 1000,
-        // Try both transport methods - important for mobile
         transports: ['websocket', 'polling'],
-        // Add timeout and other options
         timeout: 10000,
         forceNew: true
       });
 
       setSocket(newSocket);
 
-      newSocket.on('connection', () => {
+      newSocket.on('connect', () => {
         console.log('Socket connected successfully', newSocket.id);
-        Alert.alert('Debug', 'Socket connected successfully');
       });
 
       newSocket.on('connect_error', (err) => {
         console.error('Socket connection error:', err);
         console.error('Error details:', JSON.stringify(err));
-        Alert.alert('Socket Error', `Connection error: ${err.message}`);
       });
 
       // Listen for generic notification events
       newSocket.on('notification', (data) => {
         console.log('Received notification event:', data);
         incrementNotificationCount();
-        Alert.alert('Notification Received', JSON.stringify(data));
       });
 
       // Listen for friend request specific events
       newSocket.on('friend_request', (data) => {
         console.log('Received friend request event:', data);
         incrementNotificationCount();
-        Alert.alert('Friend Request', `Request from: ${data?.from?.name || 'Someone'}`);
       });
 
       // Listen for the user-specific channel
-      // This is how the server will likely emit events for a specific user
       newSocket.on(`user:${userId}`, (data) => {
         console.log(`Received event on user_${userId}:`, data);
         incrementNotificationCount();
-        Alert.alert('User Event', `New notification for user ${userId}`);
       });
-
-      // Force an immediate test notification for debugging (remove in production)
-      // setTimeout(() => {
-      //   console.log('Triggering test notification');
-      //   incrementNotificationCount();
-      // }, 5000);
 
       // Clean up on unmount
       return () => {
@@ -116,7 +141,6 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       };
     } catch (error: any) {
       console.error('Error setting up socket:', error);
-      Alert.alert('Socket Setup Error', error.message);
     }
   }, [authToken, userInfo?.id]);
 
@@ -125,7 +149,8 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       socket,
       notificationCount,
       incrementNotificationCount,
-      resetNotificationCount
+      resetNotificationCount,
+      updateNotificationCount
     }}>
       {children}
     </SocketContext.Provider>
