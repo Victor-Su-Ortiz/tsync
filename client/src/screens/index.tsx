@@ -50,7 +50,10 @@ export default function Index() {
       setAccessToken(tokens.accessToken);
       setIdToken(tokens.idToken);
 
-      // Store Google user info in context for profile display
+      // Send the ID token to your backend
+      await sendTokenToBackend(tokens.idToken, tokens.accessToken);
+      // Update context with user info and access token for UI display and fetching events
+        // Store Google user info in context for profile display
       const formattedUserInfo: UserInfo = {
         id: userInfo.data?.user.id,
         name: userInfo.data?.user.name,
@@ -58,11 +61,6 @@ export default function Index() {
         picture: userInfo.data?.user.photo, // Photo URL from Google
         bio: "Let's meet!" // Default bio
       };
-
-
-      // Send the ID token to your backend
-      await sendTokenToBackend(tokens.idToken);
-      // Update context with user info and access token for UI display and fetching events
       setUserInfo(formattedUserInfo);
 
 
@@ -82,12 +80,12 @@ export default function Index() {
     }
   };
 
-  const sendTokenToBackend = async (idToken: string) => {
+  const sendTokenToBackend = async (idToken: string, accessToken: string) => {
     try {
       console.log("Sending token to backend:", idToken);
 
       // Make sure your API is configured with proper error handling
-      const res = await api.post("/auth/google", { token: idToken });
+      const res = await api.post("/auth/google", { idToken, accessToken });
 
       const { user, token: authToken } = res.data;
 
