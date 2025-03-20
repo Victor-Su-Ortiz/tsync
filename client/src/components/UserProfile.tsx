@@ -91,8 +91,24 @@ const UserProfile = ({
             onFriendStatusChange(user.id, FriendStatus.NONE, undefined);
           }
           break;
+        case "FRIEND_REQUEST_CANCELED":
+          setCurrentStatus(FriendStatus.NONE);
+          if (onFriendStatusChange) {
+            onFriendStatusChange(user.id, FriendStatus.NONE, undefined);
+          }
+          break;
       }
     }
+    if (socket) {
+      socket.on('friend_request_status_changed', handleFriendStatusChange);
+    }
+
+     // Clean up the event listener when the component unmounts or user changes
+     return () => {
+      if (socket) {
+        socket.off('friend_request_status_changed', handleFriendStatusChange);
+      }
+    };
 
   }, [socket]);
 

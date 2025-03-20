@@ -196,7 +196,7 @@ userSchema.methods.sendFriendRequest = async function (friendId: string): Promis
   });
 
   const { default: SocketService } = await import('../services/socket.service');
-  SocketService.sendToUser(friendId, FriendEventType.FRIEND_REQUEST_RECEIVED, friendRequest);
+  SocketService.sendToUser(friendId, 'friend_request_status_changed', {event: FriendEventType.FRIEND_REQUEST_RECEIVED, data: friendRequest});
 
   return friendRequest;
 };
@@ -216,7 +216,7 @@ userSchema.methods.cancelFriendRequest = async function (requestId: string): Pro
   await FriendRequest.deleteOne({ _id: requestId });
   
   const { default: SocketService } = await import('../services/socket.service');
-  SocketService.sendToUser(request.receiver.toString(), FriendEventType.FRIEND_REQUEST_CANCELED, request);
+  SocketService.sendToUser(request.receiver.toString(), 'friend_request_status_changed', {event: FriendEventType.FRIEND_REQUEST_CANCELED, data: request});
 }
 
 userSchema.methods.acceptFriendRequest = async function (requestId: string): Promise<void> {
@@ -254,7 +254,7 @@ userSchema.methods.acceptFriendRequest = async function (requestId: string): Pro
   });
 
   const { default: SocketService } = await import('../services/socket.service');
-  SocketService.sendToUser(request.sender.toString(), FriendEventType.FRIEND_ACCEPTED, request);
+  SocketService.sendToUser(request.sender.toString(), 'friend_request_status_changed', {event: FriendEventType.FRIEND_ACCEPTED, data: request});
 };
 
 userSchema.methods.rejectFriendRequest = async function (requestId: string): Promise<void> {
@@ -271,7 +271,7 @@ userSchema.methods.rejectFriendRequest = async function (requestId: string): Pro
   request.status = FriendRequestStatus.REJECTED;
   await request.save();
   const {default: SocketService} = await import('../services/socket.service');
-  SocketService.sendToUser(request.sender.toString(), FriendEventType.FRIEND_REJECTED, request);
+  SocketService.sendToUser(request.sender.toString(), 'friend_request_status_changed', {event: FriendEventType.FRIEND_REJECTED, data:request});
 };
 
 userSchema.methods.removeFriend = async function (friendId: string) {

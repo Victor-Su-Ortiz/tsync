@@ -52,6 +52,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     // Initialize socket connection with error handling
     try {
       // Important: Do NOT include a namespace in the URL (no '/socket.io' or similar)
+      console.log('Setting up socket connection with token:', authToken);
       const newSocket = io(SOCKET_URL, {
         auth: {
           token: authToken

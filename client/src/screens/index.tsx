@@ -58,11 +58,12 @@ export default function Index() {
         picture: userInfo.data?.user.photo, // Photo URL from Google
         bio: "Let's meet!" // Default bio
       };
-      // Update context with user info and access token for UI display and fetching events
-      setUserInfo(formattedUserInfo);
+
 
       // Send the ID token to your backend
       await sendTokenToBackend(tokens.idToken);
+      // Update context with user info and access token for UI display and fetching events
+      setUserInfo(formattedUserInfo);
 
 
 
@@ -87,8 +88,6 @@ export default function Index() {
 
       // Make sure your API is configured with proper error handling
       const res = await api.post("/auth/google", { token: idToken });
-
-      console.log("Backend response:", res.data);
 
       const { user, token: authToken } = res.data;
 
