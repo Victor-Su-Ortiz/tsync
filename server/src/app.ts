@@ -11,7 +11,7 @@ import helmet from "helmet";
 import compression from "compression";
 import cookieParser from "cookie-parser";
 import mongoSanitize from "express-mongo-sanitize";
-import { rateLimit } from "express-rate-limit";
+// import { rateLimit } from "express-rate-limit";
 import path from "path";
 
 // Routes
@@ -65,12 +65,12 @@ class App {
     }
 
     // Rate limiting
-    const limiter = rateLimit({
-      max: 100, // Limit each IP to 100 requests per window
-      windowMs: 60 * 60 * 1000, // 1 hour window
-      message: "Too many requests from this IP, please try again in an hour!",
-    });
-    this.app.use("/api", limiter);
+    // const limiter = rateLimit({
+    //   max: 100, // Limit each IP to 100 requests per window
+    //   windowMs: 60 * 60 * 1000, // 1 hour window
+    //   message: "Too many requests from this IP, please try again in an hour!",
+    // });
+    // this.app.use("/api", limiter);
 
     // Serve static files
     this.app.use(

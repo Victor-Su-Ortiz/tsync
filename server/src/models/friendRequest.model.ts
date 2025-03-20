@@ -1,5 +1,6 @@
 import mongoose, { Schema, Types, Model } from 'mongoose';
-import {IFriendRequest} from '../types/friendRequest.types';
+import { IFriendRequest } from '../types/friendRequest.types';
+import { FriendRequestStatus } from '../utils/enums';
 
 const friendRequestSchema = new Schema<IFriendRequest>(
   {
@@ -17,8 +18,8 @@ const friendRequestSchema = new Schema<IFriendRequest>(
     },
     status: {
       type: String,
-      enum: ['pending', 'accepted', 'rejected'],
-      default: 'pending',
+      enum: Object.values(FriendRequestStatus),
+      default: FriendRequestStatus.PENDING,
       index: true
     }
   },
@@ -38,8 +39,8 @@ friendRequestSchema.statics.findBetweenUsers = async function (
 ) {
   return this.findOne({
     $or: [
-      { sender: senderId, receiver: receiverId },
-      { sender: receiverId, receiver: senderId }
+      { sender: senderId, receiver: receiverId, status: FriendRequestStatus.PENDING },
+      { sender: receiverId, receiver: senderId, status: FriendRequestStatus.PENDING }
     ]
   });
 };
