@@ -7,7 +7,6 @@ import { GOOGLE_IOS_ID, GOOGLE_WEB_ID } from "@env"
 import { api } from "../utils/api";
 import { useAuth } from "../context/AuthContext";
 import { GoogleSignin, statusCodes } from "@react-native-google-signin/google-signin";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface UserInfo {
   id?: string;
@@ -26,6 +25,9 @@ export default function Index() {
   // Configure Google Sign once when component mounts
   useEffect(() => {
     GoogleSignin.configure({
+      scopes: [
+        'https://www.googleapis.com/auth/calendar',
+      ],
       webClientId: GOOGLE_WEB_ID,
       iosClientId: GOOGLE_IOS_ID,
       offlineAccess: true,
@@ -82,7 +84,6 @@ export default function Index() {
 
   const sendTokenToBackend = async (idToken: string, accessToken: string) => {
     try {
-      console.log("Sending token to backend:", idToken);
 
       // Make sure your API is configured with proper error handling
       const res = await api.post("/auth/google", { idToken, accessToken });
