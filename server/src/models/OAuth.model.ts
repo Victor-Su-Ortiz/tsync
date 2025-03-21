@@ -1,9 +1,3 @@
-// src/services/google-auth.service.ts
-import { google } from 'googleapis';
-import User from '../models/user.model';
-import { NotFoundError, ValidationError } from '../utils/errors';
-import crypto from 'crypto';
-
 // Define a model for storing OAuth state
 import mongoose, { Schema } from 'mongoose';
 

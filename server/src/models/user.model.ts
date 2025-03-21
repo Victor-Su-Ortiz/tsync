@@ -49,6 +49,21 @@ const userSchema = new Schema<IUser, IUserModel, IUserMethods>(
       sparse: true, // Allows null/undefined values to be unique
       index: true,
     },
+    googleRefreshToken: {
+      type: String,
+      select: false,
+    },
+    isGoogleCalendarConnected: {
+      type: Boolean,
+      default: false,
+    },
+    googleTokenExpiry: {
+      type: Date,
+    },
+    googleCalendarSyncEnabled: {
+      type: Boolean,
+      default: true,
+    },
     profilePicture: {
       type: String,
       default: "default-avatar.png",

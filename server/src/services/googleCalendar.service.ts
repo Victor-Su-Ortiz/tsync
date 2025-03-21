@@ -252,7 +252,7 @@ export class CalendarService {
         throw new NotFoundError('Event not found');
       }
       
-      if (event.organizer._id.toString() !== organizerId) {
+      if (event.creator._id.toString() !== organizerId) {
         throw new AuthenticationError('Only the organizer can create this calendar event');
       }
       
@@ -260,16 +260,16 @@ export class CalendarService {
       const endTime = new Date(selectedTime.getTime() + duration * 60 * 1000);
       
       // Create attendees list from participants
-      const attendees = event.participants.map(participant => ({
-        email: participant.email,
-        displayName: participant.name,
+      const attendees = event.attendees.map(attendee => ({
+        email: attendee.email,
+        displayName: attendee.name,
         responseStatus: 'needsAction'
       }));
       
       // Always add organizer as an attendee
-      if (!attendees.some(a => a.email === event.organizer.email)) {
+      if (!attendees.some(a => a.email === event.creator.email)) {
         attendees.push({
-          email: event.organizer.email,
+          email: event.creator.email,
           displayName: event.organizer.name,
           responseStatus: 'accepted',
           organizer: true

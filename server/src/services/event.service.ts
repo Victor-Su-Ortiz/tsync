@@ -28,6 +28,7 @@ class EventService {
         email: user.email,
         status: 'accepted',
         responseTime: new Date(),
+        name: user.name, 
       });
 
       // Save the event
@@ -154,7 +155,7 @@ class EventService {
    */
   public async addAttendee(
     eventId: string,
-    attendeeData: { userId: string; email: string },
+    attendeeData: { userId: string; email: string, name: string },
     currentUserId: string
   ): Promise<IEvent> {
     try {
@@ -176,7 +177,7 @@ class EventService {
       }
 
       // Add the attendee
-      await event.addAttendee(attendeeData.userId, attendeeData.email);
+      await event.addAttendee(attendeeData.userId, attendeeData.email, attendeeData.name);
       
       return event;
     } catch (error) {
