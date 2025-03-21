@@ -10,23 +10,7 @@ import UserProfile from '@/src/components/UserProfile';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { User } from '@/src/components/UserProfile';
 import { FriendStatus, NotificationType } from '@/src/utils/enums';
-
-type Notification = {
-  id: string;
-  title: string;
-  message: string;
-  read: boolean;
-  type: NotificationType;
-  updatedAt: string;
-  timestamp: string;
-  userData?: {
-    id: string;
-    name: string;
-    profilePicture?: string | null;
-  };
-  requestId?: string; // Added to track the original request ID
-};
-
+import { Notification } from '../(tabs)/home';
 
 export default function Notifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -118,7 +102,7 @@ export default function Notifications() {
   const markAsRead = (id: string) => {
     setNotifications(
       notifications.map(notif =>
-        notif.id === id ? { ...notif, read: true } : notif
+        notif._id === id ? { ...notif, read: true } : notif
       )
     );
   };
@@ -129,7 +113,7 @@ export default function Notifications() {
 
     try {
       // Mark notification as read
-      markAsRead(notification.id);
+      markAsRead(notification._id);
 
       // Set up the user object for the profile
       const user: User = {
@@ -157,7 +141,7 @@ export default function Notifications() {
 
   const handleNotificationPress = async (notification: Notification) => {
     // Mark the notification as read
-    markAsRead(notification.id);
+    markAsRead(notification._id);
 
     // If it's a friend request, directly show the user profile
     if (notification.type === NotificationType.FRIEND_REQUEST && notification.userData) {
@@ -226,7 +210,7 @@ export default function Notifications() {
       ) : (
         <FlatList
           data={notifications}
-          keyExtractor={(item, index) => item.id || `notification_${index}_${Date.now()}`}
+          keyExtractor={(item, index) => item._id || `notification_${index}_${Date.now()}`}
           renderItem={({ item }) => (
             <TouchableOpacity
               style={[styles.notificationItem, item.read ? styles.readNotification : styles.unreadNotification]}

@@ -12,16 +12,22 @@ import { useSocket } from '@/src/context/SocketContext'; // Import the socket ho
 import { api } from '@/src/utils/api';
 import { NotificationType } from '@/src/utils/enums';
 
-type Notification = {
+export type Notification = {
   _id: string;
-  createdAt: string;
+  title: string;
   message: string;
-  timestamp: string;
-  onModel: string;
   read: boolean;
-  recipient: string
-  type: NotificationType
+  type: NotificationType;
+  updatedAt: string;
+  timestamp: string;
+  userData?: {
+    id: string;
+    name: string;
+    profilePicture?: string | null;
+  };
+  requestId?: string; // Added to track the original request ID
 };
+
 
 type Place = {
   place_id: string;
