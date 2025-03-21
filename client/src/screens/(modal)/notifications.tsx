@@ -8,12 +8,9 @@ import { useSocket } from '@/src/context/SocketContext'; // Import the socket ho
 import { api } from '@/src/utils/api';
 import UserProfile from '@/src/components/UserProfile';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { User } from '@/src/components/UserProfile';
+import { FriendStatus, NotificationType } from '@/src/utils/enums';
 
-// Define notification types
-type NotificationType = 'promotion' | 'social' | 'friend_request';
-
-// Ensure FriendStatus matches the UserProfile component
-type FriendStatus = 'none' | 'pending' | 'friends' | 'incoming_request';
 
 type Notification = {
   id: string;
@@ -30,14 +27,6 @@ type Notification = {
   requestId?: string; // Added to track the original request ID
 };
 
-// Define User type to match the UserProfile component
-type User = {
-  id: string;
-  name: string;
-  profilePicture?: string;
-  bio?: string;
-  friendStatus?: FriendStatus;
-};
 
 export default function Notifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -179,13 +168,13 @@ export default function Notifications() {
         id: notification.userData.id,
         name: notification.userData.name,
         profilePicture: notification.userData.profilePicture || "",
-        friendStatus: 'incoming_request' // This user sent a request to us
+        friendStatus: FriendStatus.INCOMING_REQUEST // This user sent a request to us
       };
 
       // Update the global friend status tracker
       setFriendStatuses(prev => ({
         ...prev,
-        [user.id]: 'incoming_request'
+        [user.id]: FriendStatus.INCOMING_REQUEST
       }));
 
       // Set selected user and request ID
@@ -208,7 +197,7 @@ export default function Notifications() {
     }
   };
 
-  const handleFriendStatusChange = (userId: string, newStatus: FriendStatus, actionTaken: boolean = false) => {
+  const handleFriendStatusChange = (userId: string, newStatus: FriendStatus, requestId?: string, actionTaken: boolean = false) => {
     console.log(`Notifications - Friend status changed for ${userId}: ${newStatus}`);
 
     // Update the global friend status tracker

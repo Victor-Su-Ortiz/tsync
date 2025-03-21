@@ -25,7 +25,7 @@ export default function Home() {
   const [shops, setShops] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchModalVisible, setSearchModalVisible] = useState(false);
-  const { notificationCount, updateNotificationCount } = useSocket();
+  const { notificationCount } = useSocket();
   const pathname = usePathname();
   const prevPathRef = useRef(pathname);
   const { authToken } = useAuth();
@@ -81,7 +81,7 @@ export default function Home() {
         console.log('Unread notifications count:', unreadCount);
 
         // Use the updateNotificationCount from socket context
-        updateNotificationCount(unreadCount);
+        // updateNotificationCount(unreadCount);
       }
     } catch (error) {
       console.error('Error checking notifications:', error);
