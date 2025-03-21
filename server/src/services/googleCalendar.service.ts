@@ -2,7 +2,6 @@
 import { google, calendar_v3 } from 'googleapis';
 import User from '../models/user.model';
 import { NotFoundError, AuthenticationError, ValidationError } from '../utils/errors';
-import mongoose from 'mongoose';
 import Event from '../models/event.model';
 
 export class CalendarService {
