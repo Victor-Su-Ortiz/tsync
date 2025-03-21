@@ -17,7 +17,7 @@ import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import { FriendRequestEventType, FriendStatus } from '../utils/enums';
 
-type User = {
+export type User = {
   id: string;
   name: string;
   profilePicture?: string;

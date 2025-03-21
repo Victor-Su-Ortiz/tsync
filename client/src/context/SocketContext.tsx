@@ -12,6 +12,7 @@ type SocketContextType = {
   notificationCount: number;
   incrementNotificationCount: () => void;
   resetNotificationCount: () => void;
+  updateNotifcationCount: (number: number) => void;
 };
 
 // Create the context
@@ -20,6 +21,7 @@ const SocketContext = createContext<SocketContextType>({
   notificationCount: 0,
   incrementNotificationCount: () => { },
   resetNotificationCount: () => { },
+  updateNotifcationCount: (number: number) => { },
 });
 
 // Create the provider component
@@ -30,6 +32,9 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
   const incrementNotificationCount = () => setNotificationCount(prev => prev + 1);
   const resetNotificationCount = () => setNotificationCount(0);
+
+  const updateNotifcationCount = (value: number) => setNotificationCount(value);
+
 
   useEffect(() => {
     if (!authToken) {
@@ -126,7 +131,8 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       socket,
       notificationCount,
       incrementNotificationCount,
-      resetNotificationCount
+      resetNotificationCount,
+      updateNotifcationCount,
     }}>
       {children}
     </SocketContext.Provider>

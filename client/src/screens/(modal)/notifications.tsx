@@ -33,7 +33,6 @@ export default function Notifications() {
   const [loading, setLoading] = useState(false);
   const { authToken } = useAuth(); // Get auth token from context
   const { resetNotificationCount } = useSocket(); // Get reset function from socket context
-
   // State for User Profile modal
   const [userProfileVisible, setUserProfileVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -41,6 +40,7 @@ export default function Notifications() {
 
   // Keep track of friend statuses (across the app)
   const [friendStatuses, setFriendStatuses] = useState<Record<string, FriendStatus>>({});
+
 
   // Fetch friend requests when component mounts and reset notification count
   useEffect(() => {
@@ -192,7 +192,7 @@ export default function Notifications() {
     markAsRead(notification.id);
 
     // If it's a friend request, directly show the user profile
-    if (notification.type === 'friend_request' && notification.userData) {
+    if (notification.type === NotificationType.FRIEND_REQUEST && notification.userData) {
       showUserProfile(notification);
     }
   };
@@ -215,7 +215,7 @@ export default function Notifications() {
     if (actionTaken && (newStatus === 'friends' || newStatus === 'none')) {
       setNotifications(prevNotifications =>
         prevNotifications.filter(notif =>
-          !(notif.type === 'friend_request' && notif.userData?.id === userId)
+          !(notif.type === NotificationType.FRIEND_REQUEST && notif.userData?.id === userId)
         )
       );
     }
@@ -225,11 +225,11 @@ export default function Notifications() {
 
   const getIconForType = (type: NotificationType) => {
     switch (type) {
-      case 'promotion':
+      case 'PROMOTION':
         return <Ionicons name="pricetag" size={24} color="#00cc99" />;
-      case 'social':
+      case 'SOCIAL':
         return <Ionicons name="people" size={24} color="#FF9500" />;
-      case 'friend_request':
+      case 'FRIEND_REQUEST':
         return <Ionicons name="person-add" size={24} color="#007AFF" />;
       default:
         return <Ionicons name="notifications" size={24} color="#00cc99" />;

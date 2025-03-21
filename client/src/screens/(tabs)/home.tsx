@@ -10,6 +10,18 @@ import UserSearch from '../../components/UserSearch';
 import { useAuth } from '@/src/context/AuthContext';
 import { useSocket } from '@/src/context/SocketContext'; // Import the socket hook
 import { api } from '@/src/utils/api';
+import { NotificationType } from '@/src/utils/enums';
+
+type Notification = {
+  _id: string;
+  createdAt: string;
+  message: string;
+  timestamp: string;
+  onModel: string;
+  read: boolean;
+  recipient: string
+  type: NotificationType
+};
 
 type Place = {
   place_id: string;
@@ -25,19 +37,12 @@ export default function Home() {
   const [shops, setShops] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchModalVisible, setSearchModalVisible] = useState(false);
-  const { notificationCount } = useSocket();
+  const { notificationCount, updateNotifcationCount } = useSocket();
   const pathname = usePathname();
   const prevPathRef = useRef(pathname);
   const { authToken } = useAuth();
-  // Local notification state for API-fetched notifications
-  const [apiNotificationCount, setApiNotificationCount] = useState(0);
   const appState = useRef(AppState.currentState);
-
-  // Combine socket notification count with API notification count
-  // If socket has notifications, use that; otherwise use the API count
-  // console.log("notificationCount", notificationCount);
-  // console.log("socketNotificationCount", socketNotificationCount);
-  // console.log("apiNotificationCount", apiNotificationCount);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
   // Check for pending notifications when app resumes
   useEffect(() => {
@@ -72,7 +77,11 @@ export default function Home() {
       const response = await api.get('/notifications', {
         headers: {
           'Authorization': `Bearer ${authToken}`
+        },
+        params: {
+          unreadOnly: true
         }
+
       });
       console.log('API Notifications:', response.data);
 
@@ -80,8 +89,8 @@ export default function Home() {
         const unreadCount = response.data.pagination.unreadCount;
         console.log('Unread notifications count:', unreadCount);
 
-        // Use the updateNotificationCount from socket context
-        // updateNotificationCount(unreadCount);
+        updateNotifcationCount(unreadCount);
+        setNotifications(response.data.notifications)
       }
     } catch (error) {
       console.error('Error checking notifications:', error);
@@ -106,9 +115,24 @@ export default function Home() {
     return;
   };
 
-  const handleNotificationPress = () => {
+  const handleNotificationPress = async () => {
     // Navigate to the notifications screen using the modal route
-    router.push('./../(modal)/notifications');
+
+    try {
+      const notificationIds = notifications.map(notification => (notification._id))
+      const response = await api.patch("notifications/read",
+        { notificationIds }, // This is the request body
+        {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        }
+      );
+    } catch (error: any) {
+      console.log("ERROR WHILE MARKING NOTIFS AS READ:", error)
+    } finally {
+      router.push('./../(modal)/notifications');
+    }
   };
 
   const GOOGLE_PLACES_API_KEY = GOOGLE_PLACES_API;
