@@ -11,14 +11,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { User } from '@/src/components/UserProfile';
 import { FriendStatus, NotificationType } from '@/src/utils/enums';
 
-
 type Notification = {
   id: string;
   title: string;
   message: string;
-  timestamp: string;
   read: boolean;
   type: NotificationType;
+  updatedAt: string;
+  timestamp: string;
   userData?: {
     id: string;
     name: string;
@@ -65,58 +65,26 @@ export default function Notifications() {
     console.log('Notifications screen opened, resetting notification count');
   }, []);
 
+
+  // Do not call friend reqs api and call notifs
   const fetchFriendRequests = async () => {
     if (!authToken) return;
 
     setLoading(true);
     try {
       // Call your API endpoint to get pending friend requests
-      const response = await api.get('/friends/requests/received/pending', {
+      const response = await api.get('/notifications', {
         headers: {
           'Authorization': `Bearer ${authToken}`
         }
       });
-
-      console.log('Friend requests response:', response.data);
-
-      // Check if we have valid data
-      if (!response.data.requests || !Array.isArray(response.data.requests)) {
-        console.error('Invalid response structure:', response.data);
-        return;
-      }
-
-      // Transform friend requests into notification format
-      const friendRequestNotifications = response.data.requests.map((request: any) => {
-        // Log the request to debug the structure
-        console.log('Processing request:', JSON.stringify(request));
-
-        // Check if request.from exists
-        if (!request.sender) {
-          console.warn('Missing from field in request:', request);
-          return null;
-        }
-
-        return {
-          id: `fr_${request._id}`, // Using _id instead of id based on your response
-          title: 'Friend Request',
-          message: `${request.sender.name || 'Someone'} wants to be your friend`,
-          timestamp: formatTimestamp(request.createdAt),
-          read: false,
-          type: 'friend_request' as NotificationType,
-          userData: {
-            id: request.sender._id || request.sender.id,
-            name: request.sender.name || 'User',
-            profilePicture: request.sender.profilePicture,
-          },
-          requestId: request._id // Save the original request ID
-        };
-      }).filter(Boolean); // Remove any null items
-
-      // Combine with existing notifications
-      setNotifications([...friendRequestNotifications]);
+      let pendingFriendRequests = response.data.notifications.filter((notification: Notification) => { return notification.type == "FRIEND_REQUEST" })
+      pendingFriendRequests = pendingFriendRequests.map((notification: Notification) => ({ ...notification, title: "Friend Request" }))
+      pendingFriendRequests = pendingFriendRequests.map((notification: Notification) => ({ ...notification, timestamp: formatTimestamp(notification.updatedAt) }))
+      console.log("Pending friend requests", pendingFriendRequests);
+      setNotifications([...pendingFriendRequests]);
     } catch (error) {
       console.error('Error fetching friend requests:', error);
-      // Continue with just sample notifications
     } finally {
       setLoading(false);
     }
@@ -194,6 +162,8 @@ export default function Notifications() {
     // If it's a friend request, directly show the user profile
     if (notification.type === NotificationType.FRIEND_REQUEST && notification.userData) {
       showUserProfile(notification);
+    } else {
+      console.log("NOTIFICATION TYPE", notification.type);
     }
   };
 
@@ -256,7 +226,7 @@ export default function Notifications() {
       ) : (
         <FlatList
           data={notifications}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item, index) => item.id || `notification_${index}_${Date.now()}`}
           renderItem={({ item }) => (
             <TouchableOpacity
               style={[styles.notificationItem, item.read ? styles.readNotification : styles.unreadNotification]}
