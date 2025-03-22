@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import { IUser, IUserMethods, IUserModel, PublicUser } from "../types/user.types";
 import { IFriendRequest } from "../types/friendRequest.types";
 import FriendRequest from "./friendRequest.model"; // Import the FriendRequest model
-import { FriendEventType, FriendRequestStatus } from "../utils/enums";
+import { FriendEventType, FriendRequestStatus, EventType } from "../utils/enums";
 
 const userSchema = new Schema<IUser, IUserModel, IUserMethods>(
   {
@@ -204,7 +204,7 @@ userSchema.methods.sendFriendRequest = async function (friendId: string): Promis
   await NotificationService.createNotification({
     recipientId: friendId,
     senderId: this._id.toString(),
-    type: 'FRIEND_REQUEST',
+    type: EventType.FRIEND_REQUEST,
     message: `${this.name} sent you a friend request`,
     relatedId: friendRequest._id ? friendRequest._id.toString() : friendRequest.id,
     onModel: 'FriendRequest'
@@ -262,7 +262,7 @@ userSchema.methods.acceptFriendRequest = async function (requestId: string): Pro
   await NotificationService.createNotification({
     recipientId: request.sender.toString(),
     senderId: this._id.toString(),
-    type: 'FRIEND_ACCEPTED',
+    type: EventType.FRIEND_ACCEPTED,
     message: `${this.name} accepted your friend request`,
     relatedId: request._id ? request._id.toString() : request.id,
     onModel: 'FriendRequest'

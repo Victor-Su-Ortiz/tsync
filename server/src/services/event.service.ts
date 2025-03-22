@@ -3,6 +3,7 @@ import { IEvent, IAttendee } from '../types/event.types';
 import Event from '../models/event.model';
 import User from '../models/user.model';
 import { AppError } from '../utils/errors';
+import { EventType } from '../utils/enums';
 
 class EventService {
   /**
@@ -33,6 +34,20 @@ class EventService {
 
       // Save the event
       await event.save();
+
+      const { default: NotificationService } = await import('./notification.service');
+      for (const attendee of event.attendees) {
+        if (attendee.userId.toString() === userId) continue;
+        await NotificationService.createNotification({
+          recipientId: attendee.userId.toString(),
+          senderId: userId,
+          type: EventType.MEETING_INVITE,
+          message: `${user.name} invited you to an event: ${event.title}`,
+          relatedId: event._id.toString(),
+          onModel: 'Event',
+        });
+      }
+
       return event;
     } catch (error) {
       throw error;

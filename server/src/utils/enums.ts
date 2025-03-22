@@ -13,4 +13,13 @@ export enum FriendRequestStatus {
     ACCEPTED = 'accepted',
     REJECTED = 'rejected'
 }
+
+export enum EventType {
+    FRIEND_REQUEST = 'FRIEND_REQUEST',
+    FRIEND_ACCEPTED = 'FRIEND_ACCEPTED',
+    MEETING_INVITE = 'MEETING_INVITE',
+    MEETING_UPDATE = 'MEETING_UPDATE',
+    SYSTEM = 'SYSTEM'
+}
+
   
