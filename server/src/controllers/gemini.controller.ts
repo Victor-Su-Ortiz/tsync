@@ -28,8 +28,8 @@ export class GeminiController {
       
       // Check authorization (only organizer or participants can access)
       const userId = req.userId;
-      const isOrganizer = event.organizer.toString() === userId;
-      const isParticipant = event.participants.some(p => p.toString() === userId);
+      const isOrganizer = event.creator === userId;
+      const isParticipant = event.attendees.some(p => p.userId === userId);
       
       if (!isOrganizer && !isParticipant) {
         throw new ForbiddenError('You do not have permission to access this event');
@@ -67,12 +67,12 @@ export class GeminiController {
       }
       
       const userId = req.userId;
-      if (event.organizer.toString() !== userId) {
+      if (event.creator !== userId) {
         throw new ForbiddenError('Only the event organizer can schedule this event');
       }
       
       // Schedule with Gemini
-      const result = await GeminiService.scheduleWithGemini(eventId, userId);
+      const result = await GeminiService.scheduleWithGemini(eventId, userId!.toString());
       
       // If successful, notify participants
       if (result.success) {
@@ -82,7 +82,7 @@ export class GeminiController {
           .populate('organizer', '_id name email');
         
         // Notify participants about the scheduled event
-        updatedEvent?.participants.forEach((participant: any) => {
+        updatedEvent?.attendees.forEach((participant: any) => {
           if (participant._id.toString() !== userId) {
             // Send socket notification if user is online
             if (socketService.isUserOnline(participant._id.toString())) {
@@ -90,7 +90,7 @@ export class GeminiController {
                 eventId: event._id,
                 title: event.title,
                 scheduledTime: result.selectedTime,
-                organizer: (updatedEvent?.organizer as any).name,
+                organizer: (updatedEvent?.creator as any).name,
                 aiScheduled: true
               });
             }
@@ -108,4 +108,4 @@ export class GeminiController {
   }
 }
 
-export default GeminiController;s
+export default GeminiController;
