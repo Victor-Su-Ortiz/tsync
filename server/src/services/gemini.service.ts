@@ -74,7 +74,7 @@ export class GeminiService {
       }
       
       // Get free/busy information for all participants
-      const freeBusyPromises = event.participants.map((participant: any) => 
+      const freeBusyPromises = event.attendees.map((participant: any) => 
         CalendarService.getUserFreeBusy(
           participant._id.toString(),
           event.proposedDateRange.start,
@@ -87,7 +87,7 @@ export class GeminiService {
       // Format the calendar data for the Gemini prompt
       const formattedCalendarData = this.formatCalendarData(
         freeBusyResults,
-        event.participants
+        event.attendees
       );
       
       // Create prompt for Gemini
