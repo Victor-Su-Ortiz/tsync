@@ -31,20 +31,6 @@ export default function Notifications() {
     // Reset notification count when the notifications screen is opened
     resetNotificationCount();
 
-    // Also clear the stored count in AsyncStorage
-    const clearStoredCount = async () => {
-      try {
-        await AsyncStorage.setItem('notificationCount', '0');
-        console.log('Cleared notification count in AsyncStorage');
-      } catch (error) {
-        console.error('Error clearing notification count:', error);
-      }
-    };
-
-    clearStoredCount();
-
-    // Debug: Log that we're resetting notifications
-    console.log('Notifications screen opened, resetting notification count');
   }, []);
 
 
@@ -60,7 +46,7 @@ export default function Notifications() {
           'Authorization': `Bearer ${authToken}`
         }
       });
-      
+
       let notifications = response.data.notifications;
       console.log(notifications);
       notifications.forEach((notification: any) => ({ ...notification, timestamp: formatTimestamp(notification.updatedAt) }));
@@ -113,13 +99,19 @@ export default function Notifications() {
       // Mark notification as read
       markAsRead(notification._id);
 
+      console.log("RELATED ID:", notification.relatedId);
+
       let friendStatus = FriendStatus.NONE;
-      if (notification.relatedId?.status === FriendStatus.PENDING) {
+      if (notification.relatedId?.status === FriendStatus.PENDING || friendStatus) {
         friendStatus = FriendStatus.INCOMING_REQUEST;
       } else if (notification.relatedId?.status === FriendStatus.FRIENDS) {
         friendStatus = FriendStatus.FRIENDS;
       }
 
+      // Handle cancelled friend requests
+      if (!notification.relatedId) {
+        friendStatus = FriendStatus.INCOMING_REQUEST;
+      }
 
       // Set up the user object for the profile
       const user: User = {
@@ -129,12 +121,8 @@ export default function Notifications() {
         friendStatus
       };
 
-      // Update the global friend status tracker
-      // setFriendStatuses(prev => ({
-      //   ...prev,
-      //   [user.id]: FriendStatus.INCOMING_REQUEST
-      // }));
 
+      console.log("FRIEND STATUS:", friendStatus);
       // Set selected user and request ID
       setSelectedUser(user);
       setSelectedRequestId(notification.relatedId?._id);
@@ -152,8 +140,10 @@ export default function Notifications() {
     // If it's a friend request, directly show the user profile
     if ((notification.type === NotificationType.FRIEND_REQUEST || notification.type == NotificationType.FRIEND_ACCEPTED) && notification.sender) {
       showUserProfile(notification);
-    } else {
       console.log("NOTIFICATION TYPE", notification.type);
+
+    } else {
+      console.log("DID NOT SHOW USER PROIFLE, NOTIFICATION TYPE", notification.type);
     }
   };
 
