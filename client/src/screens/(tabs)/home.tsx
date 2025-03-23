@@ -20,7 +20,7 @@ export type Notification = {
   type: NotificationType;
   updatedAt: string;
   timestamp: string;
-  userData?: {
+  sender?: {
     id: string;
     name: string;
     profilePicture?: string | null;

@@ -15,7 +15,7 @@ export enum FriendRequestEventType {
 }
 
 export enum NotificationType {
-  PROMOTION = 'PROMOTION',
-  SOCIAL = 'SOCIAL',
+  MEETING_INVITE = 'MEETING_INVITE',
+  FRIEND_ACCEPTED = 'FRIEND_ACCEPTED',
   FRIEND_REQUEST = 'FRIEND_REQUEST'
 }
