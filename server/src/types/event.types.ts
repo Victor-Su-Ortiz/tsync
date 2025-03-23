@@ -32,6 +32,7 @@ export interface IAttendee {
   status: 'pending' | 'accepted' | 'declined' | 'tentative';
   responseTime?: Date;
   responseMessage?: string;
+  name: string;
 }
 
 // Define reminder interface
@@ -98,7 +99,7 @@ export interface IEvent extends Document {
 
 export interface IEventMethods {
   getPublicEventData(): Partial<IEvent>;
-  addAttendee(userId: string, email: string): Promise<void>;
+  addAttendee(userId: string, email: string, name: string): Promise<void>;
   removeAttendee(userId: string): Promise<void>;
   updateAttendeeStatus(userId: string, status: IAttendee['status']): Promise<void>;
   syncWithGoogleCalendar(): Promise<void>;

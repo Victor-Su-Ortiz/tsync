@@ -29,13 +29,13 @@ export class AuthController {
   static async googleAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
 
-      const { token } = req.body;
-      if (!token) {
+      const { idToken, accessToken } = req.body;
+      if (!idToken) {
         res.status(400).json({ message: "Missing ID Token" });
         return;
       }
 
-      const authResponse = await AuthService.googleAuth(token);
+      const authResponse = await AuthService.googleAuth(idToken, accessToken);
       console.log("✅ Google Auth Success:", authResponse);
 
       res.status(200).json(authResponse);

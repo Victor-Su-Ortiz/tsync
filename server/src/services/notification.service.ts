@@ -1,14 +1,15 @@
 import Notification from '../models/notification.model';
 import socketService from './socket.service';
 import { Types } from 'mongoose';
+import { EventType } from '../utils/enums';
 
 export interface CreateNotificationDto {
   recipientId: string;
   senderId: string;
-  type: 'FRIEND_REQUEST' | 'FRIEND_ACCEPTED' | 'MEETING_INVITE' | 'MEETING_UPDATE' | 'SYSTEM';
+  type: EventType;
   message: string;
   relatedId?: string;
-  onModel?: 'User' | 'FriendRequest' | 'Meeting';
+  onModel?: 'User' | 'FriendRequest' | 'Event';
 }
 
 export class NotificationService {
