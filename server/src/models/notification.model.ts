@@ -1,6 +1,7 @@
 // src/models/notification.model.ts
 import mongoose, { Schema } from "mongoose";
 import { INotification } from "../types/notification.types";
+import { EventType } from "../utils/enums";
 
 
 const notificationSchema = new Schema<INotification>(
@@ -19,7 +20,7 @@ const notificationSchema = new Schema<INotification>(
     type: {
       type: String,
       required: true,
-      enum: ["FRIEND_REQUEST", "FRIEND_ACCEPTED", "MEETING_INVITE", "MEETING_UPDATE", "SYSTEM"]
+      enum: EventType
     },
     message: {
       type: String,
@@ -31,7 +32,7 @@ const notificationSchema = new Schema<INotification>(
     },
     onModel: {
       type: String,
-      enum: ["User", "FriendRequest", "Meeting"]
+      enum: ["User", "FriendRequest", "Event"]
     },
     read: {
       type: Boolean,

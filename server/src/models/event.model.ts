@@ -75,6 +75,10 @@ const EventSchema = new Schema<IEvent, IEventModel, IEventMethods>(
           type: String,
           required: true,
         },
+        name: {
+          type: String,
+          required: true,
+        },
         status: {
           type: String,
           enum: ['pending', 'accepted', 'declined', 'tentative'],
@@ -124,7 +128,7 @@ EventSchema.methods.getPublicEventData = function(): Partial<IEvent> {
   return eventObject;
 };
 
-EventSchema.methods.addAttendee = async function(userId: string, email: string): Promise<void> {
+EventSchema.methods.addAttendee = async function(userId: string, email: string, name: string): Promise<void> {
   // Check if attendee already exists
   const existingAttendee = this.attendees.find(
     (attendee) => attendee.userId.toString() === userId || attendee.email === email
@@ -135,6 +139,7 @@ EventSchema.methods.addAttendee = async function(userId: string, email: string):
       userId: new Types.ObjectId(userId),
       email,
       status: 'pending',
+      name,
     });
     await this.save();
   }

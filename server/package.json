@@ -33,6 +33,7 @@
     "express-rate-limit": "^7.5.0",
     "express-session": "^1.18.1",
     "google-auth-library": "^9.15.1",
+    "googleapis": "^146.0.0",
     "helmet": "^8.0.0",
     "jest": "^29.7.0",
     "joi": "^17.13.3",

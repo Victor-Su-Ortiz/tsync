@@ -9,6 +9,10 @@ export interface IUser extends Document {
   password: string;
   role: "user" | "admin";
   googleId?: string;
+  googleRefreshToken?: string;
+  isGoogleCalendarConnected: boolean;
+  googleTokenExpiry?: Date;
+  googleCalendarSyncEnabled?: boolean;
   profilePicture?: string;
   isEmailVerified: boolean;
   verificationToken?: string;

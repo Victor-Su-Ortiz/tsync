@@ -108,8 +108,7 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
       // Get the current friend requests cache state
       // This ensures we use the latest state
       const currentCache = friendRequestsCache;
-      console.log("Current Cache:", currentCache);
-      // console.log("Searched Users:", searchedUsers);
+      console.log("Searched Users:", searchedUsers);
 
       // Apply friend statuses from our cache
       const updatedUsers = searchedUsers.map((user: User) => {

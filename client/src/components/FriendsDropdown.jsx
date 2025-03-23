@@ -8,7 +8,8 @@ import {
   StyleSheet,
   Modal,
   Animated,
-  ActivityIndicator
+  ActivityIndicator,
+  Image
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '../utils/api';
@@ -99,11 +100,6 @@ const FriendsDropdown = ({ selectedFriends, setSelectedFriends }) => {
     }
   };
 
-  // Extract first letter of name for avatar
-  const getInitial = (name) => {
-    return name && typeof name === 'string' ? name.charAt(0).toUpperCase() : '?';
-  };
-
   // Render each friend item
   const renderFriendItem = ({ item }) => {
     const isSelected = isFriendSelected(item._id);
@@ -117,9 +113,7 @@ const FriendsDropdown = ({ selectedFriends, setSelectedFriends }) => {
         onPress={() => toggleFriendSelection(item)}
       >
         <View style={styles.friendInfo}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{getInitial(item.name)}</Text>
-          </View>
+            <Image source={{uri: item.profilePicture}} style={styles.avatar}/>
           <Text style={[
             styles.friendName,
             isSelected && styles.selectedFriendName
@@ -203,7 +197,8 @@ const FriendsDropdown = ({ selectedFriends, setSelectedFriends }) => {
             keyExtractor={(item) => item._id}
             renderItem={({ item }) => (
               <View style={styles.selectedFriendChip}>
-                <Text style={styles.chipAvatar}>{getInitial(item.name)}</Text>
+                {/* <Text style={styles.chipAvatar}>{getInitial(item.name)}</Text> */}
+                <Image source={{uri: item.profilePicture}} style={styles.chipAvatar}/>
                 <Text style={styles.selectedFriendChipText}>
                   {item.name || `User ${item._id.slice(-5)}`}
                 </Text>

@@ -2,6 +2,7 @@ import User from "../models/user.model";
 import jwt, { Secret, SignOptions } from "jsonwebtoken";
 import crypto from "crypto";
 import { OAuth2Client } from "google-auth-library";
+import { google } from 'googleapis';
 import { sendEmail } from "../utils/email";
 import {
   AuthenticationError,
@@ -145,7 +146,7 @@ export class AuthService {
   /**
    * Google OAuth Authentication
    */
-  public static async googleAuth(idToken: string): Promise<AuthResponse> {
+  public static async googleAuth(idToken: string, accessToken: string): Promise<AuthResponse> {
     try {
       // Verify Google token
       const ticket = await this.googleClient.verifyIdToken({
@@ -157,6 +158,19 @@ export class AuthService {
       
       if (!payload || !payload.email) {
         throw new AuthenticationError("Invalid Google token");
+      }
+      console.log("Google payload:", payload);
+      // Set the token on your existing client
+      this.googleClient.setCredentials({ access_token: accessToken });
+      if (!payload.picture) {  
+        const userId = payload.sub;
+        // Use the access token to get profile info including picture
+        const people = google.people({ version: 'v1', auth: this.googleClient });
+        const profile = await people.people.get({
+          resourceName: `people/${userId}`,
+          personFields: 'photos'
+        });
+        payload.picture = profile.data.photos?.[0].url ?? undefined;
       }
 
       // Find or create user
@@ -188,6 +202,7 @@ export class AuthService {
         token,
       };
     } catch (error) {
+      console.error("Google Auth Error:", error);
       throw new AuthenticationError("Google authentication failed");
     }
   }

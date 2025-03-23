@@ -153,11 +153,11 @@ export class EventController {
         return;
       }
 
-      const { attendeeId, email } = req.body;
+      const { attendeeId, email, name } = req.body;
       
       const event = await eventService.addAttendee(
         req.params.id,
-        { userId: attendeeId, email },
+        { userId: attendeeId, email, name },
         userId.toString()
       )
       res.status(200).json({
