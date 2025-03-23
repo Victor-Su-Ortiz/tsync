@@ -28,7 +28,7 @@ export default function ProfileScreen() {
       await logout();
 
       // Navigate to login screen
-      router.replace('/');
+      router.replace('../login');
     } catch (error) {
       console.error('Error signing out:', error);
     }
