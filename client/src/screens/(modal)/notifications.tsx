@@ -11,6 +11,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { User } from '@/src/components/UserProfile';
 import { FriendStatus, NotificationType } from '@/src/utils/enums';
 import { Notification } from '../(tabs)/home';
+import FriendsDropdown from '@/src/components/FriendsDropdown';
 
 export default function Notifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -112,12 +113,20 @@ export default function Notifications() {
       // Mark notification as read
       markAsRead(notification._id);
 
+      let friendStatus = FriendStatus.NONE;
+      if (notification.relatedId?.status === FriendStatus.PENDING) {
+        friendStatus = FriendStatus.INCOMING_REQUEST;
+      } else if (notification.relatedId?.status === FriendStatus.FRIENDS) {
+        friendStatus = FriendStatus.FRIENDS;
+      }
+
+
       // Set up the user object for the profile
       const user: User = {
         id: notification.sender.id,
         name: notification.sender.name,
         profilePicture: notification.sender.profilePicture || "",
-        friendStatus: notification.relatedId?.status || FriendStatus.NONE
+        friendStatus
       };
 
       // Update the global friend status tracker
