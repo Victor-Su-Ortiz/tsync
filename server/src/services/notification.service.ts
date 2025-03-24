@@ -54,7 +54,7 @@ export class NotificationService {
   /**
    * Get notifications for a user
    */
-  public static async getUserNotifications(userId: string, options: { 
+  public static async getUserNotifications(userId: string, options: {
     page?: number;
     limit?: number;
     unreadOnly?: boolean;
@@ -67,6 +67,8 @@ export class NotificationService {
       query['read'] = false;
     }
 
+    console.log("UNREAD QUERY", unreadOnly, query);
+
     const notifications = await Notification.find(query)
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -75,10 +77,12 @@ export class NotificationService {
       .populate('relatedId')
       .lean();
 
+
+    console.log("NOTIFCATIONS", notifications);
     const total = await Notification.countDocuments(query);
-    const unreadCount = await Notification.countDocuments({ 
+    const unreadCount = await Notification.countDocuments({
       recipient: new Types.ObjectId(userId),
-      read: false 
+      read: false
     });
 
     return {
@@ -97,15 +101,15 @@ export class NotificationService {
    * Mark notifications as read
    */
   public static async markAsRead(userId: string, notificationIds?: string[]): Promise<{ success: boolean; unreadCount: number }> {
-    const updateQuery = notificationIds?.length 
+    const updateQuery = notificationIds?.length
       ? { recipient: userId, _id: { $in: notificationIds.map(id => new Types.ObjectId(id)) } }
       : { recipient: userId };
 
     await Notification.updateMany(updateQuery, { read: true });
 
-    const unreadCount = await Notification.countDocuments({ 
+    const unreadCount = await Notification.countDocuments({
       recipient: new Types.ObjectId(userId),
-      read: false 
+      read: false
     });
 
     return { success: true, unreadCount };
@@ -115,9 +119,9 @@ export class NotificationService {
    * Delete notifications
    */
   public static async deleteNotifications(userId: string, notificationIds: string[]): Promise<{ success: boolean }> {
-    await Notification.deleteMany({ 
-      recipient: new Types.ObjectId(userId), 
-      _id: { $in: notificationIds.map(id => new Types.ObjectId(id)) } 
+    await Notification.deleteMany({
+      recipient: new Types.ObjectId(userId),
+      _id: { $in: notificationIds.map(id => new Types.ObjectId(id)) }
     });
 
     return { success: true };

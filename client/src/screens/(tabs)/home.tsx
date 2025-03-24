@@ -1,15 +1,33 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { StyleSheet, Alert, Text, ActivityIndicator, FlatList, View, Image, ImageBackground, TouchableOpacity, AppState } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as Location from 'expo-location';
 import axios from 'axios';
 import { GOOGLE_PLACES_API, EXPO_PUBLIC_API_URL } from '@env';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams, usePathname } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import UserSearch from '../../components/UserSearch';
 import { useAuth } from '@/src/context/AuthContext';
 import { useSocket } from '@/src/context/SocketContext'; // Import the socket hook
 import { api } from '@/src/utils/api';
+import { NotificationType } from '@/src/utils/enums';
+
+export type Notification = {
+  _id: string;
+  title: string;
+  message: string;
+  read: boolean;
+  type: NotificationType;
+  updatedAt: string;
+  timestamp: string;
+  sender?: {
+    id: string;
+    name: string;
+    profilePicture?: string | null;
+  };
+  requestId?: string; // Added to track the original request ID
+};
+
 
 type Place = {
   place_id: string;
@@ -21,27 +39,16 @@ type Place = {
 
 export default function Home() {
   const params = useLocalSearchParams();
-  const isSelectingTeaShop = params.selectingTeaShop === 'true';
-  const [selectionMode, setSelectionMode] = useState<'normal' | 'tea-shop-selection'>('normal');
   const [location, setLocation] = useState<Location.LocationObjectCoords | null>(null);
   const [shops, setShops] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchModalVisible, setSearchModalVisible] = useState(false);
+  const { notificationCount, updateNotifcationCount } = useSocket();
+  const pathname = usePathname();
+  const prevPathRef = useRef(pathname);
   const { authToken } = useAuth();
-
-  // Get notification count from the socket context
-  const { notificationCount: socketNotificationCount, resetNotificationCount } = useSocket();
-
-  // Local notification state for API-fetched notifications
-  const [apiNotificationCount, setApiNotificationCount] = useState(0);
   const appState = useRef(AppState.currentState);
-
-  // Combine socket notification count with API notification count
-  // If socket has notifications, use that; otherwise use the API count
-  const notificationCount = socketNotificationCount || apiNotificationCount;
-  // console.log("notificationCount", notificationCount);
-  // console.log("socketNotificationCount", socketNotificationCount);
-  // console.log("apiNotificationCount", apiNotificationCount);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
   // Check for pending notifications when app resumes
   useEffect(() => {
@@ -71,31 +78,67 @@ export default function Home() {
 
     try {
       console.log('Checking for pending notifications...');
-      
+
       // Use the notifications endpoint to get unread count
-      const response = await api.get(`notifications`, {
+      const response = await api.get('/notifications', {
         headers: {
           'Authorization': `Bearer ${authToken}`
+        },
+        params: {
+          unreadOnly: true
         }
+
       });
       console.log('API Notifications:', response.data);
 
       if (response.data && response.data.pagination !== undefined) {
-        console.log('Unread notifications count:', response.data.pagination.unreadCount);
-        setApiNotificationCount(response.data.pagination.unreadCount);
+        const unreadCount = response.data.pagination.unreadCount;
+        console.log('Unread notifications count:', unreadCount);
+
+        updateNotifcationCount(unreadCount);
+        setNotifications(response.data.notifications)
       }
     } catch (error) {
       console.error('Error checking notifications:', error);
     }
   };
 
+
+
+  // Detect when screen comes to focus
+  useEffect(() => {
+    // Check if we've actually navigated to this screen (not just initial render)
+    if (prevPathRef.current !== pathname && pathname === '/') {
+      console.log('Home screen came into focus, checking for notifications');
+      checkPendingNotifications();
+    }
+
+    // Update the previous path ref
+    prevPathRef.current = pathname;
+  }, [pathname]);
+
   const handleTeaShopPress = async (teaShop: Place) => {
     return;
   };
 
-  const handleNotificationPress = () => {
+  const handleNotificationPress = async () => {
     // Navigate to the notifications screen using the modal route
-    router.push('./../(modal)/notifications');
+
+    try {
+      const notificationIds = notifications.map(notification => (notification._id))
+      const response = await api.patch("notifications/read",
+        { notificationIds }, // This is the request body
+        {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        }
+      );
+    } catch (error: any) {
+      console.log("ERROR WHILE MARKING NOTIFS AS READ:", error)
+    } finally {
+      router.push('./../(modal)/notifications');
+    }
   };
 
   const GOOGLE_PLACES_API_KEY = GOOGLE_PLACES_API;

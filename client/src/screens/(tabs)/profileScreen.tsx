@@ -18,6 +18,7 @@ export default function ProfileScreen() {
 
   useEffect(() => console.log(userInfo));
 
+  // <to fix>
   const handleSignOut = async () => {
     try {
       // Sign out from Google
@@ -27,7 +28,7 @@ export default function ProfileScreen() {
       await logout();
 
       // Navigate to login screen
-      router.replace('/');
+      router.replace('./');
     } catch (error) {
       console.error('Error signing out:', error);
     }

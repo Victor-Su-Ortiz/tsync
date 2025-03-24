@@ -376,30 +376,6 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
                     />
                     <View style={styles.userInfo}>
                       <Text style={styles.userName}>{item.name}</Text>
-                      {item.friendStatus === 'pending' && (
-                        <View style={styles.friendStatusPending}>
-                          <Ionicons name="time-outline" size={14} color="#F9A826" />
-                          <Text style={[styles.friendStatusText, { color: '#F9A826' }]}>
-                            Friend Request Pending
-                          </Text>
-                        </View>
-                      )}
-                      {item.friendStatus === 'friends' && (
-                        <View style={styles.friendStatusFriends}>
-                          <Ionicons name="checkmark-circle-outline" size={14} color="#00cc99" />
-                          <Text style={[styles.friendStatusText, { color: '#00cc99' }]}>
-                            Friends
-                          </Text>
-                        </View>
-                      )}
-                      {item.friendStatus === 'incoming_request' && (
-                        <View style={styles.friendStatusPending}>
-                          <Ionicons name="person-add-outline" size={14} color="#007AFF" />
-                          <Text style={[styles.friendStatusText, { color: '#007AFF' }]}>
-                            Wants to be Friends
-                          </Text>
-                        </View>
-                      )}
                     </View>
                   </TouchableOpacity>
                 )}

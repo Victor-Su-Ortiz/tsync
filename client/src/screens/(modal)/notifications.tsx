@@ -8,126 +8,51 @@ import { useSocket } from '@/src/context/SocketContext'; // Import the socket ho
 import { api } from '@/src/utils/api';
 import UserProfile from '@/src/components/UserProfile';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// Define notification types
-type NotificationType = 'promotion' | 'social' | 'friend_request';
-
-// Ensure FriendStatus matches the UserProfile component
-type FriendStatus = 'none' | 'pending' | 'friends' | 'incoming_request';
-
-type Notification = {
-  id: string;
-  title: string;
-  message: string;
-  timestamp: string;
-  read: boolean;
-  type: NotificationType;
-  userData?: {
-    id: string;
-    name: string;
-    profilePicture?: string | null;
-  };
-  requestId?: string; // Added to track the original request ID
-};
-
-// Define User type to match the UserProfile component
-type User = {
-  id: string;
-  name: string;
-  profilePicture?: string;
-  bio?: string;
-  friendStatus?: FriendStatus;
-};
+import { User } from '@/src/components/UserProfile';
+import { FriendStatus, NotificationType } from '@/src/utils/enums';
+import { Notification } from '../(tabs)/home';
+import FriendsDropdown from '@/src/components/FriendsDropdown';
 
 export default function Notifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
   const { authToken } = useAuth(); // Get auth token from context
   const { resetNotificationCount } = useSocket(); // Get reset function from socket context
-
   // State for User Profile modal
   const [userProfileVisible, setUserProfileVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [selectedRequestId, setSelectedRequestId] = useState<string | undefined>(undefined);
 
-  // Keep track of friend statuses (across the app)
-  const [friendStatuses, setFriendStatuses] = useState<Record<string, FriendStatus>>({});
 
   // Fetch friend requests when component mounts and reset notification count
   useEffect(() => {
-    fetchFriendRequests();
+    fetchNotifications();
 
     // Reset notification count when the notifications screen is opened
     resetNotificationCount();
 
-    // Also clear the stored count in AsyncStorage
-    const clearStoredCount = async () => {
-      try {
-        await AsyncStorage.setItem('notificationCount', '0');
-        console.log('Cleared notification count in AsyncStorage');
-      } catch (error) {
-        console.error('Error clearing notification count:', error);
-      }
-    };
-
-    clearStoredCount();
-
-    // Debug: Log that we're resetting notifications
-    console.log('Notifications screen opened, resetting notification count');
   }, []);
 
-  const fetchFriendRequests = async () => {
+
+  // Do not call friend reqs api and call notifs
+  const fetchNotifications = async () => {
     if (!authToken) return;
 
     setLoading(true);
     try {
       // Call your API endpoint to get pending friend requests
-      const response = await api.get('/friends/requests/received/pending', {
+      const response = await api.get('/notifications', {
         headers: {
           'Authorization': `Bearer ${authToken}`
         }
       });
 
-      console.log('Friend requests response:', response.data);
-
-      // Check if we have valid data
-      if (!response.data.requests || !Array.isArray(response.data.requests)) {
-        console.error('Invalid response structure:', response.data);
-        return;
-      }
-
-      // Transform friend requests into notification format
-      const friendRequestNotifications = response.data.requests.map((request: any) => {
-        // Log the request to debug the structure
-        console.log('Processing request:', JSON.stringify(request));
-
-        // Check if request.from exists
-        if (!request.sender) {
-          console.warn('Missing from field in request:', request);
-          return null;
-        }
-
-        return {
-          id: `fr_${request._id}`, // Using _id instead of id based on your response
-          title: 'Friend Request',
-          message: `${request.sender.name || 'Someone'} wants to be your friend`,
-          timestamp: formatTimestamp(request.createdAt),
-          read: false,
-          type: 'friend_request' as NotificationType,
-          userData: {
-            id: request.sender._id || request.sender.id,
-            name: request.sender.name || 'User',
-            profilePicture: request.sender.profilePicture,
-          },
-          requestId: request._id // Save the original request ID
-        };
-      }).filter(Boolean); // Remove any null items
-
-      // Combine with existing notifications
-      setNotifications([...friendRequestNotifications]);
+      let notifications = response.data.notifications;
+      console.log(notifications);
+      notifications.forEach((notification: any) => ({ ...notification, timestamp: formatTimestamp(notification.updatedAt) }));
+      setNotifications([...notifications]);
     } catch (error) {
       console.error('Error fetching friend requests:', error);
-      // Continue with just sample notifications
     } finally {
       setLoading(false);
     }
@@ -161,36 +86,46 @@ export default function Notifications() {
   const markAsRead = (id: string) => {
     setNotifications(
       notifications.map(notif =>
-        notif.id === id ? { ...notif, read: true } : notif
+        notif._id === id ? { ...notif, read: true } : notif
       )
     );
   };
 
   // Show user profile from notification
-  const showUserProfile = async (notification: Notification) => {
-    if (!notification.userData) return;
+  const showUserProfile = async (notification: any) => {
+    if (!notification.sender) return;
 
     try {
       // Mark notification as read
-      markAsRead(notification.id);
+      markAsRead(notification._id);
+
+      console.log("RELATED ID:", notification.relatedId);
+
+      let friendStatus = FriendStatus.NONE;
+      if (notification.relatedId?.status === FriendStatus.PENDING || friendStatus) {
+        friendStatus = FriendStatus.INCOMING_REQUEST;
+      } else if (notification.relatedId?.status === FriendStatus.FRIENDS) {
+        friendStatus = FriendStatus.FRIENDS;
+      }
+
+      // Handle cancelled friend requests
+      if (!notification.relatedId) {
+        friendStatus = FriendStatus.INCOMING_REQUEST;
+      }
 
       // Set up the user object for the profile
       const user: User = {
-        id: notification.userData.id,
-        name: notification.userData.name,
-        profilePicture: notification.userData.profilePicture || "",
-        friendStatus: 'incoming_request' // This user sent a request to us
+        id: notification.sender.id,
+        name: notification.sender.name,
+        profilePicture: notification.sender.profilePicture || "",
+        friendStatus
       };
 
-      // Update the global friend status tracker
-      setFriendStatuses(prev => ({
-        ...prev,
-        [user.id]: 'incoming_request'
-      }));
 
+      console.log("FRIEND STATUS:", friendStatus);
       // Set selected user and request ID
       setSelectedUser(user);
-      setSelectedRequestId(notification.requestId);
+      setSelectedRequestId(notification.relatedId?._id);
       setUserProfileVisible(true);
     } catch (error) {
       console.error('Error setting up user profile:', error);
@@ -200,22 +135,20 @@ export default function Notifications() {
 
   const handleNotificationPress = async (notification: Notification) => {
     // Mark the notification as read
-    markAsRead(notification.id);
+    markAsRead(notification._id);
 
     // If it's a friend request, directly show the user profile
-    if (notification.type === 'friend_request' && notification.userData) {
+    if ((notification.type === NotificationType.FRIEND_REQUEST || notification.type == NotificationType.FRIEND_ACCEPTED) && notification.sender) {
       showUserProfile(notification);
+      console.log("NOTIFICATION TYPE", notification.type);
+
+    } else {
+      console.log("DID NOT SHOW USER PROIFLE, NOTIFICATION TYPE", notification.type);
     }
   };
 
-  const handleFriendStatusChange = (userId: string, newStatus: FriendStatus, actionTaken: boolean = false) => {
+  const handleFriendStatusChange = (userId: string, newStatus: FriendStatus, requestId?: string, actionTaken: boolean = false) => {
     console.log(`Notifications - Friend status changed for ${userId}: ${newStatus}`);
-
-    // Update the global friend status tracker
-    setFriendStatuses(prev => ({
-      ...prev,
-      [userId]: newStatus
-    }));
 
 
     // From Claude: Good to know
@@ -226,7 +159,7 @@ export default function Notifications() {
     if (actionTaken && (newStatus === 'friends' || newStatus === 'none')) {
       setNotifications(prevNotifications =>
         prevNotifications.filter(notif =>
-          !(notif.type === 'friend_request' && notif.userData?.id === userId)
+          !(notif.type === NotificationType.FRIEND_REQUEST && notif.sender?.id === userId)
         )
       );
     }
@@ -236,11 +169,11 @@ export default function Notifications() {
 
   const getIconForType = (type: NotificationType) => {
     switch (type) {
-      case 'promotion':
-        return <Ionicons name="pricetag" size={24} color="#00cc99" />;
-      case 'social':
+      case 'MEETING_INVITE':
+        return <Ionicons name="calendar" size={24} color="#00cc99" />;
+      case 'FRIEND_ACCEPTED':
         return <Ionicons name="people" size={24} color="#FF9500" />;
-      case 'friend_request':
+      case 'FRIEND_REQUEST':
         return <Ionicons name="person-add" size={24} color="#007AFF" />;
       default:
         return <Ionicons name="notifications" size={24} color="#00cc99" />;
@@ -267,7 +200,7 @@ export default function Notifications() {
       ) : (
         <FlatList
           data={notifications}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item, index) => item._id || `notification_${index}_${Date.now()}`}
           renderItem={({ item }) => (
             <TouchableOpacity
               style={[styles.notificationItem, item.read ? styles.readNotification : styles.unreadNotification]}
@@ -300,10 +233,12 @@ export default function Notifications() {
           onClose={() => {
             setUserProfileVisible(false);
             setSelectedUser(null);
+            setSelectedRequestId(undefined);
           }}
           user={selectedUser}
           onFriendStatusChange={handleFriendStatusChange}
           requestId={selectedRequestId}
+          requestStatus={selectedUser.friendStatus}
         />
       )}
     </SafeAreaView>

@@ -17,7 +17,7 @@ import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import { FriendRequestEventType, FriendStatus } from '../utils/enums';
 
-type User = {
+export type User = {
   id: string;
   name: string;
   profilePicture?: string;
@@ -39,15 +39,15 @@ const UserProfile = ({
   onClose,
   user,
   onFriendStatusChange,
-  requestId: initialRequestId, 
+  requestId: initialRequestId,
   requestStatus
 }: UserProfileProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingStatus, setLoadingStatus] = useState(false);
   // Add local state to track friend status
   const [currentStatus, setCurrentStatus] = useState<FriendStatus>(FriendStatus.NONE);
-   // Add local state to store the request ID
-   const [requestId, setRequestId] = useState<string | undefined>(initialRequestId);
+  // Add local state to store the request ID
+  const [requestId, setRequestId] = useState<string | undefined>(initialRequestId);
 
   const { authToken } = useAuth();
 
@@ -55,6 +55,7 @@ const UserProfile = ({
 
   // Set initial status from props when component mounts or props change
   useEffect(() => {
+    // First check requestStatus (direct prop)
     if (requestStatus) {
       setCurrentStatus(requestStatus as FriendStatus);
     }
@@ -75,7 +76,7 @@ const UserProfile = ({
       const data = payload.data;
       console.log('Received friend_status_changed event:', event, data);
 
-      switch(event) {
+      switch (event) {
         case "FRIEND_REQUEST_RECEIVED":
           setCurrentStatus(FriendStatus.INCOMING_REQUEST);
           setRequestId(data._id);
@@ -108,8 +109,8 @@ const UserProfile = ({
       socket.on('friend_request_status_changed', handleFriendStatusChange);
     }
 
-     // Clean up the event listener when the component unmounts or user changes
-     return () => {
+    // Clean up the event listener when the component unmounts or user changes
+    return () => {
       if (socket) {
         socket.off('friend_request_status_changed', handleFriendStatusChange);
       }
@@ -135,17 +136,17 @@ const UserProfile = ({
 
       // Update local requestId
       setRequestId(request.data.friendRequest._id);
-      
+
       // Notify parent component
       if (onFriendStatusChange) {
-        onFriendStatusChange(user.id, FriendStatus.PENDING, request.data.friendRequest._id); 
+        onFriendStatusChange(user.id, FriendStatus.PENDING, request.data.friendRequest._id);
       }
 
       // Show success message
       Alert.alert("Friend Request Sent", `Your friend request to ${user.name} has been sent.`);
     } catch (error: any) {
       console.error("Error sending friend request:", error.response?.data || error);
-      
+
       // Show a more specific error message based on the error response
       if (error.response?.data?.message) {
         Alert.alert("Error", error.response.data.message);
@@ -164,7 +165,7 @@ const UserProfile = ({
       return;
     }
     setIsLoading(true);
-    
+
     try {
       console.log("Trying to cancel request")
       // You'll need to implement a cancel request endpoint on your backend
@@ -174,18 +175,18 @@ const UserProfile = ({
         }
       });
       console.log("Request cancelled")
-      
+
       // Update local status
       setCurrentStatus(FriendStatus.NONE);
 
       // Clear the requestId
       setRequestId(undefined);
-      
+
       // Notify parent component
       if (onFriendStatusChange) {
         onFriendStatusChange(user.id, FriendStatus.NONE, requestId);
       }
-      
+
       Alert.alert("Request Cancelled", "Friend request has been cancelled.");
     } catch (error: any) {
       console.error("Error cancelling request:", error);
@@ -213,7 +214,7 @@ const UserProfile = ({
 
       // Update local status
       setCurrentStatus(FriendStatus.FRIENDS);
-      
+
       // Notify parent component
       if (onFriendStatusChange) {
         onFriendStatusChange(user.id, FriendStatus.FRIENDS, requestId);
@@ -226,7 +227,7 @@ const UserProfile = ({
       setTimeout(() => onClose(), 1500);
     } catch (error: any) {
       console.error("Error accepting friend request:", error);
-      
+
       // Show a more specific error message
       if (error.response?.data?.message) {
         Alert.alert("Error", error.response.data.message);
@@ -257,7 +258,7 @@ const UserProfile = ({
 
       // Update local status
       setCurrentStatus(FriendStatus.NONE);
-      
+
       // Notify parent component
       if (onFriendStatusChange) {
         onFriendStatusChange(user.id, FriendStatus.NONE, requestId);
@@ -270,7 +271,7 @@ const UserProfile = ({
       setTimeout(() => onClose(), 1500);
     } catch (error: any) {
       console.error("Error declining friend request:", error);
-      
+
       // Show a more specific error message
       if (error.response?.data?.message) {
         Alert.alert("Error", error.response.data.message);
@@ -302,7 +303,7 @@ const UserProfile = ({
             >
               <Ionicons name="arrow-back" size={24} color="#333" />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>Profile</Text>
+            <Text style={styles.headerTitle}>{user.name}</Text>
             <View style={{ width: 40 }} />
           </View>
 
