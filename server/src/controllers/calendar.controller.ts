@@ -30,7 +30,7 @@ export class CalendarController {
         return res.status(400).json({ message: 'Authorization code is required' });
       }
 
-      const result = await AuthService.handleGoogleCalendarCallback(code, userId);
+      const result = await GoogleAuthService.handleAuthCallback(code, userId!.toString());
       res.status(200).json(result);
     } catch (error) {
       next(error);
