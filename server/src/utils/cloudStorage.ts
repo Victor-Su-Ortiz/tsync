@@ -23,7 +23,7 @@ export const cloudUpload = async (filePath: string, folder: string): Promise<any
       resource_type: 'auto',
       transformation: [
         { quality: 'auto:good' }, // Optimize quality
-        { fetch_format: 'auto' },  // Auto format based on browser
+        { fetch_format: 'auto' }, // Auto format based on browser
       ],
     });
 
@@ -36,7 +36,7 @@ export const cloudUpload = async (filePath: string, folder: string): Promise<any
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
     }
-    
+
     console.error('Error uploading to cloud storage:', error);
     throw new Error('Cloud storage upload failed');
   }
@@ -76,10 +76,10 @@ const getPublicIdFromUrl = (url: string): string | null => {
     const urlParts = url.split('/');
     const filename = urlParts.pop() || '';
     const folder = urlParts.pop() || '';
-    
+
     // Get filename without extension
     const filenameWithoutExt = path.parse(filename).name;
-    
+
     // Combine folder and filename to get public ID
     return `${folder}/${filenameWithoutExt}`;
   } catch (error) {

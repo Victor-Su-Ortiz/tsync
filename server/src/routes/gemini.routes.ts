@@ -9,15 +9,9 @@ const router = express.Router();
 router.use(protect);
 
 // Get AI-suggested meeting times
-router.get(
-  '/events/:eventId/suggestions',
-  GeminiController.getSuggestedTimes
-);
+router.get('/events/:eventId/suggestions', GeminiController.getSuggestedTimes);
 
 // Auto-schedule event using Gemini AI
-router.post(
-  '/events/:eventId/auto-schedule',
-  GeminiController.scheduleWithGemini
-);
+router.post('/events/:eventId/auto-schedule', GeminiController.scheduleWithGemini);
 
 export default router;
