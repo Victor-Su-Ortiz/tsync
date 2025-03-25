@@ -63,7 +63,7 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [profileVisible, setProfileVisible] = useState(false);
   const inputRef = useRef<TextInput>(null);
-  
+
   // Cache of friend requests to avoid repeated API calls
   const [friendRequestsCache, setFriendRequestsCache] = useState<{
     incoming: Record<string, string>, // userId -> requestId
@@ -134,8 +134,8 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
         }
         console.log("User:", user.name, "Status:", friendStatus);
 
-        return { 
-          ...user, 
+        return {
+          ...user,
           id: userId, // Ensure id is consistently available
           friendStatus,
           requestId
@@ -269,12 +269,12 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
     console.log("updating friend status for user:", userId, "to:", newStatus, "requestId:", requestId);
     // Update our cache based on the new status
     const newCache = { ...friendRequestsCache };
-    
+
     // Remove from all categories first
     delete newCache.incoming[userId];
     delete newCache.outgoing[userId];
     newCache.friends = newCache.friends.filter(id => id !== userId);
-    
+
     // Then add to the appropriate category
     if (newStatus === FriendStatus.FRIENDS) {
       newCache.friends.push(userId);
@@ -283,7 +283,7 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
     } else if (newStatus === FriendStatus.INCOMING_REQUEST && requestId) {
       newCache.incoming[userId] = requestId;
     }
-    
+
     setFriendRequestsCache(newCache);
 
     // Also update the search results list if this user is in it
@@ -299,7 +299,7 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
   const handleUserPress = (user: User) => {
     console.log("Selected user:", user);
     setSelectedUser(user);
-    
+
     // Add a slight delay to ensure the state updates before showing the profile
     setTimeout(() => {
       setProfileVisible(true);
