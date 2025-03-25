@@ -1,11 +1,10 @@
-// client/src/screens/calendar/CalendarSettingsScreen.tsx
 import React, { useState } from 'react';
-import { View, Text, Switch, Alert, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Switch, Alert, ActivityIndicator, TouchableOpacity, StatusBar } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCalendar } from '../hooks/useCalendar';
 
-const CalendarSettingsScreen = () => {
+export default function CalendarSettingsScreen() {
   const {
     isCalendarConnected,
     isCalendarSyncEnabled,
@@ -45,9 +44,9 @@ const CalendarSettingsScreen = () => {
 
   if (calendarLoading || isTogglingSync || isDisconnecting) {
     return (
-      <SafeAreaView className="flex-1 bg-white justify-center items-center">
-        <ActivityIndicator size="large" color="#0000ff" />
-        <Text className="mt-5 text-gray-600 text-base">
+      <SafeAreaView style={styles.container}>
+        <ActivityIndicator size="large" color="#007AFF" style={{ marginTop: 20 }} />
+        <Text style={styles.loadingText}>
           {isTogglingSync 
             ? 'Updating sync settings...' 
             : isDisconnecting 
@@ -59,20 +58,20 @@ const CalendarSettingsScreen = () => {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <View className="flex-1 px-5 pt-4">
-        <Text className="text-2xl font-bold mb-8">Calendar Settings</Text>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.contentContainer}>
+        <Text style={styles.title}>Calendar Settings</Text>
         
         {isCalendarConnected ? (
           <>
-            <View className="bg-green-50 p-4 rounded-xl mb-6">
-              <Text className="text-green-800 font-medium text-base">
+            <View style={styles.connectedContainer}>
+              <Text style={styles.connectedText}>
                 ✓ Your Google Calendar is connected
               </Text>
             </View>
             
-            <View className="flex-row justify-between items-center mb-3 py-3 border-b border-gray-200">
-              <Text className="text-base font-medium">Sync calendar events</Text>
+            <View style={styles.settingRow}>
+              <Text style={styles.settingText}>Sync calendar events</Text>
               <Switch
                 value={isCalendarSyncEnabled}
                 onValueChange={handleToggleSync}
@@ -81,40 +80,147 @@ const CalendarSettingsScreen = () => {
               />
             </View>
             
-            <Text className="text-gray-600 text-sm mb-8 leading-5">
+            <Text style={styles.infoText}>
               When enabled, your meetings will automatically be added to your Google Calendar.
             </Text>
             
             <TouchableOpacity
               onPress={handleDisconnect}
-              className="mt-4 bg-white shadow-sm shadow-zinc-300 rounded-full py-3 border border-gray-300"
+              style={styles.disconnectButton}
             >
-              <Text className="text-red-600 text-center font-medium">Disconnect Calendar</Text>
+              <Text style={styles.disconnectButtonText}>Disconnect Calendar</Text>
             </TouchableOpacity>
           </>
         ) : (
           <>
-            <View className="bg-orange-50 p-4 rounded-xl mb-6">
-              <Text className="text-orange-800 font-medium text-base">
+            <View style={styles.notConnectedContainer}>
+              <Text style={styles.notConnectedText}>
                 Your Google Calendar is not connected
               </Text>
             </View>
             
-            <Text className="text-gray-600 text-sm mb-8 leading-5">
+            <Text style={styles.infoText}>
               Connect your Google Calendar to schedule meetings seamlessly and never miss an important event.
             </Text>
             
             <TouchableOpacity
-              onPress={() => connectCalendar('./calendar-settings')}
-              className="bg-blue-500 shadow-md shadow-blue-300 rounded-full py-3"
+              onPress={() => connectCalendar('./calendarSettings')}
+              style={styles.connectButton}
             >
-              <Text className="text-white text-center font-semibold">Connect Google Calendar</Text>
+              <Text style={styles.buttonText}>Connect Google Calendar</Text>
             </TouchableOpacity>
           </>
         )}
       </View>
     </SafeAreaView>
   );
-};
+}
 
-export default CalendarSettingsScreen;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    marginTop: StatusBar.currentHeight,
+    backgroundColor: '#f9f9f9',
+  },
+  contentContainer: {
+    flex: 1,
+    padding: 20,
+  },
+  loadingText: {
+    marginTop: 20,
+    fontSize: 16,
+    color: '#555',
+    textAlign: 'center',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    color: '#333',
+  },
+  connectedContainer: {
+    backgroundColor: '#e6f7ed',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 25,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  connectedText: {
+    color: '#2e7d32',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  notConnectedContainer: {
+    backgroundColor: '#fff3e0',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 25,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  notConnectedText: {
+    color: '#e65100',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  settingRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  settingText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#333',
+  },
+  infoText: {
+    color: '#666',
+    fontSize: 14,
+    marginBottom: 30,
+    lineHeight: 20,
+  },
+  connectButton: {
+    backgroundColor: '#007AFF',
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+    marginTop: 10,
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  disconnectButton: {
+    backgroundColor: '#f8f8f8',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    marginTop: 20,
+  },
+  disconnectButtonText: {
+    color: '#d32f2f',
+    fontWeight: '500',
+    fontSize: 16,
+    textAlign: 'center',
+  },
+});

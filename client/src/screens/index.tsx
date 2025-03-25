@@ -66,7 +66,6 @@ export default function Index() {
       setUserInfo(formattedUserInfo);
 
 
-
     } catch (error: any) {
       console.error('Google Sign-In Error:', error);
 
@@ -103,7 +102,7 @@ export default function Index() {
 
       // Now that everything is saved, navigate to the home screen
       // router.push('./(tabs)/home');
-      router.push('./googleConnection')
+      router.push('./calendarConnection')
     } catch (error: any) {
       console.error("Backend Auth Error:", error);
 
