@@ -1,9 +1,9 @@
 // client/src/hooks/useCalendar.ts
 import { useState, useEffect, useCallback } from 'react';
 import { Alert } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useAuth } from './useAuth';
-import api from '../utils/api';
+import { useRouter, RelativePathString } from 'expo-router';
+import { useAuth } from '../context/AuthContext';
+import { api } from '../utils/api';
 
 interface CalendarStatus {
   isConnected: boolean;
@@ -19,11 +19,12 @@ export const useCalendar = () => {
     loading: true,
     error: null,
   });
-  const { authToken, isAuthenticated } = useAuth();
+  const { authToken } = useAuth();
   const router = useRouter();
 
   const fetchCalendarStatus = useCallback(async () => {
-    if (!isAuthenticated || !authToken) {
+    // if (!isAuthenticated || !authToken) {
+    if (!authToken) {
       setStatus(prev => ({ ...prev, loading: false }));
       return;
     }
@@ -49,7 +50,8 @@ export const useCalendar = () => {
         error: 'Failed to fetch calendar status'
       });
     }
-  }, [authToken, isAuthenticated]);
+  // }, [authToken, isAuthenticated]);
+  }, [authToken]); 
 
   // Fetch status on mount and when auth changes
   useEffect(() => {
@@ -59,7 +61,7 @@ export const useCalendar = () => {
   const connectCalendar = useCallback((redirectPath?: string) => {
     // Use Expo Router's push method with searchParams for the redirect
     router.push({
-      pathname: '/calendar-connection',
+      pathname: '/calendarConnection' as RelativePathString,
       params: { redirectPath: redirectPath || './(tabs)/home' }
     });
   }, [router]);

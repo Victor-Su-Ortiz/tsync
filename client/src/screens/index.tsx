@@ -102,7 +102,8 @@ export default function Index() {
       Alert.alert("Success", `Welcome ${user.name}!`);
 
       // Now that everything is saved, navigate to the home screen
-      router.push('./(tabs)/home');
+      // router.push('./(tabs)/home');
+      router.push('./googleConnection')
     } catch (error: any) {
       console.error("Backend Auth Error:", error);
 
