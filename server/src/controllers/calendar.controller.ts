@@ -1,8 +1,8 @@
 // src/controllers/calendar.controller.ts
 import { Request, Response, NextFunction } from 'express';
-import CalendarService from '../services/google-calendar.service';
+// import CalendarService from '../services/google-calendar.service';
 import GoogleAuthService from '../services/google-auth.service';
-import { AuthService } from '../services/auth.service';
+// import { AuthService } from '../services/auth.service';
 
 export class CalendarController {
   /**
@@ -25,11 +25,10 @@ export class CalendarController {
     try {
       const { code } = req.query;
       const userId = req.userId;
-
       if (!code || typeof code !== 'string') {
-        return res.status(400).json({ message: 'Authorization code is required' });
+        res.status(400).json({ message: 'Authorization code is required' });
+        return;
       }
-
       const result = await GoogleAuthService.handleAuthCallback(code, userId!.toString());
       res.status(200).json(result);
     } catch (error) {
@@ -40,108 +39,108 @@ export class CalendarController {
   /**
    * List user's calendar events
    */
-  static async listEvents(req: Request, res: Response, next: NextFunction) {
-    try {
-      const userId = req.userId;
-      const { timeMin, timeMax } = req.query;
+  // static async listEvents(req: Request, res: Response, next: NextFunction) {
+  //   try {
+  //     const userId = req.userId;
+  //     const { timeMin, timeMax } = req.query;
 
-      let parsedTimeMin: Date | undefined;
-      let parsedTimeMax: Date | undefined;
+  //     let parsedTimeMin: Date | undefined;
+  //     let parsedTimeMax: Date | undefined;
 
-      if (timeMin && typeof timeMin === 'string') {
-        parsedTimeMin = new Date(timeMin);
-      }
+  //     if (timeMin && typeof timeMin === 'string') {
+  //       parsedTimeMin = new Date(timeMin);
+  //     }
 
-      if (timeMax && typeof timeMax === 'string') {
-        parsedTimeMax = new Date(timeMax);
-      }
+  //     if (timeMax && typeof timeMax === 'string') {
+  //       parsedTimeMax = new Date(timeMax);
+  //     }
 
-      const events = await CalendarService.listEvents(userId, parsedTimeMin, parsedTimeMax);
-      res.status(200).json({ events });
-    } catch (error) {
-      next(error);
-    }
-  }
+  //     const events = await CalendarService.listEvents(userId, parsedTimeMin, parsedTimeMax);
+  //     res.status(200).json({ events });
+  //   } catch (error) {
+  //     next(error);
+  //   }
+  // }
 
   /**
    * Create a calendar event
    */
-  static async createEvent(req: Request, res: Response, next: NextFunction) {
-    try {
-      const userId = req.userId;
-      const eventData = req.body;
+  // static async createEvent(req: Request, res: Response, next: NextFunction) {
+  //   try {
+  //     const userId = req.userId;
+  //     const eventData = req.body;
 
-      const event = await CalendarService.createEvent(userId, eventData);
-      res.status(201).json({ event });
-    } catch (error) {
-      next(error);
-    }
-  }
+  //     const event = await CalendarService.createEvent(userId, eventData);
+  //     res.status(201).json({ event });
+  //   } catch (error) {
+  //     next(error);
+  //   }
+  // }
 
   /**
    * Find available meeting slots between users
    */
-  static async findAvailableMeetingSlots(req: Request, res: Response, next: NextFunction) {
-    try {
-      const { userIds, duration, startDate, endDate } = req.body;
+  // static async findAvailableMeetingSlots(req: Request, res: Response, next: NextFunction) {
+  //   try {
+  //     const { userIds, duration, startDate, endDate } = req.body;
 
-      if (!Array.isArray(userIds) || !userIds.length) {
-        return res.status(400).json({ message: 'At least one user ID is required' });
-      }
+  //     if (!Array.isArray(userIds) || !userIds.length) {
+  //       return res.status(400).json({ message: 'At least one user ID is required' });
+  //     }
 
-      if (!duration || typeof duration !== 'number') {
-        return res.status(400).json({ message: 'Valid duration in minutes is required' });
-      }
+  //     if (!duration || typeof duration !== 'number') {
+  //       return res.status(400).json({ message: 'Valid duration in minutes is required' });
+  //     }
 
-      const parsedStartDate = startDate ? new Date(startDate) : new Date();
-      const parsedEndDate = endDate
-        ? new Date(endDate)
-        : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // Default to 7 days ahead
+  //     const parsedStartDate = startDate ? new Date(startDate) : new Date();
+  //     const parsedEndDate = endDate
+  //       ? new Date(endDate)
+  //       : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // Default to 7 days ahead
 
-      const slots = await CalendarService.findAvailableMeetingSlots(
-        userIds,
-        duration,
-        parsedStartDate,
-        parsedEndDate
-      );
+  //     const slots = await CalendarService.findAvailableMeetingSlots(
+  //       userIds,
+  //       duration,
+  //       parsedStartDate,
+  //       parsedEndDate
+  //     );
 
-      res.status(200).json({ availableSlots: slots });
-    } catch (error) {
-      next(error);
-    }
-  }
+  //     res.status(200).json({ availableSlots: slots });
+  //   } catch (error) {
+  //     next(error);
+  //   }
+  // }
 
   /**
    * Disconnect Google Calendar
    */
-  static async disconnectCalendar(req: Request, res: Response, next: NextFunction) {
-    try {
-      const userId = req.userId;
-      const result = await CalendarService.disconnectCalendar(userId);
-      res.status(200).json(result);
-    } catch (error) {
-      next(error);
-    }
-  }
+  // static async disconnectCalendar(req: Request, res: Response, next: NextFunction) {
+  //   try {
+  //     const userId = req.userId;
+  //     const result = await CalendarService.disconnectCalendar(userId);
+  //     res.status(200).json(result);
+  //   } catch (error) {
+  //     next(error);
+  //   }
+  // }
 
   /**
    * Toggle Google Calendar sync
    */
-  static async toggleCalendarSync(req: Request, res: Response, next: NextFunction) {
-    try {
-      const userId = req.userId;
-      const { enabled } = req.body;
+  // static async toggleCalendarSync(req: Request, res: Response, next: NextFunction) {
+  //   try {
+  //     const userId = req.userId;
+  //     const { enabled } = req.body;
 
-      if (typeof enabled !== 'boolean') {
-        return res.status(400).json({ message: 'Enabled status must be a boolean' });
-      }
+  //     if (typeof enabled !== 'boolean') {
+  //       return res.status(400).json({ message: 'Enabled status must be a boolean' });
+  //     }
 
-      const result = await CalendarService.toggleCalendarSync(userId, enabled);
-      res.status(200).json(result);
-    } catch (error) {
-      next(error);
-    }
-  }
+  //     const result = await CalendarService.toggleCalendarSync(userId, enabled);
+  //     res.status(200).json(result);
+  //   } catch (error) {
+  //     next(error);
+  //   }
+  // }
 
   /**
    * Get calendar connection status
@@ -155,7 +154,8 @@ export class CalendarController {
       const user = await User.findById(userId);
 
       if (!user) {
-        return res.status(404).json({ message: 'User not found' });
+        res.status(404).json({ message: 'User not found' });
+        return;
       }
 
       res.status(200).json({
@@ -167,5 +167,3 @@ export class CalendarController {
     }
   }
 }
-
-export default CalendarController;

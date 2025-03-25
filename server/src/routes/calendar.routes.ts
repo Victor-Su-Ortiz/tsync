@@ -12,28 +12,32 @@ router.use(protect);
 
 // Google Calendar connection routes
 router.get('/auth-url', CalendarController.getAuthUrl);
-router.get('/callback', CalendarController.handleAuthCallback);
-router.get('/status', CalendarController.getCalendarStatus);
-router.delete('/disconnect', CalendarController.disconnectCalendar);
-router.patch(
-  '/toggle-sync',
-  validateRequest(calendarValidation.toggleSync),
-  CalendarController.toggleCalendarSync
+router.get(
+  '/callback',
+  validateRequest(calendarValidation.authCallback),
+  CalendarController.handleAuthCallback
 );
+router.get('/status', CalendarController.getCalendarStatus);
+// router.delete('/disconnect', CalendarController.disconnectCalendar);
+// router.patch(
+//   '/toggle-sync',
+//   validateRequest(calendarValidation.toggleSync),
+//   CalendarController.toggleCalendarSync
+// );
 
 // Calendar events routes
-router.get('/events', CalendarController.listEvents);
-router.post(
-  '/events',
-  validateRequest(calendarValidation.createEvent),
-  CalendarController.createEvent
-);
+// router.get('/events', CalendarController.listEvents);
+// router.post(
+//   '/events',
+//   validateRequest(calendarValidation.createEvent),
+//   CalendarController.createEvent
+// );
 
 // Meeting scheduling routes
-router.post(
-  '/available-slots',
-  validateRequest(calendarValidation.findSlots),
-  CalendarController.findAvailableMeetingSlots
-);
+// router.post(
+//   '/available-slots',
+//   validateRequest(calendarValidation.findSlots),
+//   CalendarController.findAvailableMeetingSlots
+// );
 
 export default router;

@@ -20,6 +20,7 @@ import friendRoutes from './routes/friends.routes';
 import userRoutes from './routes/user.routes';
 import notificationRoutes from './routes/notification.routes';
 import eventRoutes from './routes/event.routes';
+import calendarRoutes from './routes/calendar.routes';
 
 // Middleware
 import { errorHandler } from './middleware/error.middleware';
@@ -103,6 +104,7 @@ class App {
     this.app.use('/api/v1/users', userRoutes);
     this.app.use('/api/v1/notifications', notificationRoutes);
     this.app.use('/api/v1/events', eventRoutes);
+    this.app.use('/api/v1/calendar', calendarRoutes);
 
     // Handle undefined routes
     this.app.all('*', (req: Request, _: Response, next: NextFunction) => {

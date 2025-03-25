@@ -2,6 +2,12 @@
 import Joi from 'joi';
 
 export const calendarValidation = {
+  // Callabck validation
+  authCallback: Joi.object({
+    query: Joi.object({
+      code: Joi.string().required(),
+    }),
+  }),
   // Toggle calendar sync validation
   toggleSync: Joi.object({
     enabled: Joi.boolean().required(),

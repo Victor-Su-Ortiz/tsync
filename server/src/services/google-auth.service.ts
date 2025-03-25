@@ -110,14 +110,13 @@ export default class GoogleAuthService {
       // Also store user info from Google if available
       if (tokens.id_token) {
         oauth2Client.setCredentials(tokens);
-        const peopleApi = google.people({ version: 'v1', auth: oauth2Client });
+        // const peopleApi = google.people({ version: 'v1', auth: oauth2Client });
 
         try {
-          const profile = await peopleApi.people.get({
-            resourceName: 'people/me',
-            personFields: 'names,emailAddresses,photos',
-          });
-
+          // const profile = await peopleApi.people.get({
+          //   resourceName: 'people/me',
+          //   personFields: 'names,emailAddresses,photos',
+          // });
           // Update user profile with Google info if needed
           // This is optional and depends on your app requirements
         } catch (profileError) {
