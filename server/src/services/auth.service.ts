@@ -5,6 +5,7 @@ import { OAuth2Client } from 'google-auth-library';
 import { google } from 'googleapis';
 import { sendEmail } from '../utils/email';
 import { AuthenticationError, ValidationError, NotFoundError } from '../utils/errors';
+// import { OAuthState } from '../models/OAuth.model';
 
 // Types
 export interface RegisterUserInput {
@@ -138,9 +139,32 @@ export class AuthService {
   /**
    * Google OAuth Authentication
    */
-  public static async googleAuth(idToken: string, accessToken: string): Promise<AuthResponse> {
+  public static async googleAuth(
+    idToken: string,
+    accessToken: string,
+    code: string
+  ): Promise<AuthResponse> {
     try {
-      // Verify Google token
+      // const newGoogleToken = await this.googleClient.getToken(code);
+      // Example backend code (Node.js)
+
+      const response = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          code,
+          client_id: process.env.GOOGLE_CLIENT_ID as string,
+          client_secret: process.env.GOOGLE_CLIENT_SECRET as string,
+          grant_type: 'authorization_code',
+        }),
+      });
+
+      const tokens = await response.json();
+      // Store tokens.refresh_token securely
+
+      console.log('newGoogleToken:', tokens);
       const ticket = await this.googleClient.verifyIdToken({
         idToken,
         audience: process.env.GOOGLE_CLIENT_ID,
@@ -151,9 +175,11 @@ export class AuthService {
       if (!payload || !payload.email) {
         throw new AuthenticationError('Invalid Google token');
       }
-      console.log('Google payload:', payload);
+
       // Set the token on your existing client
       this.googleClient.setCredentials({ access_token: accessToken });
+      console.log('auth code:', code);
+
       if (!payload.picture) {
         const userId = payload.sub;
         // Use the access token to get profile info including picture
@@ -188,6 +214,8 @@ export class AuthService {
 
       // Generate token
       const token = this.generateToken(user);
+      // console.log(this.googleClient.credentials.refresh_token);r
+      // user.googleRefreshToken = newGoogleToken.r
 
       return {
         user: user.getPublicProfile(),

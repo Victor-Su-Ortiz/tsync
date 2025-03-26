@@ -5,7 +5,7 @@ import { useRouter, useLocalSearchParams, RelativePathString } from 'expo-router
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../utils/api';
-import { EXPO_PUBLIC_GOOGLE_REDIRECT_URI } from '@env';
+import { GOOGLE_WEB_ID } from '@env';
 
 export default function CalendarConnectionScreen() {
   const [loading, setLoading] = useState(false);
@@ -26,6 +26,7 @@ export default function CalendarConnectionScreen() {
       const response = await api.get('/calendar/auth-url', {
         headers: { Authorization: `Bearer ${authToken}` }
       });
+      console.log("oauth:", response.data.authUrl)
       setAuthUrl(response.data.authUrl);
     } catch (error) {
       Alert.alert('Error', 'Failed to get Google authorization URL');
@@ -36,14 +37,18 @@ export default function CalendarConnectionScreen() {
   };
 
   const handleNavigationStateChange = async (event: any) => {
+    console.log("changing navigation")
     // Check if the URL is your callback URL with a code parameter
-    const redirectUri = EXPO_PUBLIC_GOOGLE_REDIRECT_URI;
+    const redirectUri = GOOGLE_WEB_ID;
+    console.log(event.url)
     
     if (event.url.includes(redirectUri) && event.url.includes('code=')) {
       setConnecting(true);
       
+      
       // Extract the authorization code from the URL
       const code = event.url.split('code=')[1].split('&')[0];
+      console.log("code:",code)
       
       try {
         // Send the code to your backend

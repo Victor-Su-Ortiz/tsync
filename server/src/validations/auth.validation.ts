@@ -31,6 +31,7 @@ export const authValidation = {
   googleAuth: Joi.object({
     idToken: Joi.string().required(),
     accessToken: Joi.string().required(),
+    // serverAuthCode: Joi.string().required(),
   }),
 
   verifyEmail: Joi.object({
