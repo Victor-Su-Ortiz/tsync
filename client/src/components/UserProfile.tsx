@@ -50,7 +50,6 @@ const UserProfile = ({
   const [requestId, setRequestId] = useState<string | undefined>(initialRequestId);
 
   const { authToken } = useAuth();
-
   const { socket } = useSocket();
 
   // Set initial status from props when component mounts or props change
@@ -120,6 +119,11 @@ const UserProfile = ({
 
   const handleSendFriendRequest = async () => {
     if (!user) return;
+
+    // console.log("REQUEST ID:", requestId);
+    if (!user.id) {
+      user.id = requestId || ""
+    }
 
     setIsLoading(true);
 

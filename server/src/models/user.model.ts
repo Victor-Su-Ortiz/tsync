@@ -5,6 +5,7 @@ import { IUser, IUserMethods, IUserModel, PublicUser } from "../types/user.types
 import { IFriendRequest } from "../types/friendRequest.types";
 import FriendRequest from "./friendRequest.model"; // Import the FriendRequest model
 import { FriendEventType, FriendRequestStatus, EventType } from "../utils/enums";
+import Notification from "./notification.model";
 
 const userSchema = new Schema<IUser, IUserModel, IUserMethods>(
   {
@@ -228,8 +229,10 @@ userSchema.methods.cancelFriendRequest = async function (requestId: string): Pro
     throw new Error('Invalid friend request');
   }
 
+  await Notification.deleteOne({relatedId: requestId});
+
   await FriendRequest.deleteOne({ _id: requestId });
-  
+
   const { default: SocketService } = await import('../services/socket.service');
   SocketService.sendToUser(request.receiver.toString(), 'friend_request_status_changed', {event: FriendEventType.FRIEND_REQUEST_CANCELED, data: request});
 }
