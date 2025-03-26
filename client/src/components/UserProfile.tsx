@@ -120,6 +120,11 @@ const UserProfile = ({
   const handleSendFriendRequest = async () => {
     if (!user) return;
 
+    // console.log("REQUEST ID:", requestId);
+    if (!user.id) {
+      user.id = requestId || ""
+    }
+
     setIsLoading(true);
 
     try {
