@@ -1,10 +1,11 @@
 // src/models/User.ts
-import mongoose, { Types, Schema, Document } from 'mongoose';
-import bcrypt from 'bcryptjs';
-import { IUser, IUserMethods, IUserModel, PublicUser } from '../types/user.types';
-import { IFriendRequest } from '../types/friendRequest.types';
-import FriendRequest from './friendRequest.model'; // Import the FriendRequest model
-import { FriendEventType, FriendRequestStatus, EventType } from '../utils/enums';
+import mongoose, { Types, Schema, Document } from "mongoose";
+import bcrypt from "bcryptjs";
+import { IUser, IUserMethods, IUserModel, PublicUser } from "../types/user.types";
+import { IFriendRequest } from "../types/friendRequest.types";
+import FriendRequest from "./friendRequest.model"; // Import the FriendRequest model
+import { FriendEventType, FriendRequestStatus, EventType } from "../utils/enums";
+import Notification from "./notification.model";
 
 const userSchema = new Schema<IUser, IUserModel, IUserMethods>(
   {
@@ -234,6 +235,8 @@ userSchema.methods.cancelFriendRequest = async function (requestId: string): Pro
   if (!request) {
     throw new Error('Invalid friend request');
   }
+
+  await Notification.deleteOne({relatedId: requestId});
 
   await FriendRequest.deleteOne({ _id: requestId });
 

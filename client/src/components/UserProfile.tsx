@@ -50,7 +50,6 @@ const UserProfile = ({
   const [requestId, setRequestId] = useState<string | undefined>(initialRequestId);
 
   const { authToken } = useAuth();
-
   const { socket } = useSocket();
 
   // Set initial status from props when component mounts or props change

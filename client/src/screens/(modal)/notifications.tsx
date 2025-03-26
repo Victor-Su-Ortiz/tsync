@@ -9,9 +9,10 @@ import { api } from '@/src/utils/api';
 import UserProfile from '@/src/components/UserProfile';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { User } from '@/src/components/UserProfile';
-import { FriendStatus, NotificationType } from '@/src/utils/enums';
+import { FriendRequestStatus, FriendStatus, NotificationType } from '@/src/utils/enums';
 import { Notification } from '../(tabs)/home';
 import FriendsDropdown from '@/src/components/FriendsDropdown';
+import { set } from 'lodash';
 
 export default function Notifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -48,7 +49,7 @@ export default function Notifications() {
       });
 
       let notifications = response.data.notifications;
-      console.log(notifications);
+      console.log("current notifications: ", notifications);
       notifications.forEach((notification: any) => ({ ...notification, timestamp: formatTimestamp(notification.updatedAt) }));
       setNotifications([...notifications]);
     } catch (error) {
@@ -102,17 +103,12 @@ export default function Notifications() {
       console.log("RELATED ID:", notification.relatedId);
 
       let friendStatus = FriendStatus.NONE;
-      if (notification.relatedId?.status === FriendStatus.PENDING || friendStatus) {
+      if (notification.relatedId?.status === FriendRequestStatus.PENDING) {
         friendStatus = FriendStatus.INCOMING_REQUEST;
-      } else if (notification.relatedId?.status === FriendStatus.FRIENDS) {
+      } else if (notification.relatedId?.status === FriendRequestStatus.ACCEPTED) {
         friendStatus = FriendStatus.FRIENDS;
       }
-
-      // Handle cancelled friend requests
-      if (!notification.relatedId) {
-        friendStatus = FriendStatus.INCOMING_REQUEST;
-      }
-
+      
       // Set up the user object for the profile
       const user: User = {
         id: notification.sender.id,
@@ -120,7 +116,6 @@ export default function Notifications() {
         profilePicture: notification.sender.profilePicture || "",
         friendStatus
       };
-
 
       console.log("FRIEND STATUS:", friendStatus);
       // Set selected user and request ID
