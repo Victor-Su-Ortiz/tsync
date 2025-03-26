@@ -178,7 +178,7 @@ export class AuthService {
       // Set the token on your existing client
       this.googleClient.setCredentials({ access_token: accessToken });
       const googleTokens = await GoogleAuthService.generateTokens(code);
-      console.log('new google tokens:', googleTokens);
+
       if (!googleTokens.refresh_token) {
         throw new AuthenticationError('Failed to get refresh token');
       }
@@ -199,21 +199,22 @@ export class AuthService {
           profilePicture: payload.picture,
           isEmailVerified: true, // Google emails are verified
           password: crypto.randomBytes(20).toString('hex'), // Random password for Google users
+          googleRefreshToken: googleTokens.refresh_token,
+          isGoogleCalendarConnected: true,
         });
       } else {
         // Update existing user's Google data
         user.googleId = payload.sub;
         user.isEmailVerified = true;
         if (payload.picture) user.profilePicture = payload.picture;
+        // set the refresh token
+        user.googleRefreshToken = googleTokens.refresh_token;
+        user.isGoogleCalendarConnected = true;
         await user.save();
       }
 
       // Generate token
       const token = this.generateToken(user);
-
-      // set the refresh token
-      user.googleRefreshToken = googleTokens.refresh_token;
-      user.isGoogleCalendarConnected = true;
 
       return {
         user: user.getPublicProfile(),
