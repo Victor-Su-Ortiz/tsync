@@ -5,6 +5,7 @@ import { OAuth2Client } from 'google-auth-library';
 import { google } from 'googleapis';
 import { sendEmail } from '../utils/email';
 import { AuthenticationError, ValidationError, NotFoundError } from '../utils/errors';
+import GoogleAuthService from './google-auth.service';
 // import { OAuthState } from '../models/OAuth.model';
 
 // Types
@@ -31,7 +32,24 @@ export interface AuthResponse {
 }
 
 export class AuthService {
-  private static readonly googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+  private static readonly googleClient = new OAuth2Client(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET
+  );
+
+  /**
+   * Generate a profile picture for payload
+   */
+  private static async setProfilePicture(payload: any) {
+    const userId = payload.sub;
+    // Use the access token to get profile info including picture
+    const people = google.people({ version: 'v1', auth: this.googleClient });
+    const profile = await people.people.get({
+      resourceName: `people/${userId}`,
+      personFields: 'photos',
+    });
+    payload.picture = profile.data.photos?.[0].url ?? undefined;
+  }
 
   /**
    * Generate JWT Token
@@ -145,26 +163,7 @@ export class AuthService {
     code: string
   ): Promise<AuthResponse> {
     try {
-      // const newGoogleToken = await this.googleClient.getToken(code);
-      // Example backend code (Node.js)
-
-      const response = await fetch('https://oauth2.googleapis.com/token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          code,
-          client_id: process.env.GOOGLE_CLIENT_ID as string,
-          client_secret: process.env.GOOGLE_CLIENT_SECRET as string,
-          grant_type: 'authorization_code',
-        }),
-      });
-
-      const tokens = await response.json();
       // Store tokens.refresh_token securely
-
-      console.log('newGoogleToken:', tokens);
       const ticket = await this.googleClient.verifyIdToken({
         idToken,
         audience: process.env.GOOGLE_CLIENT_ID,
@@ -178,17 +177,14 @@ export class AuthService {
 
       // Set the token on your existing client
       this.googleClient.setCredentials({ access_token: accessToken });
-      console.log('auth code:', code);
+      const googleTokens = await GoogleAuthService.generateTokens(code);
+      console.log('new google tokens:', googleTokens);
+      if (!googleTokens.refresh_token) {
+        throw new AuthenticationError('Failed to get refresh token');
+      }
 
       if (!payload.picture) {
-        const userId = payload.sub;
-        // Use the access token to get profile info including picture
-        const people = google.people({ version: 'v1', auth: this.googleClient });
-        const profile = await people.people.get({
-          resourceName: `people/${userId}`,
-          personFields: 'photos',
-        });
-        payload.picture = profile.data.photos?.[0].url ?? undefined;
+        await this.setProfilePicture(payload);
       }
 
       // Find or create user
@@ -214,8 +210,10 @@ export class AuthService {
 
       // Generate token
       const token = this.generateToken(user);
-      // console.log(this.googleClient.credentials.refresh_token);r
-      // user.googleRefreshToken = newGoogleToken.r
+
+      // set the refresh token
+      user.googleRefreshToken = googleTokens.refresh_token;
+      user.isGoogleCalendarConnected = true;
 
       return {
         user: user.getPublicProfile(),

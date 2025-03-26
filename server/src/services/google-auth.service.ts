@@ -17,6 +17,28 @@ export default class GoogleAuthService {
     );
   }
 
+  public static async generateTokens(code: string) {
+    try {
+      const response = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          code,
+          client_id: process.env.GOOGLE_CLIENT_ID as string,
+          client_secret: process.env.GOOGLE_CLIENT_SECRET as string,
+          grant_type: 'authorization_code',
+        }),
+      });
+      const tokens = await response.json();
+      return tokens;
+    } catch (error) {
+      console.error('Error generating Google auth URL:', error);
+      throw error;
+    }
+  }
+
   /**
    * Generate authorization URL for Google Calendar API
    */
