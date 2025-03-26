@@ -6,6 +6,12 @@ export enum FriendStatus {
   INCOMING_REQUEST = 'incoming_request',
 }
 
+export enum FriendRequestStatus {
+  PENDING = 'pending',
+  ACCEPTED = 'accepted',
+  REJECTED = 'rejected'
+}
+
 export enum FriendRequestEventType {
   FRIEND_REQUEST_RECEIVED = 'FRIEND_REQUEST_RECEIVED',
   FRIEND_ACCEPTED = 'FRIEND_ACCEPTED',
