@@ -158,46 +158,5 @@ export default class GoogleAuthService {
     }
   }
 
-  /**
-   * Disconnect Google Calendar (remove refresh token)
-   */
-  public static async disconnectGoogleCalendar(userId: string) {
-    try {
-      const user = await User.findById(userId);
 
-      if (!user) {
-        throw new NotFoundError('User not found');
-      }
-
-      // If there's a refresh token, try to revoke it
-      if (user.googleRefreshToken) {
-        try {
-          const oauth2Client = this.createOAuth2Client();
-          oauth2Client.setCredentials({
-            refresh_token: user.googleRefreshToken,
-          });
-
-          await oauth2Client.revokeToken(user.googleRefreshToken);
-        } catch (revokeError) {
-          console.error('Error revoking Google token:', revokeError);
-          // Continue anyway to remove the token from our database
-        }
-      }
-
-      // Clear Google Calendar connection data
-      user.googleRefreshToken = undefined;
-      user.isGoogleCalendarConnected = false;
-      user.googleTokenExpiry = undefined;
-
-      await user.save();
-
-      return {
-        success: true,
-        message: 'Google Calendar disconnected successfully',
-      };
-    } catch (error) {
-      console.error('Error disconnecting Google Calendar:', error);
-      throw error;
-    }
-  }
 }
