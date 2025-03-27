@@ -1,27 +1,16 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
-import {
-  StyleSheet,
-  Alert,
-  Text,
-  ActivityIndicator,
-  FlatList,
-  View,
-  Image,
-  ImageBackground,
-  TouchableOpacity,
-  AppState,
-} from "react-native";
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { StyleSheet, Alert, Text, ActivityIndicator, FlatList, View, Image, ImageBackground, TouchableOpacity, AppState } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import * as Location from "expo-location";
-import axios from "axios";
-import { GOOGLE_PLACES_API, EXPO_PUBLIC_API_URL } from "@env";
-import { router, useLocalSearchParams, usePathname } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
-import UserSearch from "../../components/UserSearch";
-import { useAuth } from "@/src/context/AuthContext";
-import { useSocket } from "@/src/context/SocketContext"; // Import the socket hook
-import { api } from "@/src/utils/api";
-import { NotificationType } from "@/src/utils/enums";
+import * as Location from 'expo-location';
+import axios from 'axios';
+import { GOOGLE_PLACES_API, EXPO_PUBLIC_API_URL } from '@env';
+import { router, useLocalSearchParams, usePathname } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import UserSearch from '../../components/UserSearch';
+import { useAuth } from '@/src/context/AuthContext';
+import { useSocket } from '@/src/context/SocketContext'; // Import the socket hook
+import { api } from '@/src/utils/api';
+import { NotificationType } from '@/src/utils/enums';
 
 export type Notification = {
   _id: string;
@@ -39,6 +28,7 @@ export type Notification = {
   requestId?: string; // Added to track the original request ID
 };
 
+
 type Place = {
   place_id: string;
   name: string;
@@ -49,8 +39,7 @@ type Place = {
 
 export default function Home() {
   const params = useLocalSearchParams();
-  const [location, setLocation] =
-    useState<Location.LocationObjectCoords | null>(null);
+  const [location, setLocation] = useState<Location.LocationObjectCoords | null>(null);
   const [shops, setShops] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchModalVisible, setSearchModalVisible] = useState(false);
@@ -63,11 +52,8 @@ export default function Home() {
 
   // Check for pending notifications when app resumes
   useEffect(() => {
-    const subscription = AppState.addEventListener("change", (nextAppState) => {
-      if (
-        appState.current.match(/inactive|background/) &&
-        nextAppState === "active"
-      ) {
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
         // App has come to the foreground
         checkPendingNotifications();
       }
@@ -91,36 +77,39 @@ export default function Home() {
     if (!authToken) return;
 
     try {
-      console.log("Checking for pending notifications...");
+      console.log('Checking for pending notifications...');
 
       // Use the notifications endpoint to get unread count
-      const response = await api.get("/notifications", {
+      const response = await api.get('/notifications', {
         headers: {
-          Authorization: `Bearer ${authToken}`,
+          'Authorization': `Bearer ${authToken}`
         },
         params: {
-          unreadOnly: true,
-        },
+          unreadOnly: true
+        }
+
       });
-      console.log("API Notifications:", response.data);
+      console.log('API Notifications:', response.data);
 
       if (response.data && response.data.pagination !== undefined) {
         const unreadCount = response.data.pagination.unreadCount;
-        console.log("Unread notifications count:", unreadCount);
+        console.log('Unread notifications count:', unreadCount);
 
         updateNotifcationCount(unreadCount);
-        setNotifications(response.data.notifications);
+        setNotifications(response.data.notifications)
       }
     } catch (error) {
-      console.error("Error checking notifications:", error);
+      console.error('Error checking notifications:', error);
     }
   };
+
+
 
   // Detect when screen comes to focus
   useEffect(() => {
     // Check if we've actually navigated to this screen (not just initial render)
-    if (prevPathRef.current !== pathname && pathname === "/") {
-      console.log("Home screen came into focus, checking for notifications");
+    if (prevPathRef.current !== pathname && pathname === '/') {
+      console.log('Home screen came into focus, checking for notifications');
       checkPendingNotifications();
     }
 
@@ -136,22 +125,19 @@ export default function Home() {
     // Navigate to the notifications screen using the modal route
 
     try {
-      const notificationIds = notifications.map(
-        (notification) => notification._id,
-      );
-      const response = await api.patch(
-        "notifications/read",
+      const notificationIds = notifications.map(notification => (notification._id))
+      const response = await api.patch("notifications/read",
         { notificationIds }, // This is the request body
         {
           headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        },
+            'Authorization': `Bearer ${authToken}`
+          }
+        }
       );
     } catch (error: any) {
-      console.log("ERROR WHILE MARKING NOTIFS AS READ:", error);
+      console.log("ERROR WHILE MARKING NOTIFS AS READ:", error)
     } finally {
-      router.push("./../(modal)/notifications");
+      router.push('./../(modal)/notifications');
     }
   };
 
@@ -159,11 +145,8 @@ export default function Home() {
 
   const getUserLocation = async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert(
-        "Permission denied",
-        "Allow location access to find nearby stores!",
-      );
+    if (status !== 'granted') {
+      Alert.alert("Permission denied", 'Allow location access to find nearby stores!');
       return;
     }
     const location = await Location.getCurrentPositionAsync({});
@@ -174,7 +157,7 @@ export default function Home() {
   const getNearbyStores = async (latitude: number, longitude: number) => {
     setLoading(true);
     const radius = 5000;
-    const type = "cafe";
+    const type = 'cafe';
 
     const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${latitude},${longitude}&radius=${radius}&type=${type}&keyword=tea&key=${GOOGLE_PLACES_API_KEY}`;
 
@@ -199,7 +182,7 @@ export default function Home() {
   }, [location]);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "white", padding: 16 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: 'white', padding: 16 }}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Nearby Tea Shops 🍵</Text>
@@ -213,7 +196,7 @@ export default function Home() {
           {notificationCount > 0 && (
             <View style={styles.notificationBadge}>
               <Text style={styles.notificationBadgeText}>
-                {notificationCount > 9 ? "9+" : notificationCount}
+                {notificationCount > 9 ? '9+' : notificationCount}
               </Text>
             </View>
           )}
@@ -252,17 +235,11 @@ export default function Home() {
 
             return (
               <TouchableOpacity onPress={() => handleTeaShopPress(item)}>
-                <ImageBackground
-                  source={{ uri: imageUrl }}
-                  style={styles.itemContainer}
-                  imageStyle={styles.image}
-                >
+                <ImageBackground source={{ uri: imageUrl }} style={styles.itemContainer} imageStyle={styles.image}>
                   <View style={styles.overlay}>
                     <Text style={styles.name}>{item.name}</Text>
                     <Text style={styles.address}>{item.vicinity}</Text>
-                    <Text style={styles.rating}>
-                      Rating: ⭐ {item.rating || "N/A"}
-                    </Text>
+                    <Text style={styles.rating}>Rating: ⭐ {item.rating || 'N/A'}</Text>
                   </View>
                 </ImageBackground>
               </TouchableOpacity>
@@ -276,50 +253,50 @@ export default function Home() {
 
 const styles = StyleSheet.create({
   header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16
   },
   headerTitle: {
     fontSize: 24,
-    fontWeight: "bold",
+    fontWeight: 'bold'
   },
   notificationButton: {
-    position: "relative",
+    position: 'relative',
     padding: 5,
   },
   notificationBadge: {
-    position: "absolute",
+    position: 'absolute',
     top: 0,
     right: 0,
-    backgroundColor: "#FF4B4B",
+    backgroundColor: '#FF4B4B',
     borderRadius: 10,
     width: 20,
     height: 20,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   notificationBadgeText: {
-    color: "white",
+    color: 'white',
     fontSize: 10,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
   searchButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#00cc99",
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#00cc99',
     borderRadius: 20,
     paddingHorizontal: 15,
     paddingVertical: 12,
     marginBottom: 16,
-    justifyContent: "center",
+    justifyContent: 'center',
   },
   searchButtonText: {
-    color: "white",
+    color: 'white',
     marginLeft: 10,
     fontSize: 16,
-    fontWeight: "500",
+    fontWeight: '500',
   },
   itemContainer: {
     height: 150,

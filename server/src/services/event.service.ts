@@ -29,7 +29,7 @@ class EventService {
         email: user.email,
         status: 'accepted',
         responseTime: new Date(),
-        name: user.name, 
+        name: user.name,
       });
 
       // Save the event
@@ -138,13 +138,10 @@ class EventService {
   public async getUserEvents(userId: string, query: any = {}): Promise<IEvent[]> {
     try {
       const { startDate, endDate, status } = query;
-      
+
       // Base query
       const baseQuery: any = {
-        $or: [
-          { creator: userId },
-          { 'attendees.userId': userId },
-        ],
+        $or: [{ creator: userId }, { 'attendees.userId': userId }],
       };
 
       // Add date filtering if provided
@@ -170,7 +167,7 @@ class EventService {
    */
   public async addAttendee(
     eventId: string,
-    attendeeData: { userId: string; email: string, name: string },
+    attendeeData: { userId: string; email: string; name: string },
     currentUserId: string
   ): Promise<IEvent> {
     try {
@@ -193,7 +190,7 @@ class EventService {
 
       // Add the attendee
       await event.addAttendee(attendeeData.userId, attendeeData.email, attendeeData.name);
-      
+
       return event;
     } catch (error) {
       throw error;
@@ -217,14 +214,14 @@ class EventService {
 
       // Check if user is an attendee
       const isAttendee = event.attendees.some(attendee => attendee.userId.toString() === userId);
-      
+
       if (!isAttendee) {
         throw new AppError('You are not an attendee of this event', 403);
       }
 
       // Update the status
       await event.updateAttendeeStatus(userId, status);
-      
+
       return event;
     } catch (error) {
       throw error;
@@ -237,12 +234,9 @@ class EventService {
   public async getUpcomingEvents(userId: string, limit: number = 5): Promise<IEvent[]> {
     try {
       const now = new Date();
-      
+
       return await Event.find({
-        $or: [
-          { creator: userId },
-          { 'attendees.userId': userId },
-        ],
+        $or: [{ creator: userId }, { 'attendees.userId': userId }],
         'eventDates.date': { $gte: now },
         status: { $ne: 'cancelled' },
       })
@@ -279,9 +273,9 @@ class EventService {
       // For now, just update a placeholder field
       event.googleCalendarEventId = 'placeholder-gc-event-id';
       event.googleCalendarId = 'placeholder-gc-id';
-      
+
       await event.save();
-      
+
       return event;
     } catch (error) {
       throw error;

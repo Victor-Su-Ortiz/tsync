@@ -1,5 +1,5 @@
 // components/UserSearch.tsx
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
   StyleSheet,
   Alert,
@@ -12,13 +12,13 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
-  Modal,
+  Modal
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import UserProfile from "./UserProfile";
-import { debounce } from "lodash";
-import { api } from "../utils/api"; // Import your API utility
-import { FriendStatus } from "../utils/enums";
+import { Ionicons } from '@expo/vector-icons';
+import UserProfile from './UserProfile';
+import { debounce } from 'lodash';
+import { api } from '../utils/api'; // Import your API utility
+import { FriendStatus } from '../utils/enums';
 
 // Define request interface for consistency
 export interface FriendRequestData {
@@ -33,7 +33,7 @@ export interface FriendRequestData {
     name: string;
     profilePicture?: string;
   };
-  status: "pending" | "accepted" | "rejected";
+  status: 'pending' | 'accepted' | 'rejected';
   createdAt: string;
 }
 
@@ -56,27 +56,28 @@ type UserSearchProps = {
 };
 
 const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
   const [users, setUsers] = useState<User[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [profileVisible, setProfileVisible] = useState(false);
   const inputRef = useRef<TextInput>(null);
-
+  
   // Cache of friend requests to avoid repeated API calls
   const [friendRequestsCache, setFriendRequestsCache] = useState<{
-    incoming: Record<string, string>; // userId -> requestId
-    outgoing: Record<string, string>; // userId -> requestId
-    friends: string[]; // array of friend userIds
+    incoming: Record<string, string>, // userId -> requestId
+    outgoing: Record<string, string>, // userId -> requestId
+    friends: string[] // array of friend userIds
   }>({
     incoming: {},
     outgoing: {},
-    friends: [],
+    friends: []
   });
 
   // Define the searchUsers function without debounce first
   const searchUsers = async (query: string) => {
+
     if (!query.trim()) {
       console.log("⚠️ Empty query, exiting searchUsers");
       return;
@@ -92,12 +93,15 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
 
     try {
       // Get search results
-      const searchResponse = await api.get("/users/search", {
-        params: { q: query, limit: 10 },
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+      const searchResponse = await api.get(
+        '/users/search',
+        {
+          params: { q: query, limit: 10 },
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
 
       const searchedUsers = searchResponse.data.users || [];
 
@@ -130,22 +134,18 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
         }
         console.log("User:", user.name, "Status:", friendStatus);
 
-        return {
-          ...user,
+        return { 
+          ...user, 
           id: userId, // Ensure id is consistently available
           friendStatus,
-          requestId,
+          requestId
         };
       });
 
       setUsers(updatedUsers);
     } catch (error: any) {
       console.error("❌ Error searching for users:", error);
-      console.error(
-        "⚠️ API Error Response:",
-        error.response?.status,
-        error.response?.data,
-      );
+      console.error("⚠️ API Error Response:", error.response?.status, error.response?.data);
 
       // Just show empty results if there's an error
       setUsers([]);
@@ -188,7 +188,7 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
   useEffect(() => {
     // Reset state when modal opens
     if (visible) {
-      setSearchQuery("");
+      setSearchQuery('');
       setHasSearched(false);
 
       // Focus the input field when the modal opens
@@ -206,28 +206,24 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
 
     try {
       // Fetch all friend relationships in parallel for efficiency
-      const [incomingResponse, outgoingResponse, friendsResponse] =
-        await Promise.all([
-          api.get("/friends/requests/received/pending", {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          }),
-          api.get("/friends/requests/sent/pending", {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          }),
-          api.get("/friends", {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          }),
-        ]);
+      const [incomingResponse, outgoingResponse, friendsResponse] = await Promise.all([
+        api.get('/friends/requests/received/pending', {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        }),
+        api.get('/friends/requests/sent/pending', {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        }),
+        api.get('/friends', {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        })
+      ]);
       // console.log('incoming request data:', incomingResponse.data);
       // console.log('outgoing request data:', outgoingResponse.data);
       // console.log('friends data:', friendsResponse.data);
 
       // Process incoming requests
       const incomingRequests: Record<string, string> = {};
-      if (
-        incomingResponse.data.requests &&
-        Array.isArray(incomingResponse.data.requests)
-      ) {
+      if (incomingResponse.data.requests && Array.isArray(incomingResponse.data.requests)) {
         incomingResponse.data.requests.forEach((request: FriendRequestData) => {
           const senderId = request.sender._id;
           incomingRequests[senderId] = request._id; // Store request ID for accept/reject operations
@@ -236,10 +232,7 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
 
       // Process outgoing requests
       const outgoingRequests: Record<string, string> = {};
-      if (
-        outgoingResponse.data.requests &&
-        Array.isArray(outgoingResponse.data.requests)
-      ) {
+      if (outgoingResponse.data.requests && Array.isArray(outgoingResponse.data.requests)) {
         outgoingResponse.data.requests.forEach((request: FriendRequestData) => {
           const recipientId = request.receiver._id;
           outgoingRequests[recipientId] = request._id; // Store request ID for cancel operations
@@ -248,10 +241,7 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
 
       // Process friends list
       const friendsList: string[] = [];
-      if (
-        friendsResponse.data.friends &&
-        Array.isArray(friendsResponse.data.friends)
-      ) {
+      if (friendsResponse.data.friends && Array.isArray(friendsResponse.data.friends)) {
         friendsResponse.data.friends.forEach((friend: any) => {
           friendsList.push(friend._id);
         });
@@ -261,41 +251,30 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
       setFriendRequestsCache({
         incoming: incomingRequests,
         outgoing: outgoingRequests,
-        friends: friendsList,
+        friends: friendsList
       });
 
-      console.log("Friend data loaded:", {
+      console.log('Friend data loaded:', {
         incomingCount: Object.keys(incomingRequests).length,
         outgoingCount: Object.keys(outgoingRequests).length,
-        friendsCount: friendsList.length,
+        friendsCount: friendsList.length
       });
     } catch (error) {
-      console.error("Error fetching friend data:", error);
+      console.error('Error fetching friend data:', error);
     }
   };
 
   // Handle friend status changes from the UserProfile component
-  const handleFriendStatusChange = (
-    userId: string,
-    newStatus: FriendStatus,
-    requestId?: string,
-  ) => {
-    console.log(
-      "updating friend status for user:",
-      userId,
-      "to:",
-      newStatus,
-      "requestId:",
-      requestId,
-    );
+  const handleFriendStatusChange = (userId: string, newStatus: FriendStatus, requestId?: string) => {
+    console.log("updating friend status for user:", userId, "to:", newStatus, "requestId:", requestId);
     // Update our cache based on the new status
     const newCache = { ...friendRequestsCache };
-
+    
     // Remove from all categories first
     delete newCache.incoming[userId];
     delete newCache.outgoing[userId];
-    newCache.friends = newCache.friends.filter((id) => id !== userId);
-
+    newCache.friends = newCache.friends.filter(id => id !== userId);
+    
     // Then add to the appropriate category
     if (newStatus === FriendStatus.FRIENDS) {
       newCache.friends.push(userId);
@@ -304,23 +283,23 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
     } else if (newStatus === FriendStatus.INCOMING_REQUEST && requestId) {
       newCache.incoming[userId] = requestId;
     }
-
+    
     setFriendRequestsCache(newCache);
 
     // Also update the search results list if this user is in it
-    setUsers((prev) =>
-      prev.map((user) =>
+    setUsers(prev =>
+      prev.map(user =>
         user.id === userId
           ? { ...user, friendStatus: newStatus, requestId }
-          : user,
-      ),
+          : user
+      )
     );
   };
 
   const handleUserPress = (user: User) => {
     console.log("Selected user:", user);
     setSelectedUser(user);
-
+    
     // Add a slight delay to ensure the state updates before showing the profile
     setTimeout(() => {
       setProfileVisible(true);
@@ -347,23 +326,21 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
     >
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
       >
         <View style={styles.container}>
           {/* Header with close button and search input */}
           <View style={styles.header}>
-            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={onClose}
+            >
               <Ionicons name="close" size={24} color="#333" />
             </TouchableOpacity>
 
             <View style={styles.searchContainer}>
-              <Ionicons
-                name="search"
-                size={20}
-                color="#666"
-                style={styles.searchIcon}
-              />
+              <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
               <TextInput
                 ref={inputRef}
                 style={styles.searchInput}
@@ -394,11 +371,7 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
                     onPress={() => handleUserPress(item)}
                   >
                     <Image
-                      source={{
-                        uri:
-                          item.profilePicture ||
-                          "https://via.placeholder.com/150",
-                      }}
+                      source={{ uri: item.profilePicture || "https://via.placeholder.com/150" }}
                       style={styles.userAvatar}
                     />
                     <View style={styles.userInfo}>
@@ -411,17 +384,13 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
             ) : (
               <View style={styles.centered}>
                 <Ionicons name="search-outline" size={50} color="#ccc" />
-                <Text style={styles.noUsersText}>
-                  No users found matching "{searchQuery}"
-                </Text>
+                <Text style={styles.noUsersText}>No users found matching "{searchQuery}"</Text>
               </View>
             )
           ) : (
             <View style={styles.centered}>
               <Ionicons name="people-outline" size={70} color="#ddd" />
-              <Text style={styles.instructionText}>
-                Search for tea enthusiasts
-              </Text>
+              <Text style={styles.instructionText}>Search for tea enthusiasts</Text>
             </View>
           )}
 
@@ -445,25 +414,25 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "white",
+    backgroundColor: 'white',
   },
   header: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    marginTop: Platform.OS === "ios" ? 40 : 0, // Add top margin for iOS status bar
+    marginTop: Platform.OS === 'ios' ? 40 : 0, // Add top margin for iOS status bar
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBottomColor: '#eee',
   },
   closeButton: {
     padding: 8,
   },
   searchContainer: {
     flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#f2f2f2",
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f2f2f2',
     borderRadius: 20,
     paddingHorizontal: 15,
     marginLeft: 12,
@@ -482,24 +451,24 @@ const styles = StyleSheet.create({
   },
   centered: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     padding: 20,
   },
   loadingText: {
     marginTop: 10,
-    color: "#666",
+    color: '#666',
     fontSize: 16,
   },
   userList: {
     padding: 16,
   },
   userItem: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBottomColor: '#eee',
   },
   userAvatar: {
     width: 50,
@@ -512,20 +481,20 @@ const styles = StyleSheet.create({
   },
   userName: {
     fontSize: 17,
-    fontWeight: "500",
+    fontWeight: '500',
     marginBottom: 4,
   },
   userDistance: {
     fontSize: 14,
-    color: "#666",
+    color: '#666',
   },
   friendStatusPending: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   friendStatusFriends: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   friendStatusText: {
     fontSize: 12,
@@ -533,15 +502,15 @@ const styles = StyleSheet.create({
   },
   noUsersText: {
     marginTop: 12,
-    textAlign: "center",
-    color: "#666",
+    textAlign: 'center',
+    color: '#666',
     fontSize: 16,
   },
   instructionText: {
     marginTop: 12,
     fontSize: 18,
-    color: "#666",
-    textAlign: "center",
+    color: '#666',
+    textAlign: 'center',
   },
 });
 

@@ -5,7 +5,7 @@ import NodeCache from 'node-cache';
 const appCache = new NodeCache({
   stdTTL: 300, // 5 minutes default TTL
   checkperiod: 120, // Check for expired keys every 2 minutes
-  useClones: false // Don't clone objects when getting/setting
+  useClones: false, // Don't clone objects when getting/setting
 });
 
 /**
@@ -16,13 +16,18 @@ const appCache = new NodeCache({
 const parseDuration = (duration: string): number => {
   const value = parseInt(duration.slice(0, -1), 10);
   const unit = duration.slice(-1);
-  
+
   switch (unit) {
-    case 's': return value; // seconds
-    case 'm': return value * 60; // minutes
-    case 'h': return value * 60 * 60; // hours
-    case 'd': return value * 60 * 60 * 24; // days
-    default: return 300; // default 5 minutes
+    case 's':
+      return value; // seconds
+    case 'm':
+      return value * 60; // minutes
+    case 'h':
+      return value * 60 * 60; // hours
+    case 'd':
+      return value * 60 * 60 * 24; // days
+    default:
+      return 300; // default 5 minutes
   }
 };
 
@@ -37,7 +42,7 @@ const generateCacheKey = (req: Request): string => {
   const path = req.path;
   const query = JSON.stringify(req.query);
   const userId = req.userId || 'anonymous';
-  
+
   return `${method}:${path}:${query}:${userId}`;
 };
 
@@ -53,10 +58,10 @@ export const cache = (duration: string) => {
       next();
       return;
     }
-    
+
     // Generate cache key
     const key = generateCacheKey(req);
-    
+
     // Check if response exists in cache
     const cachedResponse = appCache.get(key);
     if (cachedResponse) {
@@ -64,23 +69,23 @@ export const cache = (duration: string) => {
       res.status(200).json(cachedResponse);
       return;
     }
-    
+
     // If not in cache, capture the response
     const originalSend = res.json;
-    res.json = function(body): Response {
+    res.json = function (body): Response {
       // Only cache successful responses
       if (res.statusCode >= 200 && res.statusCode < 300) {
         // Convert duration string to seconds
         const ttl = parseDuration(duration);
-        
+
         // Store in cache
         appCache.set(key, body, ttl);
       }
-      
+
       // Call original json method
       return originalSend.call(this, body);
     };
-    
+
     next();
   };
 };
@@ -92,7 +97,7 @@ export const cache = (duration: string) => {
 export const clearCache = (pattern: string): void => {
   const keys = appCache.keys();
   const matchedKeys = keys.filter(key => key.includes(pattern));
-  
+
   if (matchedKeys.length > 0) {
     appCache.del(matchedKeys);
   }
@@ -100,5 +105,5 @@ export const clearCache = (pattern: string): void => {
 
 export default {
   cache,
-  clearCache
+  clearCache,
 };

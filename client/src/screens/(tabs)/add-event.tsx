@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,18 +10,16 @@ import {
   Platform,
   SafeAreaView,
   Alert,
-  ActivityIndicator,
-} from "react-native";
-import { StatusBar } from "expo-status-bar";
-import { router, useLocalSearchParams } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
-import FriendsDropdown from "../../components/FriendsDropdown";
-import TeaShopSelectionModal from "../../components/SelectTeaShop";
-import DateTimePickerModal, {
-  DateTimeRange,
-} from "../../components/DateTimePickerModal";
-import { useAuth } from "@/src/context/AuthContext"; // Import your auth context
-import { api } from "@/src/utils/api";
+  ActivityIndicator
+} from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { router, useLocalSearchParams } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import FriendsDropdown from '../../components/FriendsDropdown';
+import TeaShopSelectionModal from '../../components/SelectTeaShop';
+import DateTimePickerModal, { DateTimeRange } from '../../components/DateTimePickerModal';
+import { useAuth } from '@/src/context/AuthContext'; // Import your auth context
+import { api } from '@/src/utils/api';
 
 type Friend = {
   id: string;
@@ -42,10 +40,10 @@ export default function AddEventScreen() {
   const { authToken } = useAuth(); // Get the auth token from context
   const sourceScreen = params.sourceScreen as string;
 
-  const [teaShopInfo, setTeaShopInfo] = useState("");
-  const [teaShopAddress, setTeaShopAddress] = useState("");
-  const [eventName, setEventName] = useState("");
-  const [description, setDescription] = useState("");
+  const [teaShopInfo, setTeaShopInfo] = useState('');
+  const [teaShopAddress, setTeaShopAddress] = useState('');
+  const [eventName, setEventName] = useState('');
+  const [description, setDescription] = useState('');
 
   // Replace single date/time with array of date/time ranges
   const [dateTimeRanges, setDateTimeRanges] = useState<DateTimeRange[]>([]);
@@ -72,22 +70,15 @@ export default function AddEventScreen() {
   useEffect(() => {
     // We need to check if ANY of the fields have values to determine if form is dirty
     const hasChanges =
-      teaShopInfo !== "" ||
-      teaShopAddress !== "" ||
-      eventName !== "" ||
-      description !== "" ||
+      teaShopInfo !== '' ||
+      teaShopAddress !== '' ||
+      eventName !== '' ||
+      description !== '' ||
       dateTimeRanges.length > 0 ||
       selectedFriends.length > 0;
 
     setFormDirty(hasChanges);
-  }, [
-    teaShopInfo,
-    teaShopAddress,
-    eventName,
-    description,
-    dateTimeRanges,
-    selectedFriends,
-  ]);
+  }, [teaShopInfo, teaShopAddress, eventName, description, dateTimeRanges, selectedFriends]);
 
   const handleSelectTeaShop = () => {
     setTeaShopModalVisible(true);
@@ -102,12 +93,12 @@ export default function AddEventScreen() {
   const navigateBack = () => {
     if (sourceScreen) {
       // Check if source screen is a valid path
-      if (sourceScreen.startsWith("/")) {
+      if (sourceScreen.startsWith('/')) {
         // For absolute paths just use them directly
         router.push(sourceScreen as any);
       } else {
         // For relative paths like "./events" ensure in correct format
-        const normalizedPath = sourceScreen.startsWith(".")
+        const normalizedPath = sourceScreen.startsWith('.')
           ? sourceScreen
           : `./${sourceScreen}`;
 
@@ -124,31 +115,31 @@ export default function AddEventScreen() {
     if (formDirty) {
       // Show confirmation dialog if there are unsaved changes
       Alert.alert(
-        "Discard Changes",
-        "You have unsaved changes. Are you sure you want to go back?",
+        'Discard Changes',
+        'You have unsaved changes. Are you sure you want to go back?',
         [
           {
-            text: "Cancel",
-            style: "cancel",
+            text: 'Cancel',
+            style: 'cancel'
           },
           {
-            text: "Discard",
-            style: "destructive",
+            text: 'Discard',
+            style: 'destructive',
             onPress: () => {
               // Clear all form fields first
-              setTeaShopInfo("");
-              setTeaShopAddress("");
-              setEventName("");
-              setDescription("");
+              setTeaShopInfo('');
+              setTeaShopAddress('');
+              setEventName('');
+              setDescription('');
               setDateTimeRanges([]);
               setSelectedFriends([]);
               setFormDirty(false);
 
               // Navigate back to source screen
               navigateBack();
-            },
-          },
-        ],
+            }
+          }
+        ]
       );
     } else {
       // No changes to discard, just navigate back
@@ -159,18 +150,12 @@ export default function AddEventScreen() {
   const handleAddEvent = async () => {
     // Validate form data
     if (!teaShopInfo || !eventName) {
-      Alert.alert(
-        "Missing Information",
-        "Please fill in the tea shop info and event name",
-      );
+      Alert.alert('Missing Information', 'Please fill in the tea shop info and event name');
       return;
     }
 
     if (dateTimeRanges.length === 0) {
-      Alert.alert(
-        "Missing Date & Time",
-        "Please add at least one date and time for this event",
-      );
+      Alert.alert('Missing Date & Time', 'Please add at least one date and time for this event');
       return;
     }
 
@@ -195,60 +180,65 @@ export default function AddEventScreen() {
         userId: (friend as Friend).id,
         name: (friend as Friend).name,
         email: (friend as Friend).email,
-      })),
+      }))
     };
 
     try {
       setIsLoading(true);
 
       // Log the event data for debugging
-      console.log("Sending event data:", JSON.stringify(newEvent, null, 2));
+      console.log('Sending event data:', JSON.stringify(newEvent, null, 2));
 
       // Call the API to create the event, with explicit auth header
-      const response = await api.post("/events", newEvent, {
+      const response = await api.post('/events', newEvent, {
         headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
+          'Authorization': `Bearer ${authToken}`
+        }
       });
 
-      console.log("Event created successfully:", response.data);
+      console.log('Event created successfully:', response.data);
 
       // Reset form dirty state since we're saving
       setFormDirty(false);
 
       // Show success message and navigate back to source screen
-      Alert.alert("Success!", "Event has been created successfully.", [
-        {
-          text: "OK",
-          onPress: () => {
+      Alert.alert(
+        'Success!',
+        'Event has been created successfully.',
+        [{
+          text: 'OK', onPress: () => {
             navigateBack(), resetForm();
-          },
-        },
-      ]);
+          }
+        }]
+
+      );
     } catch (error: any) {
-      console.error("Error creating event:", error);
+      console.error('Error creating event:', error);
 
       // Show more detailed error message if possible
-      let errorMessage = "Failed to create the event. Please try again.";
+      let errorMessage = 'Failed to create the event. Please try again.';
 
       if (error.response) {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx
-        console.log("Error response:", error.response.data);
-        console.log("Error status:", error.response.status);
+        console.log('Error response:', error.response.data);
+        console.log('Error status:', error.response.status);
 
         if (error.response.status === 401) {
-          errorMessage = "Authentication failed. Please log in again.";
+          errorMessage = 'Authentication failed. Please log in again.';
         } else if (error.response.data && error.response.data.message) {
           errorMessage = error.response.data.message;
         }
       } else if (error.request) {
         // The request was made but no response was received
-        errorMessage =
-          "No response from server. Please check your internet connection.";
+        errorMessage = 'No response from server. Please check your internet connection.';
       }
 
-      Alert.alert("Error", errorMessage, [{ text: "OK" }]);
+      Alert.alert(
+        'Error',
+        errorMessage,
+        [{ text: 'OK' }]
+      );
     } finally {
       setIsLoading(false);
     }
@@ -256,10 +246,10 @@ export default function AddEventScreen() {
 
   // Clear all form fields
   const resetForm = () => {
-    setTeaShopInfo("");
-    setTeaShopAddress("");
-    setEventName("");
-    setDescription("");
+    setTeaShopInfo('');
+    setTeaShopAddress('');
+    setEventName('');
+    setDescription('');
     setDateTimeRanges([]);
     setSelectedFriends([]);
     setFormDirty(false);
@@ -272,24 +262,24 @@ export default function AddEventScreen() {
 
     if (dateTimeRanges.length === 1) {
       const range = dateTimeRanges[0];
-      const startDateStr = range.startDate.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
+      const startDateStr = range.startDate.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric'
       });
-      const endDateStr = range.endDate.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
+      const endDateStr = range.endDate.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric'
       });
 
-      const startTimeStr = range.startTime.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
+      const startTimeStr = range.startTime.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
       });
-      const endTimeStr = range.endTime.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
+      const endTimeStr = range.endTime.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
       });
 
       if (range.startDate.toDateString() === range.endDate.toDateString()) {
@@ -315,7 +305,7 @@ export default function AddEventScreen() {
       </View>
 
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
       >
         <ScrollView style={styles.scrollView}>
@@ -325,11 +315,7 @@ export default function AddEventScreen() {
               style={[styles.input, styles.teaShopButton]}
               onPress={handleSelectTeaShop}
             >
-              <Text
-                style={
-                  teaShopInfo ? styles.teaShopText : styles.placeholderText
-                }
-              >
+              <Text style={teaShopInfo ? styles.teaShopText : styles.placeholderText}>
                 {teaShopInfo || "Tap to select a tea shop"}
               </Text>
               <Ionicons name="chevron-forward" size={20} color="#aaa" />
@@ -360,18 +346,11 @@ export default function AddEventScreen() {
 
             <Text style={styles.label}>Date & Time</Text>
             <TouchableOpacity
-              style={[
-                styles.dateTimeButton,
-                dateTimeRanges.length > 0 && styles.dateTimeButtonActive,
-              ]}
+              style={[styles.dateTimeButton, dateTimeRanges.length > 0 && styles.dateTimeButtonActive]}
               onPress={() => setDateTimeModalVisible(true)}
             >
               <Text
-                style={
-                  dateTimeRanges.length > 0
-                    ? styles.dateTimeText
-                    : styles.placeholderText
-                }
+                style={dateTimeRanges.length > 0 ? styles.dateTimeText : styles.placeholderText}
               >
                 {formatDateTimeRangeSummary()}
               </Text>
@@ -382,37 +361,29 @@ export default function AddEventScreen() {
               <View style={styles.rangesPreview}>
                 {dateTimeRanges.map((range, index) => (
                   <View key={range.id} style={styles.rangePreviewItem}>
-                    <Ionicons
-                      name="time-outline"
-                      size={16}
-                      color="#00cc99"
-                      style={styles.rangeIcon}
-                    />
+                    <Ionicons name="time-outline" size={16} color="#00cc99" style={styles.rangeIcon} />
                     <Text style={styles.rangePreviewText}>
-                      {range.startDate.toLocaleDateString("en-US", {
-                        weekday: "short",
-                        month: "short",
-                        day: "numeric",
+                      {range.startDate.toLocaleDateString('en-US', {
+                        weekday: 'short',
+                        month: 'short',
+                        day: 'numeric'
                       })}
-                      {range.startDate.toDateString() !==
-                      range.endDate.toDateString()
-                        ? ` — ${range.endDate.toLocaleDateString("en-US", {
-                            weekday: "short",
-                            month: "short",
-                            day: "numeric",
-                          })}`
-                        : ""}
-                      {", "}
-                      {range.startTime.toLocaleTimeString("en-US", {
-                        hour: "numeric",
-                        minute: "2-digit",
-                        hour12: true,
-                      })}{" "}
-                      —{" "}
-                      {range.endTime.toLocaleTimeString("en-US", {
-                        hour: "numeric",
-                        minute: "2-digit",
-                        hour12: true,
+                      {range.startDate.toDateString() !== range.endDate.toDateString() ?
+                        ` — ${range.endDate.toLocaleDateString('en-US', {
+                          weekday: 'short',
+                          month: 'short',
+                          day: 'numeric'
+                        })}` :
+                        ''}
+                      {', '}
+                      {range.startTime.toLocaleTimeString('en-US', {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true
+                      })} — {range.endTime.toLocaleTimeString('en-US', {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true
                       })}
                     </Text>
                   </View>
@@ -463,23 +434,23 @@ export default function AddEventScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
   },
   header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
+    borderBottomColor: '#f0f0f0',
   },
   backButton: {
     padding: 8,
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
   placeholder: {
     width: 40,
@@ -488,8 +459,8 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   resetButtonText: {
-    color: "#00cc99",
-    fontWeight: "600",
+    color: '#00cc99',
+    fontWeight: '600',
   },
   scrollView: {
     flex: 1,
@@ -499,65 +470,65 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: 'bold',
     marginBottom: 5,
     marginTop: 15,
-    color: "#333",
+    color: '#333',
   },
   input: {
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: '#ddd',
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    backgroundColor: "#fafafa",
+    backgroundColor: '#fafafa',
   },
   descriptionInput: {
     height: 100,
     paddingTop: 12,
   },
   teaShopButton: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   teaShopText: {
-    color: "#000",
+    color: '#000',
     fontSize: 16,
   },
   placeholderText: {
-    color: "#aaa",
+    color: '#aaa',
     fontSize: 16,
   },
   addressText: {
     fontSize: 14,
-    color: "#666",
+    color: '#666',
     marginTop: 4,
     marginLeft: 2,
   },
   dateTimeButton: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: '#ddd',
     borderRadius: 8,
     padding: 12,
-    backgroundColor: "#fafafa",
+    backgroundColor: '#fafafa',
   },
   dateTimeButtonActive: {
-    borderColor: "#00cc99",
+    borderColor: '#00cc99',
   },
   dateTimeText: {
     fontSize: 16,
-    color: "#000",
+    color: '#000',
   },
   rangesPreview: {
     marginTop: 8,
   },
   rangePreviewItem: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 4,
   },
   rangeIcon: {
@@ -565,18 +536,18 @@ const styles = StyleSheet.create({
   },
   rangePreviewText: {
     fontSize: 14,
-    color: "#555",
+    color: '#555',
   },
   addButton: {
-    backgroundColor: "#00cc99",
+    backgroundColor: '#00cc99',
     padding: 15,
     borderRadius: 8,
     marginTop: 30,
-    alignItems: "center",
+    alignItems: 'center',
   },
   addButtonText: {
-    color: "white",
+    color: 'white',
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
 });
