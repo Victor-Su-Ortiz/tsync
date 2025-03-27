@@ -52,6 +52,7 @@ export interface IEvent extends Document {
     };
     virtual?: boolean;
     meetingLink?: string;
+    metadata?: any;
   };
 
   // Creator and ownership

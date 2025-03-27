@@ -21,6 +21,7 @@ const EventSchema = new Schema<IEvent, IEventModel, IEventMethods>(
       },
       virtual: Boolean,
       meetingLink: String,
+      metadata: Schema.Types.Mixed,
     },
     creator: {
       type: Schema.Types.ObjectId,
