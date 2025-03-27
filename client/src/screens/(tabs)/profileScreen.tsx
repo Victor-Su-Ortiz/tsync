@@ -4,6 +4,7 @@ import { Stack, router } from 'expo-router';
 import images from '../../constants/images';
 import { useAuth } from '../../context/AuthContext';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { RelativePathString } from 'expo-router';
 import UserProfile from '@/src/components/UserProfile';
 
 export default function ProfileScreen() {
@@ -28,7 +29,7 @@ export default function ProfileScreen() {
       await logout();
 
       // Navigate to login screen
-      router.replace("./");
+      router.replace("/" as RelativePathString);
     } catch (error) {
       console.error('Error signing out:', error);
     }
