@@ -1,10 +1,17 @@
-import React, { useEffect } from 'react';
-import { View, Text, Image, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
-import { Stack, router } from 'expo-router';
-import images from '../../constants/images';
-import { useAuth } from '../../context/AuthContext';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
-import UserProfile from '@/src/components/UserProfile';
+import React, { useEffect } from "react";
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  SafeAreaView,
+  TouchableOpacity,
+} from "react-native";
+import { Stack, router } from "expo-router";
+import images from "../../constants/images";
+import { useAuth } from "../../context/AuthContext";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import UserProfile from "@/src/components/UserProfile";
 
 export default function ProfileScreen() {
   const { userInfo, logout } = useAuth();
@@ -13,7 +20,7 @@ export default function ProfileScreen() {
   const stats = {
     friends: 42,
     eventsAttended: 10,
-    eventsHosted: 10
+    eventsHosted: 10,
   };
 
   useEffect(() => console.log(userInfo));
@@ -28,9 +35,9 @@ export default function ProfileScreen() {
       await logout();
 
       // Navigate to login screen
-      router.replace('/');
+      router.replace("/");
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error("Error signing out:", error);
     }
   };
 
@@ -40,12 +47,16 @@ export default function ProfileScreen() {
 
       <View style={styles.avatarContainer}>
         <Image
-          source={userInfo?.picture || userInfo?.profilePicture ? { uri: userInfo?.picture || userInfo?.profilePicture } : images.defaultpfp}
+          source={
+            userInfo?.picture || userInfo?.profilePicture
+              ? { uri: userInfo?.picture || userInfo?.profilePicture }
+              : images.defaultpfp
+          }
           style={styles.avatar}
         />
       </View>
 
-      <Text style={styles.nameText}>{userInfo?.name || 'User'}</Text>
+      <Text style={styles.nameText}>{userInfo?.name || "User"}</Text>
 
       <View style={styles.statsContainer}>
         <View style={styles.statItem}>
@@ -62,10 +73,7 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      <TouchableOpacity
-        style={styles.signOutButton}
-        onPress={handleSignOut}
-      >
+      <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
         <Text style={styles.signOutText}>Sign Out</Text>
       </TouchableOpacity>
     </SafeAreaView>
@@ -75,18 +83,18 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     paddingHorizontal: 20,
     paddingTop: 20,
   },
   nameText: {
     fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    fontWeight: "bold",
+    textAlign: "center",
     marginVertical: 10,
   },
   avatarContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginVertical: 20,
   },
   avatar: {
@@ -94,59 +102,59 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 60,
     borderWidth: 3,
-    borderColor: '#00cc99',
+    borderColor: "#00cc99",
   },
   bioContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 15,
   },
   bioText: {
     fontSize: 16,
-    color: '#555',
-    fontStyle: 'italic',
-    textAlign: 'center',
+    color: "#555",
+    fontStyle: "italic",
+    textAlign: "center",
     paddingHorizontal: 25,
   },
   statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
     paddingVertical: 16,
     marginHorizontal: 24,
     marginBottom: 16,
     marginTop: 10,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: "#f9f9f9",
     borderRadius: 12,
   },
   statDivider: {
     width: 1,
     height: 30,
-    backgroundColor: '#ddd',
+    backgroundColor: "#ddd",
   },
   statItem: {
-    alignItems: 'center',
+    alignItems: "center",
     flex: 1,
   },
   statNumber: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#00cc99',
+    fontWeight: "bold",
+    color: "#00cc99",
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
     marginTop: 5,
   },
   signOutButton: {
     marginTop: 40,
-    backgroundColor: '#f2f2f2',
+    backgroundColor: "#f2f2f2",
     padding: 12,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
   },
   signOutText: {
-    color: '#666',
+    color: "#666",
     fontSize: 16,
-  }
+  },
 });

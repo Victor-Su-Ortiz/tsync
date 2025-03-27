@@ -1,15 +1,14 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { createContext, useState, useContext, useEffect } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface UserInfo {
   id?: string;
   name?: string | null;
   email?: string;
   profilePicture?: string | null; // URL to profile picture
-  picture?: string | null // URL for test accounts
+  picture?: string | null; // URL for test accounts
   bio?: string;
 }
-
 
 interface AuthContextType {
   authToken: string;
@@ -27,40 +26,40 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [authToken, setAuthToken] = useState<string>('');
-  const [accessToken, setAccessToken] = useState<string>('');
+  const [authToken, setAuthToken] = useState<string>("");
+  const [accessToken, setAccessToken] = useState<string>("");
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [idToken, setIdToken] = useState<string>('');
+  const [idToken, setIdToken] = useState<string>("");
 
   // Load stored auth data when the component mounts
   useEffect(() => {
     const loadStoredAuthData = async () => {
       try {
         // Load JWT token
-        const authToken = await AsyncStorage.getItem('authToken');
+        const authToken = await AsyncStorage.getItem("authToken");
         if (authToken) {
           setAuthToken(authToken);
         }
 
         // Load access token
-        const storedToken = await AsyncStorage.getItem('accessToken');
+        const storedToken = await AsyncStorage.getItem("accessToken");
         if (storedToken) {
           setAccessToken(storedToken);
         }
 
         // Load ID token
-        const idToken = await AsyncStorage.getItem('idToken');
+        const idToken = await AsyncStorage.getItem("idToken");
         if (idToken) {
           setIdToken(idToken);
         }
         // Load user info
-        const storedUserInfo = await AsyncStorage.getItem('userInfo');
+        const storedUserInfo = await AsyncStorage.getItem("userInfo");
         if (storedUserInfo) {
           setUserInfo(JSON.parse(storedUserInfo));
         }
       } catch (error) {
-        console.error('Error loading auth data:', error);
+        console.error("Error loading auth data:", error);
       } finally {
         setIsLoading(false);
       }
@@ -74,36 +73,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const storeAuthToken = async () => {
       try {
         if (authToken) {
-          await AsyncStorage.setItem('authToken', authToken);
+          await AsyncStorage.setItem("authToken", authToken);
         } else {
-          await AsyncStorage.removeItem('authTOken');
+          await AsyncStorage.removeItem("authTOken");
         }
       } catch (error) {
-        console.error('Error storing auth token:', error);
+        console.error("Error storing auth token:", error);
       }
     };
 
     const storeAccessToken = async () => {
       try {
         if (accessToken) {
-          await AsyncStorage.setItem('accessToken', accessToken);
+          await AsyncStorage.setItem("accessToken", accessToken);
         } else {
-          await AsyncStorage.removeItem('accessToken');
+          await AsyncStorage.removeItem("accessToken");
         }
       } catch (error) {
-        console.error('Error storing access token:', error);
+        console.error("Error storing access token:", error);
       }
     };
 
     const storeIdToken = async () => {
       try {
         if (idToken) {
-          await AsyncStorage.setItem('idToken', idToken);
+          await AsyncStorage.setItem("idToken", idToken);
         } else {
-          await AsyncStorage.removeItem('idToken');
+          await AsyncStorage.removeItem("idToken");
         }
       } catch (error) {
-        console.error('Error storing ID token:', error);
+        console.error("Error storing ID token:", error);
       }
     };
 
@@ -119,12 +118,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (userInfo) {
           // Convert userInfo object to a JSON string before storing
           const userInfoString = JSON.stringify(userInfo);
-          await AsyncStorage.setItem('userInfo', userInfoString);
+          await AsyncStorage.setItem("userInfo", userInfoString);
         } else {
-          await AsyncStorage.removeItem('userInfo');
+          await AsyncStorage.removeItem("userInfo");
         }
       } catch (error) {
-        console.error('Error storing user info:', error);
+        console.error("Error storing user info:", error);
       }
     };
 
@@ -134,16 +133,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Logout function to clear auth data
   const logout = async () => {
     try {
-      setAuthToken('');
-      setIdToken('');
-      setAccessToken('');
+      setAuthToken("");
+      setIdToken("");
+      setAccessToken("");
       setUserInfo(null);
-      await AsyncStorage.removeItem('authToken');
-      await AsyncStorage.removeItem('accessToken');
-      await AsyncStorage.removeItem('userInfo');
-      await AsyncStorage.removeItem('idToken');
+      await AsyncStorage.removeItem("authToken");
+      await AsyncStorage.removeItem("accessToken");
+      await AsyncStorage.removeItem("userInfo");
+      await AsyncStorage.removeItem("idToken");
     } catch (error) {
-      console.error('Error during logout:', error);
+      console.error("Error during logout:", error);
     }
   };
 
@@ -159,7 +158,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         userInfo,
         setUserInfo,
         isLoading,
-        logout
+        logout,
       }}
     >
       {children}
@@ -170,7 +169,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }
