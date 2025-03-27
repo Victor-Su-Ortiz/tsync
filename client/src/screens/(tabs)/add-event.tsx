@@ -20,6 +20,7 @@ import TeaShopSelectionModal from '../../components/SelectTeaShop';
 import DateTimePickerModal, { DateTimeRange } from '../../components/DateTimePickerModal';
 import { useAuth } from '@/src/context/AuthContext'; // Import your auth context
 import { api } from '@/src/utils/api';
+import { ILocation } from '../../types/location.type';
 
 type Friend = {
   id: string;
@@ -27,19 +28,20 @@ type Friend = {
   email: string;
 };
 
-type Place = {
-  place_id: string;
-  name: string;
-  vicinity: string;
-  rating?: number;
-  photos?: { photo_reference: string }[];
-};
+// type Place = {
+//   place_id: string;
+//   name: string;
+//   vicinity: string;
+//   rating?: number;
+//   photos?: { photo_reference: string }[];
+// };
 
 export default function AddEventScreen() {
   const params = useLocalSearchParams();
   const { authToken } = useAuth(); // Get the auth token from context
   const sourceScreen = params.sourceScreen as string;
 
+  // const [teaShopInfo, setTeaShopInfo] = useState<ILocation | null>(null);
   const [teaShopInfo, setTeaShopInfo] = useState('');
   const [teaShopAddress, setTeaShopAddress] = useState('');
   const [eventName, setEventName] = useState('');
@@ -70,7 +72,7 @@ export default function AddEventScreen() {
   useEffect(() => {
     // We need to check if ANY of the fields have values to determine if form is dirty
     const hasChanges =
-      teaShopInfo !== '' ||
+      teaShopInfo !== null ||
       teaShopAddress !== '' ||
       eventName !== '' ||
       description !== '' ||
@@ -84,9 +86,41 @@ export default function AddEventScreen() {
     setTeaShopModalVisible(true);
   };
 
-  const handleTeaShopSelection = (teaShop: Place) => {
+  const handleTeaShopSelection = (teaShop: any) => {
+    console.log('Selected tea shop:', teaShop);
     setTeaShopInfo(teaShop.name);
     setTeaShopAddress(teaShop.vicinity);
+  };
+
+  /**
+   * Converts a Google Places API response into an event location model
+   * @param placesData The response from Google Places API
+   * @returns An object formatted for the event model location field
+   */
+  const convertGooglePlaceToEventLocation = (placesData: any) => {
+    // Extract the address from vicinity or formatted_address
+    const address = placesData.vicinity || placesData.formatted_address || '';
+
+    // Extract coordinates
+    const latitude = placesData.geometry?.location?.lat || null;
+    const longitude = placesData.geometry?.location?.lng || null;
+
+    // Filter out fields to exclude from metadata
+    const { geometry, vicinity, formatted_address, ...restData } = placesData;
+
+    // Create the location object
+    const location = {
+      address,
+      coordinates: {
+        latitude,
+        longitude,
+      },
+      virtual: false, // Default to physical location
+      meetingLink: '', // Empty for physical locations
+      metadata: restData, // Include all other fields in metadata
+    };
+
+    return location;
   };
 
   // Navigate back to the source screen if available
