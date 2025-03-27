@@ -1,7 +1,7 @@
-import { Document, Model, Types } from "mongoose";
+import { Document, Model, Types } from 'mongoose';
 
 // Define the possible event recurrence patterns
-export type RecurrencePattern = 
+export type RecurrencePattern =
   | 'none'
   | 'daily'
   | 'weekly'
@@ -11,11 +11,7 @@ export type RecurrencePattern =
   | 'custom';
 
 // Define the possible event statuses
-export type EventStatus = 
-  | 'scheduled'
-  | 'tentative'
-  | 'confirmed'
-  | 'cancelled';
+export type EventStatus = 'scheduled' | 'tentative' | 'confirmed' | 'cancelled';
 
 // Define event date type to handle non-consecutive dates
 export interface IEventDate {
@@ -44,7 +40,7 @@ export interface IReminder {
 // Interface to define the Event document structure
 export interface IEvent extends Document {
   _id: Types.ObjectId;
-  
+
   // Basic info
   title: string;
   description?: string;
@@ -56,15 +52,16 @@ export interface IEvent extends Document {
     };
     virtual?: boolean;
     meetingLink?: string;
+    metadata?: any;
   };
-  
+
   // Creator and ownership
   creator: Types.ObjectId; // Reference to User model
-  
+
   // Time-related fields
   eventDates: IEventDate[]; // Support for non-consecutive dates
   timezone: string;
-  
+
   // Recurrence
   recurrence?: {
     pattern: RecurrencePattern;
@@ -75,23 +72,23 @@ export interface IEvent extends Document {
     byDaysOfMonth?: number[]; // 1-31
     excludeDates?: Date[];
   };
-  
+
   // Integration with Google Calendar
   googleCalendarEventId?: string;
   googleCalendarId?: string;
-  
+
   // Status
   status: EventStatus;
-  
+
   // Attendees
   attendees: IAttendee[];
-  
+
   // Visibility and privacy
   visibility: 'public' | 'private' | 'friends';
-  
+
   // Reminders
   reminders: IReminder[];
-  
+
   // Timestamps
   createdAt: Date;
   updatedAt: Date;
@@ -106,6 +103,11 @@ export interface IEventMethods {
 }
 
 export interface IEventModel extends Model<IEvent, {}, IEventMethods> {
-  findEventsForUser(userId: string): Promise<Array<Document<unknown, any, IEvent> & IEvent & IEventMethods>>;
-  findEventsByDateRange(start: Date, end: Date): Promise<Array<Document<unknown, any, IEvent> & IEvent & IEventMethods>>;
+  findEventsForUser(
+    userId: string
+  ): Promise<Array<Document<unknown, any, IEvent> & IEvent & IEventMethods>>;
+  findEventsByDateRange(
+    start: Date,
+    end: Date
+  ): Promise<Array<Document<unknown, any, IEvent> & IEvent & IEventMethods>>;
 }

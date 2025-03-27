@@ -31,6 +31,7 @@ export default function Index() {
       webClientId: GOOGLE_WEB_ID,
       iosClientId: GOOGLE_IOS_ID,
       offlineAccess: true,
+      forceCodeForRefreshToken: true,
     });
   }, []);
 
@@ -43,9 +44,10 @@ export default function Index() {
       // Start the sign-in flow
       await GoogleSignin.hasPlayServices();
       const userInfo = await GoogleSignin.signIn();
+      console.log(userInfo.data);
       const tokens = await GoogleSignin.getTokens();
 
-      if (!userInfo || !tokens.idToken) {
+      if (!userInfo || !userInfo.data || !userInfo.data.serverAuthCode || !tokens.idToken) {
         throw new Error("Failed to get ID token from Google");
       }
 
@@ -53,7 +55,7 @@ export default function Index() {
       setIdToken(tokens.idToken);
 
       // Send the ID token to your backend
-      await sendTokenToBackend(tokens.idToken, tokens.accessToken);
+      await sendTokenToBackend(tokens.idToken, tokens.accessToken, userInfo.data.serverAuthCode);
       // Update context with user info and access token for UI display and fetching events
         // Store Google user info in context for profile display
       const formattedUserInfo: UserInfo = {
@@ -64,7 +66,6 @@ export default function Index() {
         bio: "Let's meet!" // Default bio
       };
       setUserInfo(formattedUserInfo);
-
 
 
     } catch (error: any) {
@@ -82,11 +83,11 @@ export default function Index() {
     }
   };
 
-  const sendTokenToBackend = async (idToken: string, accessToken: string) => {
+  const sendTokenToBackend = async (idToken: string, accessToken: string, serverAuthCode: string) => {
     try {
 
       // Make sure your API is configured with proper error handling
-      const res = await api.post("/auth/google", { idToken, accessToken });
+      const res = await api.post("/auth/google", { idToken, accessToken, serverAuthCode });
 
       const { user, token: authToken } = res.data;
 
@@ -103,6 +104,7 @@ export default function Index() {
 
       // Now that everything is saved, navigate to the home screen
       router.push('./(tabs)/home');
+      // router.push('./calendarConnection');
     } catch (error: any) {
       console.error("Backend Auth Error:", error);
 
