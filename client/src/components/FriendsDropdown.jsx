@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -9,16 +9,16 @@ import {
   Modal,
   Animated,
   ActivityIndicator,
-  Image
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { api } from '../utils/api';
-import { useAuth } from '../context/AuthContext';
+  Image,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { api } from "../utils/api";
+import { useAuth } from "../context/AuthContext";
 
 const FriendsDropdown = ({ selectedFriends, setSelectedFriends }) => {
   const { authToken } = useAuth();
   const [modalVisible, setModalVisible] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [friends, setFriends] = useState([]);
   const [filteredFriends, setFilteredFriends] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -54,21 +54,23 @@ const FriendsDropdown = ({ selectedFriends, setSelectedFriends }) => {
     setError(null);
 
     try {
-      const response = await api.get('/friends', { headers: { Authorization: `Bearer ${authToken}` } });
+      const response = await api.get("/friends", {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
       const { success, friends } = response.data;
       console.log(friends);
 
       // Based on your controller, response should have a structure with success and data fields
       if (!response || !success || !Array.isArray(friends)) {
-        throw new Error('Unexpected API response format');
+        throw new Error("Unexpected API response format");
       }
 
       // Your controller already populates friend details, so we can use them directly
       setFriends(friends);
       setFilteredFriends(friends);
     } catch (err) {
-      console.error('Error fetching friends:', err);
-      setError('Failed to load friends. Please try again.');
+      console.error("Error fetching friends:", err);
+      setError("Failed to load friends. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -77,8 +79,10 @@ const FriendsDropdown = ({ selectedFriends, setSelectedFriends }) => {
   // Filter friends based on search query
   useEffect(() => {
     if (searchQuery) {
-      const filtered = friends.filter(friend =>
-        friend.name && friend.name.toLowerCase().includes(searchQuery.toLowerCase())
+      const filtered = friends.filter(
+        (friend) =>
+          friend.name &&
+          friend.name.toLowerCase().includes(searchQuery.toLowerCase()),
       );
       setFilteredFriends(filtered);
     } else {
@@ -88,13 +92,13 @@ const FriendsDropdown = ({ selectedFriends, setSelectedFriends }) => {
 
   // Check if a friend is selected
   const isFriendSelected = (friendId) => {
-    return selectedFriends.some(friend => friend._id === friendId);
+    return selectedFriends.some((friend) => friend._id === friendId);
   };
 
   // Toggle friend selection
   const toggleFriendSelection = (friend) => {
     if (isFriendSelected(friend._id)) {
-      setSelectedFriends(selectedFriends.filter(f => f._id !== friend._id));
+      setSelectedFriends(selectedFriends.filter((f) => f._id !== friend._id));
     } else {
       setSelectedFriends([...selectedFriends, friend]);
     }
@@ -106,18 +110,14 @@ const FriendsDropdown = ({ selectedFriends, setSelectedFriends }) => {
 
     return (
       <TouchableOpacity
-        style={[
-          styles.friendItem,
-          isSelected && styles.selectedFriendItem
-        ]}
+        style={[styles.friendItem, isSelected && styles.selectedFriendItem]}
         onPress={() => toggleFriendSelection(item)}
       >
         <View style={styles.friendInfo}>
-            <Image source={{uri: item.profilePicture}} style={styles.avatar}/>
-          <Text style={[
-            styles.friendName,
-            isSelected && styles.selectedFriendName
-          ]}>
+          <Image source={{ uri: item.profilePicture }} style={styles.avatar} />
+          <Text
+            style={[styles.friendName, isSelected && styles.selectedFriendName]}
+          >
             {item.name || `User ${item._id.slice(-5)}`}
           </Text>
         </View>
@@ -143,10 +143,7 @@ const FriendsDropdown = ({ selectedFriends, setSelectedFriends }) => {
         <View style={styles.emptyStateContainer}>
           <Ionicons name="alert-circle-outline" size={40} color="#ff6b6b" />
           <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity
-            style={styles.retryButton}
-            onPress={fetchFriends}
-          >
+          <TouchableOpacity style={styles.retryButton} onPress={fetchFriends}>
             <Text style={styles.retryButtonText}>Retry</Text>
           </TouchableOpacity>
         </View>
@@ -157,7 +154,9 @@ const FriendsDropdown = ({ selectedFriends, setSelectedFriends }) => {
       return (
         <View style={styles.emptyStateContainer}>
           <Ionicons name="people-outline" size={40} color="#aaa" />
-          <Text style={styles.emptyStateText}>You don't have any friends yet</Text>
+          <Text style={styles.emptyStateText}>
+            You don't have any friends yet
+          </Text>
         </View>
       );
     }
@@ -166,7 +165,9 @@ const FriendsDropdown = ({ selectedFriends, setSelectedFriends }) => {
       return (
         <View style={styles.emptyStateContainer}>
           <Ionicons name="search-outline" size={40} color="#aaa" />
-          <Text style={styles.emptyStateText}>No friends match your search</Text>
+          <Text style={styles.emptyStateText}>
+            No friends match your search
+          </Text>
         </View>
       );
     }
@@ -180,9 +181,15 @@ const FriendsDropdown = ({ selectedFriends, setSelectedFriends }) => {
         style={styles.dropdownButton}
         onPress={() => setModalVisible(true)}
       >
-        <Text style={selectedFriends.length ? styles.dropdownText : styles.placeholderText}>
+        <Text
+          style={
+            selectedFriends.length
+              ? styles.dropdownText
+              : styles.placeholderText
+          }
+        >
           {selectedFriends.length
-            ? `${selectedFriends.length} friend${selectedFriends.length !== 1 ? 's' : ''} selected`
+            ? `${selectedFriends.length} friend${selectedFriends.length !== 1 ? "s" : ""} selected`
             : "Select friends"}
         </Text>
         <Ionicons name="chevron-down" size={20} color="#aaa" />
@@ -198,7 +205,10 @@ const FriendsDropdown = ({ selectedFriends, setSelectedFriends }) => {
             renderItem={({ item }) => (
               <View style={styles.selectedFriendChip}>
                 {/* <Text style={styles.chipAvatar}>{getInitial(item.name)}</Text> */}
-                <Image source={{uri: item.profilePicture}} style={styles.chipAvatar}/>
+                <Image
+                  source={{ uri: item.profilePicture }}
+                  style={styles.chipAvatar}
+                />
                 <Text style={styles.selectedFriendChipText}>
                   {item.name || `User ${item._id.slice(-5)}`}
                 </Text>
@@ -221,12 +231,7 @@ const FriendsDropdown = ({ selectedFriends, setSelectedFriends }) => {
         onRequestClose={() => setModalVisible(false)}
       >
         {/* Animated overlay with fade effect */}
-        <Animated.View
-          style={[
-            styles.modalOverlay,
-            { opacity: fadeAnim }
-          ]}
-        />
+        <Animated.View style={[styles.modalOverlay, { opacity: fadeAnim }]} />
 
         {/* Modal content - slides up from bottom */}
         <View style={styles.modalContainer}>
@@ -242,7 +247,12 @@ const FriendsDropdown = ({ selectedFriends, setSelectedFriends }) => {
             </View>
 
             <View style={styles.searchContainer}>
-              <Ionicons name="search" size={20} color="#aaa" style={styles.searchIcon} />
+              <Ionicons
+                name="search"
+                size={20}
+                color="#aaa"
+                style={styles.searchIcon}
+              />
               <TextInput
                 style={styles.searchInput}
                 placeholder="Search friends..."
@@ -252,7 +262,7 @@ const FriendsDropdown = ({ selectedFriends, setSelectedFriends }) => {
               />
               {searchQuery ? (
                 <TouchableOpacity
-                  onPress={() => setSearchQuery('')}
+                  onPress={() => setSearchQuery("")}
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
                   <Ionicons name="close-circle" size={20} color="#aaa" />
@@ -267,7 +277,9 @@ const FriendsDropdown = ({ selectedFriends, setSelectedFriends }) => {
               style={styles.friendsList}
               showsVerticalScrollIndicator={false}
               ListEmptyComponent={renderEmptyState}
-              contentContainerStyle={filteredFriends.length === 0 ? { flex: 1 } : null}
+              contentContainerStyle={
+                filteredFriends.length === 0 ? { flex: 1 } : null
+              }
             />
 
             <TouchableOpacity
@@ -285,30 +297,30 @@ const FriendsDropdown = ({ selectedFriends, setSelectedFriends }) => {
 
 const styles = StyleSheet.create({
   dropdownButton: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
     borderRadius: 8,
     padding: 12,
-    backgroundColor: '#fafafa',
+    backgroundColor: "#fafafa",
   },
   dropdownText: {
     fontSize: 16,
-    color: '#000',
+    color: "#000",
   },
   placeholderText: {
     fontSize: 16,
-    color: '#aaa',
+    color: "#aaa",
   },
   selectedContainer: {
     marginTop: 8,
   },
   selectedFriendChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#e0f7fa',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#e0f7fa",
     borderRadius: 16,
     paddingVertical: 6,
     paddingHorizontal: 12,
@@ -319,55 +331,55 @@ const styles = StyleSheet.create({
     marginLeft: 6,
     marginRight: 6,
     fontSize: 14,
-    color: '#333',
+    color: "#333",
   },
   chipAvatar: {
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: '#00cc99',
-    color: 'white',
-    textAlign: 'center',
+    backgroundColor: "#00cc99",
+    color: "white",
+    textAlign: "center",
     lineHeight: 20,
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   modalOverlay: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: "rgba(0,0,0,0.5)",
   },
   modalContainer: {
     flex: 1,
-    justifyContent: 'flex-end',
+    justifyContent: "flex-end",
   },
   modalContent: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
-    height: '70%',
+    height: "70%",
   },
   modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingBottom: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: "#f0f0f0",
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
   },
   searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f5f5f5",
     borderRadius: 8,
     paddingHorizontal: 10,
     marginVertical: 15,
@@ -385,82 +397,82 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   friendItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingVertical: 12,
     paddingHorizontal: 5,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: "#f0f0f0",
   },
   friendInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   avatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#e0f7fa',
+    backgroundColor: "#e0f7fa",
     marginRight: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   avatarText: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#00cc99',
+    fontWeight: "bold",
+    color: "#00cc99",
   },
   selectedFriendItem: {
-    backgroundColor: '#f0f9f6',
+    backgroundColor: "#f0f9f6",
   },
   friendName: {
     fontSize: 16,
-    color: '#333',
+    color: "#333",
   },
   selectedFriendName: {
-    fontWeight: '500',
-    color: '#00cc99',
+    fontWeight: "500",
+    color: "#00cc99",
   },
   emptyStateContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   emptyStateText: {
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: 10,
-    color: '#999',
+    color: "#999",
     fontSize: 16,
   },
   errorText: {
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: 10,
-    color: '#ff6b6b',
+    color: "#ff6b6b",
     fontSize: 16,
   },
   retryButton: {
     marginTop: 15,
     paddingVertical: 8,
     paddingHorizontal: 16,
-    backgroundColor: '#00cc99',
+    backgroundColor: "#00cc99",
     borderRadius: 8,
   },
   retryButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: "white",
+    fontWeight: "bold",
   },
   doneButton: {
-    backgroundColor: '#00cc99',
+    backgroundColor: "#00cc99",
     borderRadius: 8,
     paddingVertical: 12,
-    alignItems: 'center',
+    alignItems: "center",
   },
   doneButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });
 

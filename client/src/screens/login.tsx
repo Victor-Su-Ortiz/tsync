@@ -1,12 +1,21 @@
-import React, { useState } from 'react';
-import { Text, TextInput, TouchableOpacity, Alert, StyleSheet, Keyboard, Button, View } from 'react-native';
+import React, { useState } from "react";
+import {
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  StyleSheet,
+  Keyboard,
+  Button,
+  View,
+} from "react-native";
 import { api } from "../utils/api"; // Import the API instance
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import '../../global.css';
+import { useRouter } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
+import "../../global.css";
 import { ArrowLeft, User } from "lucide-react-native";
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from "../context/AuthContext";
 
 // User data
 const users = [
@@ -58,25 +67,31 @@ const users = [
 ];
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { setUserInfo, setAuthToken } = useAuth();
 
   const handleForget = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Please enter both email and password.');
+      Alert.alert("Error", "Please enter both email and password.");
       return;
     }
     setLoading(true);
 
     try {
-      const response = await api.post("/auth/resetPassword", { email, password });
+      const response = await api.post("/auth/resetPassword", {
+        email,
+        password,
+      });
       const { token } = response.data;
     } catch (error: any) {
       console.error("Login error:", error);
-      Alert.alert("Login Failed", error.response?.data?.message || "Something went wrong.");
+      Alert.alert(
+        "Login Failed",
+        error.response?.data?.message || "Something went wrong.",
+      );
     } finally {
       setLoading(false);
     }
@@ -84,7 +99,7 @@ const Login = () => {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Please enter both email and password.');
+      Alert.alert("Error", "Please enter both email and password.");
       return;
     }
     setLoading(true);
@@ -96,10 +111,13 @@ const Login = () => {
       setAuthToken(token);
       setUserInfo(user);
       Alert.alert("Success", "Login successful!");
-      router.push('./(tabs)/home');
+      router.push("./(tabs)/home");
     } catch (error: any) {
       console.error("Login error:", error);
-      Alert.alert("Login Failed", error.response?.data?.message || "Something went wrong.");
+      Alert.alert(
+        "Login Failed",
+        error.response?.data?.message || "Something went wrong.",
+      );
     } finally {
       setLoading(false);
     }
@@ -111,7 +129,7 @@ const Login = () => {
     try {
       const response = await api.post("/auth/login", {
         email: selectedUser.email,
-        password: selectedUser.password
+        password: selectedUser.password,
       });
 
       const { user, token } = response.data;
@@ -120,10 +138,13 @@ const Login = () => {
       setAuthToken(token);
       setUserInfo(user);
       Alert.alert("Success", `Logged in as ${selectedUser.name}`);
-      router.push('./(tabs)/home');
+      router.push("./(tabs)/home");
     } catch (error: any) {
       console.error("Login error:", error);
-      Alert.alert("Login Failed", error.response?.data?.message || "Something went wrong.");
+      Alert.alert(
+        "Login Failed",
+        error.response?.data?.message || "Something went wrong.",
+      );
     } finally {
       setLoading(false);
     }
@@ -132,27 +153,27 @@ const Login = () => {
   // Function to show user selection alert
   const showUserSelectionAlert = () => {
     // Create buttons for each user
-    const buttons = users.map(user => ({
+    const buttons = users.map((user) => ({
       text: user.name,
-      onPress: () => handleUserSelection(user)
+      onPress: () => handleUserSelection(user),
     }));
 
     // Show alert with user options
-    Alert.alert(
-      'Select a User',
-      'Choose a user to sign in as:',
-      buttons,
-      { cancelable: true }
-    );
+    Alert.alert("Select a User", "Choose a user to sign in as:", buttons, {
+      cancelable: true,
+    });
   };
 
   return (
-    <SafeAreaView className='flex-1 justify-center px-5 bg-gray-100'>
-      <TouchableOpacity onPress={() => router.back()} className="absolute top-14 left-5 p-2 bg-white shadow-md shadow-zinc-300 rounded-full">
+    <SafeAreaView className="flex-1 justify-center px-5 bg-gray-100">
+      <TouchableOpacity
+        onPress={() => router.back()}
+        className="absolute top-14 left-5 p-2 bg-white shadow-md shadow-zinc-300 rounded-full"
+      >
         <ArrowLeft size={24} />
       </TouchableOpacity>
 
-      <Text className='pb-5 text-2xl font-bold text-center'>Sign In 🧋</Text>
+      <Text className="pb-5 text-2xl font-bold text-center">Sign In 🧋</Text>
 
       <TextInput
         style={styles.input}
@@ -175,11 +196,13 @@ const Login = () => {
         onPress={handleLogin}
         disabled={loading}
       >
-        <Text style={styles.buttonText}>{loading ? "Logging in..." : "Login"}</Text>
+        <Text style={styles.buttonText}>
+          {loading ? "Logging in..." : "Login"}
+        </Text>
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={[styles.button, { backgroundColor: '#4a90e2', marginTop: 10 }]}
+        style={[styles.button, { backgroundColor: "#4a90e2", marginTop: 10 }]}
         onPress={showUserSelectionAlert}
         disabled={loading}
       >
@@ -187,7 +210,7 @@ const Login = () => {
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={[styles.button, { backgroundColor: '#6c757d', marginTop: 10 }]}
+        style={[styles.button, { backgroundColor: "#6c757d", marginTop: 10 }]}
         onPress={handleForget}
         disabled={loading}
       >
@@ -199,26 +222,26 @@ const Login = () => {
 
 const styles = StyleSheet.create({
   input: {
-    width: '100%',
+    width: "100%",
     padding: 10,
     marginBottom: 15,
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderRadius: 5,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   button: {
-    backgroundColor: '#007BFF',
+    backgroundColor: "#007BFF",
     padding: 10,
-    width: '100%',
-    alignItems: 'center',
+    width: "100%",
+    alignItems: "center",
     borderRadius: 5,
     marginVertical: 5,
   },
   buttonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });
 
