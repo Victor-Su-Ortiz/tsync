@@ -1,18 +1,10 @@
 import React, { useEffect, useState } from "react";
-import {
-  Text,
-  View,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-  FlatList,
-  StyleSheet,
-  StatusBar,
-} from "react-native";
+import { Text, View, ScrollView, TouchableOpacity, ActivityIndicator, FlatList, StyleSheet, StatusBar } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import axios from "axios";
 import moment from "moment";
 import { useAuth } from "../../context/AuthContext";
+
 
 interface CalendarEvent {
   id: string;
@@ -30,43 +22,37 @@ interface CalendarEvent {
   description?: string;
 }
 
+
 export default function Events() {
+
   const { accessToken, idToken, authToken } = useAuth();
   const [selectedDay, setSelectedDay] = useState(moment().format("YYYY-MM-DD"));
   const [loading, setLoading] = useState(false);
 
-  const [eventsByDate, setEventsByDate] = useState<
-    Record<string, CalendarEvent[]>
-  >({});
+  const [eventsByDate, setEventsByDate] = useState<Record<string, CalendarEvent[]>>({});
 
   // In your fetchAllEvents function, modify how events are stored:
-  const fetchAllEvents = async (
-    calendarId = "primary",
-    pageToken: string | null = null,
-  ) => {
+  const fetchAllEvents = async (calendarId = "primary", pageToken: string | null = null) => {
     try {
       let url = `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events?singleEvents=true&orderBy=startTime`;
       if (pageToken) {
         url += `&pageToken=${pageToken}`;
       }
 
-      const response = await axios.get<{
-        items: CalendarEvent[];
-        nextPageToken?: string;
-      }>(url, {
+      const response = await axios.get<{ items: CalendarEvent[]; nextPageToken?: string }>(url, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
 
       const newEvents = response.data.items || [];
 
       // Organize events by date
-      setEventsByDate((prevEvents) => {
+      setEventsByDate(prevEvents => {
         const updatedEvents = { ...prevEvents };
 
-        newEvents.forEach((event) => {
+        newEvents.forEach(event => {
           // Get the date from either dateTime or date field
           const eventDate = event.start.dateTime
-            ? moment(event.start.dateTime).format("YYYY-MM-DD")
+            ? moment(event.start.dateTime).format('YYYY-MM-DD')
             : event.start.date;
 
           if (eventDate) {
@@ -94,7 +80,7 @@ export default function Events() {
     console.log(authToken);
 
     if (accessToken) {
-      fetchAllEvents(); // ✅ Fetch events after token is set
+      fetchAllEvents();  // ✅ Fetch events after token is set
     }
   }, [accessToken]);
 
@@ -142,8 +128,8 @@ export default function Events() {
               <Text style={styles.eventTitle}>{event.summary}</Text>
               <Text style={styles.eventTime}>
                 {event.start.dateTime
-                  ? `${moment(event.start.dateTime).format("h:mm A")} - ${moment(event.end.dateTime).format("h:mm A")}`
-                  : "All day"}
+                  ? `${moment(event.start.dateTime).format('h:mm A')} - ${moment(event.end.dateTime).format('h:mm A')}`
+                  : 'All day'}
               </Text>
             </View>
           ))
@@ -271,7 +257,7 @@ const styles = StyleSheet.create({
   },
   eventDescription: {
     fontSize: 12,
-    color: "#666",
+    color: '#666',
     marginTop: 4,
   },
 });

@@ -8,23 +8,23 @@ const friendRequestSchema = new Schema<IFriendRequest>(
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      index: true
+      index: true,
     },
     receiver: {
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      index: true
+      index: true,
     },
     status: {
       type: String,
       enum: Object.values(FriendRequestStatus),
       default: FriendRequestStatus.PENDING,
-      index: true
-    }
+      index: true,
+    },
   },
   {
-    timestamps: true
+    timestamps: true,
   }
 );
 
@@ -40,8 +40,8 @@ friendRequestSchema.statics.findBetweenUsers = async function (
   return this.findOne({
     $or: [
       { sender: senderId, receiver: receiverId, status: FriendRequestStatus.PENDING },
-      { sender: receiverId, receiver: senderId, status: FriendRequestStatus.PENDING }
-    ]
+      { sender: receiverId, receiver: senderId, status: FriendRequestStatus.PENDING },
+    ],
   });
 };
 

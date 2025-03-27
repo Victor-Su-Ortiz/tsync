@@ -1,15 +1,15 @@
-import dotenv from "dotenv";
-import mongoose from "mongoose";
-import app from "./app";
-import http from "http";
-import socketService from "./services/socket.service";
+import dotenv from 'dotenv';
+import mongoose from 'mongoose';
+import app from './app';
+import http from 'http';
+import socketService from './services/socket.service';
 
 // Load environment variables
 dotenv.config();
 
 // Handle uncaught exceptions
-process.on("uncaughtException", (err: Error) => {
-  console.error("UNCAUGHT EXCEPTION! 💥 Shutting down...");
+process.on('uncaughtException', (err: Error) => {
+  console.error('UNCAUGHT EXCEPTION! 💥 Shutting down...');
   console.error(err.name, err.message);
   process.exit(1);
 });
@@ -29,11 +29,11 @@ const connectDB = async (): Promise<void> => {
     console.log(`MongoDB Connected: ${conn.connection.host}`);
 
     // Add MongoDB logging in development
-    if (process.env.NODE_ENV === "development") {
-      mongoose.set("debug", true);
+    if (process.env.NODE_ENV === 'development') {
+      mongoose.set('debug', true);
     }
   } catch (error) {
-    console.error("Error connecting to MongoDB:", error);
+    console.error('Error connecting to MongoDB:', error);
     process.exit(1);
   }
 };
@@ -47,7 +47,7 @@ const startServer = async (): Promise<void> => {
 
     // Create HTTP server
     const server = http.createServer(app);
-    
+
     // Initialize socket.io
     socketService.initialize(server);
 
@@ -60,8 +60,8 @@ const startServer = async (): Promise<void> => {
     });
 
     // Handle unhandled promise rejections
-    process.on("unhandledRejection", (err: Error) => {
-      console.error("UNHANDLED REJECTION! 💥 Shutting down...");
+    process.on('unhandledRejection', (err: Error) => {
+      console.error('UNHANDLED REJECTION! 💥 Shutting down...');
       console.error(err.name, err.message);
       server.close(() => {
         process.exit(1);
@@ -69,14 +69,14 @@ const startServer = async (): Promise<void> => {
     });
 
     // Handle SIGTERM signal
-    process.on("SIGTERM", () => {
-      console.log("👋 SIGTERM RECEIVED. Shutting down gracefully");
+    process.on('SIGTERM', () => {
+      console.log('👋 SIGTERM RECEIVED. Shutting down gracefully');
       server.close(() => {
-        console.log("💥 Process terminated!");
+        console.log('💥 Process terminated!');
       });
     });
   } catch (error) {
-    console.error("Error starting server:", error);
+    console.error('Error starting server:', error);
     process.exit(1);
   }
 };

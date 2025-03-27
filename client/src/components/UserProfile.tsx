@@ -1,5 +1,5 @@
 // components/UserProfile.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -9,13 +9,13 @@ import {
   Modal,
   Alert,
   ScrollView,
-  ActivityIndicator,
+  ActivityIndicator
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { api } from "../utils/api";
-import { useAuth } from "../context/AuthContext";
-import { useSocket } from "../context/SocketContext";
-import { FriendRequestEventType, FriendStatus } from "../utils/enums";
+import { Ionicons } from '@expo/vector-icons';
+import { api } from '../utils/api';
+import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/SocketContext';
+import { FriendRequestEventType, FriendStatus } from '../utils/enums';
 
 export type User = {
   id: string;
@@ -29,11 +29,7 @@ type UserProfileProps = {
   visible: boolean;
   onClose: () => void;
   user: User;
-  onFriendStatusChange?: (
-    userId: string,
-    newStatus: FriendStatus,
-    requestId?: string,
-  ) => void;
+  onFriendStatusChange?: (userId: string, newStatus: FriendStatus, requestId?: string) => void;
   requestId?: string;
   requestStatus?: string;
 };
@@ -44,18 +40,14 @@ const UserProfile = ({
   user,
   onFriendStatusChange,
   requestId: initialRequestId,
-  requestStatus,
+  requestStatus
 }: UserProfileProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingStatus, setLoadingStatus] = useState(false);
   // Add local state to track friend status
-  const [currentStatus, setCurrentStatus] = useState<FriendStatus>(
-    FriendStatus.NONE,
-  );
+  const [currentStatus, setCurrentStatus] = useState<FriendStatus>(FriendStatus.NONE);
   // Add local state to store the request ID
-  const [requestId, setRequestId] = useState<string | undefined>(
-    initialRequestId,
-  );
+  const [requestId, setRequestId] = useState<string | undefined>(initialRequestId);
 
   const { authToken } = useAuth();
   const { socket } = useSocket();
@@ -75,26 +67,20 @@ const UserProfile = ({
 
   // Update local status when friend status changes
   useEffect(() => {
-    console.log("setting up socket listener with user:", user);
+    console.log('setting up socket listener with user:', user);
     if (!user && !socket) return;
-    console.log("is ready to set up socket listener");
+    console.log('is ready to set up socket listener');
     const handleFriendStatusChange = (payload: any) => {
       const event = payload.event;
       const data = payload.data;
-      console.log("Received friend_status_changed event:", event, data);
+      console.log('Received friend_status_changed event:', event, data);
 
       switch (event) {
         case "FRIEND_REQUEST_RECEIVED":
           setCurrentStatus(FriendStatus.INCOMING_REQUEST);
           setRequestId(data._id);
-          console.log("Friend request received:", data);
-          console.log("current user id:", user.id);
           if (onFriendStatusChange) {
-            onFriendStatusChange(
-              user.id,
-              FriendStatus.INCOMING_REQUEST,
-              data._id,
-            );
+            onFriendStatusChange(user.id, FriendStatus.INCOMING_REQUEST, data._id);
           }
           break;
         case "FRIEND_ACCEPTED":
@@ -116,39 +102,33 @@ const UserProfile = ({
           }
           break;
       }
-    };
+    }
     if (socket) {
-      console.log(
-        "Setting up socket listener for friend_request_status_changed",
-      );
-      socket.on("friend_request_status_changed", handleFriendStatusChange);
+      console.log('Setting up socket listener for friend_request_status_changed');
+      socket.on('friend_request_status_changed', handleFriendStatusChange);
     }
 
     // Clean up the event listener when the component unmounts or user changes
     return () => {
       if (socket) {
-        socket.off("friend_request_status_changed", handleFriendStatusChange);
+        socket.off('friend_request_status_changed', handleFriendStatusChange);
       }
     };
+
   }, [socket]);
 
   const handleSendFriendRequest = async () => {
-    console.log("Sending friend request to:", user);
     if (!user) return;
 
     setIsLoading(true);
 
     try {
       // Send friend request using our API route
-      const request = await api.post(
-        `/friends/requests/${user.id}`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        },
-      );
+      const request = await api.post(`/friends/requests/${user.id}`, {}, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
 
       // Update local status
       setCurrentStatus(FriendStatus.PENDING);
@@ -158,32 +138,19 @@ const UserProfile = ({
 
       // Notify parent component
       if (onFriendStatusChange) {
-        onFriendStatusChange(
-          user.id,
-          FriendStatus.PENDING,
-          request.data.friendRequest._id,
-        );
+        onFriendStatusChange(user.id, FriendStatus.PENDING, request.data.friendRequest._id);
       }
 
       // Show success message
-      Alert.alert(
-        "Friend Request Sent",
-        `Your friend request to ${user.name} has been sent.`,
-      );
+      Alert.alert("Friend Request Sent", `Your friend request to ${user.name} has been sent.`);
     } catch (error: any) {
-      console.error(
-        "Error sending friend request:",
-        error.response?.data || error,
-      );
+      console.error("Error sending friend request:", error.response?.data || error);
 
       // Show a more specific error message based on the error response
       if (error.response?.data?.message) {
         Alert.alert("Error", error.response.data.message);
       } else {
-        Alert.alert(
-          "Error",
-          "Failed to send friend request. Please try again.",
-        );
+        Alert.alert("Error", "Failed to send friend request. Please try again.");
       }
     } finally {
       setIsLoading(false);
@@ -199,14 +166,14 @@ const UserProfile = ({
     setIsLoading(true);
 
     try {
-      console.log("Trying to cancel request");
+      console.log("Trying to cancel request")
       // You'll need to implement a cancel request endpoint on your backend
       await api.delete(`/friends/requests/${requestId}`, {
         headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
+          'Authorization': `Bearer ${authToken}`
+        }
       });
-      console.log("Request cancelled");
+      console.log("Request cancelled")
 
       // Update local status
       setCurrentStatus(FriendStatus.NONE);
@@ -238,15 +205,11 @@ const UserProfile = ({
 
     try {
       // Accept friend request using our API route
-      await api.put(
-        `/friends/requests/${requestId}/accept`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        },
-      );
+      await api.put(`/friends/requests/${requestId}/accept`, {}, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
 
       // Update local status
       setCurrentStatus(FriendStatus.FRIENDS);
@@ -257,10 +220,7 @@ const UserProfile = ({
       }
 
       // Show success message
-      Alert.alert(
-        "Friend Request Accepted",
-        `You are now friends with ${user.name}.`,
-      );
+      Alert.alert("Friend Request Accepted", `You are now friends with ${user.name}.`);
 
       // Close the profile after accepting
       setTimeout(() => onClose(), 1500);
@@ -271,10 +231,7 @@ const UserProfile = ({
       if (error.response?.data?.message) {
         Alert.alert("Error", error.response.data.message);
       } else {
-        Alert.alert(
-          "Error",
-          "Failed to accept friend request. Please try again.",
-        );
+        Alert.alert("Error", "Failed to accept friend request. Please try again.");
       }
     } finally {
       setIsLoading(false);
@@ -292,15 +249,11 @@ const UserProfile = ({
 
     try {
       // Reject friend request using our API route
-      await api.put(
-        `/friends/requests/${requestId}/reject`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        },
-      );
+      await api.put(`/friends/requests/${requestId}/reject`, {}, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
 
       // Update local status
       setCurrentStatus(FriendStatus.NONE);
@@ -311,10 +264,7 @@ const UserProfile = ({
       }
 
       // Show success message
-      Alert.alert(
-        "Friend Request Declined",
-        `Friend request from ${user.name} has been declined.`,
-      );
+      Alert.alert("Friend Request Declined", `Friend request from ${user.name} has been declined.`);
 
       // Close the profile after declining
       setTimeout(() => onClose(), 1500);
@@ -325,10 +275,7 @@ const UserProfile = ({
       if (error.response?.data?.message) {
         Alert.alert("Error", error.response.data.message);
       } else {
-        Alert.alert(
-          "Error",
-          "Failed to decline friend request. Please try again.",
-        );
+        Alert.alert("Error", "Failed to decline friend request. Please try again.");
       }
     } finally {
       setIsLoading(false);
@@ -343,13 +290,16 @@ const UserProfile = ({
       animationType="slide"
       transparent={false}
       onRequestClose={onClose}
-      presentationStyle="fullScreen"
+      presentationStyle='fullScreen'
     >
       <View style={styles.modalContainer}>
         <View style={styles.container}>
           {/* Header with back button */}
           <View style={styles.header}>
-            <TouchableOpacity style={styles.backButton} onPress={onClose}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={onClose}
+            >
               <Ionicons name="arrow-back" size={24} color="#333" />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>{user.name}</Text>
@@ -360,9 +310,7 @@ const UserProfile = ({
             {/* Profile Header */}
             <View style={styles.profileHeader}>
               <Image
-                source={{
-                  uri: user.profilePicture || "https://via.placeholder.com/150",
-                }}
+                source={{ uri: user.profilePicture || "https://via.placeholder.com/150" }}
                 style={styles.profileImage}
               />
               <Text style={styles.userName}>{user.name}</Text>
@@ -375,7 +323,7 @@ const UserProfile = ({
                   <ActivityIndicator size="small" color="#00cc99" />
                   <Text style={styles.loadingText}>Checking status...</Text>
                 </View>
-              ) : currentStatus === "incoming_request" ? (
+              ) : currentStatus === 'incoming_request' ? (
                 <View style={styles.requestButtonsContainer}>
                   <TouchableOpacity
                     style={styles.acceptButton}
@@ -407,7 +355,7 @@ const UserProfile = ({
                     )}
                   </TouchableOpacity>
                 </View>
-              ) : currentStatus === "none" ? (
+              ) : currentStatus === 'none' ? (
                 <TouchableOpacity
                   style={styles.friendRequestButton}
                   onPress={handleSendFriendRequest}
@@ -422,7 +370,7 @@ const UserProfile = ({
                     </>
                   )}
                 </TouchableOpacity>
-              ) : currentStatus === "pending" ? (
+              ) : currentStatus === 'pending' ? (
                 <TouchableOpacity
                   style={[styles.friendRequestButton, styles.pendingButton]}
                   onPress={handleCancelFriendRequest}
@@ -438,9 +386,7 @@ const UserProfile = ({
                   )}
                 </TouchableOpacity>
               ) : (
-                <View
-                  style={[styles.friendRequestButton, styles.friendsButton]}
-                >
+                <View style={[styles.friendRequestButton, styles.friendsButton]}>
                   <Ionicons name="checkmark-circle" size={20} color="#fff" />
                   <Text style={styles.buttonText}>Friends</Text>
                 </View>
@@ -484,29 +430,29 @@ const UserProfile = ({
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   container: {
     flex: 1,
-    backgroundColor: "white",
+    backgroundColor: 'white',
     marginTop: 60, // Show part of the search screen behind
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    overflow: "hidden",
+    overflow: 'hidden',
   },
   header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-    backgroundColor: "white",
+    borderBottomColor: '#eee',
+    backgroundColor: 'white',
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   backButton: {
     padding: 8,
@@ -515,7 +461,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   profileHeader: {
-    alignItems: "center",
+    alignItems: 'center',
     paddingVertical: 24,
   },
   profileImage: {
@@ -524,99 +470,99 @@ const styles = StyleSheet.create({
     borderRadius: 60,
     marginBottom: 16,
     borderWidth: 3,
-    borderColor: "#00cc99",
+    borderColor: '#00cc99',
   },
   userName: {
     fontSize: 24,
-    fontWeight: "bold",
+    fontWeight: 'bold',
     marginBottom: 8,
   },
   loadingContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
     padding: 12,
   },
   loadingText: {
     marginLeft: 8,
-    color: "#666",
+    color: '#666',
   },
   statsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
     paddingVertical: 16,
     marginHorizontal: 24,
     marginBottom: 16,
-    backgroundColor: "#f9f9f9",
+    backgroundColor: '#f9f9f9',
     borderRadius: 12,
   },
   statItem: {
-    alignItems: "center",
+    alignItems: 'center',
     flex: 1,
   },
   statNumber: {
     fontSize: 18,
-    fontWeight: "bold",
-    color: "#00cc99",
+    fontWeight: 'bold',
+    color: '#00cc99',
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 14,
-    color: "#666",
+    color: '#666',
   },
   statDivider: {
     width: 1,
     height: 30,
-    backgroundColor: "#ddd",
+    backgroundColor: '#ddd',
   },
   actionButtonContainer: {
     paddingHorizontal: 24,
     marginBottom: 24,
   },
   requestButtonsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   friendRequestButton: {
-    backgroundColor: "#00cc99",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: '#00cc99',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     padding: 12,
     borderRadius: 25,
   },
   acceptButton: {
-    backgroundColor: "#00cc99",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: '#00cc99',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     padding: 12,
     borderRadius: 25,
     flex: 1,
     marginRight: 8,
   },
   declineButton: {
-    backgroundColor: "#ff3b30",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: '#ff3b30',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     padding: 12,
     borderRadius: 25,
     flex: 1,
     marginLeft: 8,
   },
   pendingButton: {
-    backgroundColor: "#f5a623",
+    backgroundColor: '#f5a623',
   },
   friendsButton: {
-    backgroundColor: "#4a90e2",
+    backgroundColor: '#4a90e2',
   },
   buttonText: {
-    color: "white",
+    color: 'white',
     marginLeft: 8,
     fontSize: 16,
-    fontWeight: "500",
+    fontWeight: '500',
   },
   infoContainer: {
     paddingHorizontal: 24,
@@ -627,14 +573,14 @@ const styles = StyleSheet.create({
   },
   bioLabel: {
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: '600',
     marginBottom: 8,
   },
   bioText: {
     fontSize: 16,
     lineHeight: 24,
-    color: "#333",
-  },
+    color: '#333',
+  }
 });
 
 export default UserProfile;

@@ -1,30 +1,18 @@
-import React, { useState, useEffect } from "react";
-import {
-  StyleSheet,
-  Text,
-  View,
-  FlatList,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
-import { useAuth } from "@/src/context/AuthContext";
-import { useSocket } from "@/src/context/SocketContext"; // Import the socket hook
-import { api } from "@/src/utils/api";
-import UserProfile from "@/src/components/UserProfile";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { User } from "@/src/components/UserProfile";
-import {
-  FriendRequestStatus,
-  FriendStatus,
-  NotificationType,
-} from "@/src/utils/enums";
-import { Notification } from "../(tabs)/home";
-import FriendsDropdown from "@/src/components/FriendsDropdown";
-import { set } from "lodash";
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import { useAuth } from '@/src/context/AuthContext';
+import { useSocket } from '@/src/context/SocketContext'; // Import the socket hook
+import { api } from '@/src/utils/api';
+import UserProfile from '@/src/components/UserProfile';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { User } from '@/src/components/UserProfile';
+import { FriendRequestStatus, FriendStatus, NotificationType } from '@/src/utils/enums';
+import { Notification } from '../(tabs)/home';
+import FriendsDropdown from '@/src/components/FriendsDropdown';
+import { set } from 'lodash';
 
 export default function Notifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -34,9 +22,8 @@ export default function Notifications() {
   // State for User Profile modal
   const [userProfileVisible, setUserProfileVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [selectedRequestId, setSelectedRequestId] = useState<
-    string | undefined
-  >(undefined);
+  const [selectedRequestId, setSelectedRequestId] = useState<string | undefined>(undefined);
+
 
   // Fetch friend requests when component mounts and reset notification count
   useEffect(() => {
@@ -44,7 +31,9 @@ export default function Notifications() {
 
     // Reset notification count when the notifications screen is opened
     resetNotificationCount();
+
   }, []);
+
 
   // Do not call friend reqs api and call notifs
   const fetchNotifications = async () => {
@@ -53,21 +42,18 @@ export default function Notifications() {
     setLoading(true);
     try {
       // Call your API endpoint to get pending friend requests
-      const response = await api.get("/notifications", {
+      const response = await api.get('/notifications', {
         headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
+          'Authorization': `Bearer ${authToken}`
+        }
       });
 
       let notifications = response.data.notifications;
       console.log("current notifications: ", notifications);
-      notifications.forEach((notification: any) => ({
-        ...notification,
-        timestamp: formatTimestamp(notification.updatedAt),
-      }));
+      notifications.forEach((notification: any) => ({ ...notification, timestamp: formatTimestamp(notification.updatedAt) }));
       setNotifications([...notifications]);
     } catch (error) {
-      console.error("Error fetching friend requests:", error);
+      console.error('Error fetching friend requests:', error);
     } finally {
       setLoading(false);
     }
@@ -81,28 +67,28 @@ export default function Notifications() {
       const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
       if (diffInSeconds < 60) {
-        return "Just now";
+        return 'Just now';
       } else if (diffInSeconds < 3600) {
         const minutes = Math.floor(diffInSeconds / 60);
-        return `${minutes} minute${minutes > 1 ? "s" : ""} ago`;
+        return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
       } else if (diffInSeconds < 86400) {
         const hours = Math.floor(diffInSeconds / 3600);
-        return `${hours} hour${hours > 1 ? "s" : ""} ago`;
+        return `${hours} hour${hours > 1 ? 's' : ''} ago`;
       } else {
         const days = Math.floor(diffInSeconds / 86400);
-        return `${days} day${days > 1 ? "s" : ""} ago`;
+        return `${days} day${days > 1 ? 's' : ''} ago`;
       }
     } catch (e) {
-      console.error("Error formatting date:", e);
-      return "Recently";
+      console.error('Error formatting date:', e);
+      return 'Recently';
     }
   };
 
   const markAsRead = (id: string) => {
     setNotifications(
-      notifications.map((notif) =>
-        notif._id === id ? { ...notif, read: true } : notif,
-      ),
+      notifications.map(notif =>
+        notif._id === id ? { ...notif, read: true } : notif
+      )
     );
   };
 
@@ -119,18 +105,16 @@ export default function Notifications() {
       let friendStatus = FriendStatus.NONE;
       if (notification.relatedId?.status === FriendRequestStatus.PENDING) {
         friendStatus = FriendStatus.INCOMING_REQUEST;
-      } else if (
-        notification.relatedId?.status === FriendRequestStatus.ACCEPTED
-      ) {
+      } else if (notification.relatedId?.status === FriendRequestStatus.ACCEPTED) {
         friendStatus = FriendStatus.FRIENDS;
       }
-
+      
       // Set up the user object for the profile
       const user: User = {
         id: notification.sender.id,
         name: notification.sender.name,
         profilePicture: notification.sender.profilePicture || "",
-        friendStatus,
+        friendStatus
       };
 
       console.log("FRIEND STATUS:", friendStatus);
@@ -139,8 +123,8 @@ export default function Notifications() {
       setSelectedRequestId(notification.relatedId?._id);
       setUserProfileVisible(true);
     } catch (error) {
-      console.error("Error setting up user profile:", error);
-      Alert.alert("Error", "Failed to open user profile. Please try again.");
+      console.error('Error setting up user profile:', error);
+      Alert.alert('Error', 'Failed to open user profile. Please try again.');
     }
   };
 
@@ -149,56 +133,42 @@ export default function Notifications() {
     markAsRead(notification._id);
 
     // If it's a friend request, directly show the user profile
-    if (
-      (notification.type === NotificationType.FRIEND_REQUEST ||
-        notification.type == NotificationType.FRIEND_ACCEPTED) &&
-      notification.sender
-    ) {
+    if ((notification.type === NotificationType.FRIEND_REQUEST || notification.type == NotificationType.FRIEND_ACCEPTED) && notification.sender) {
       showUserProfile(notification);
       console.log("NOTIFICATION TYPE", notification.type);
+
     } else {
-      console.log(
-        "DID NOT SHOW USER PROIFLE, NOTIFICATION TYPE",
-        notification.type,
-      );
+      console.log("DID NOT SHOW USER PROIFLE, NOTIFICATION TYPE", notification.type);
     }
   };
 
-  const handleFriendStatusChange = (
-    userId: string,
-    newStatus: FriendStatus,
-    requestId?: string,
-    actionTaken: boolean = false,
-  ) => {
-    console.log(
-      `Notifications - Friend status changed for ${userId}: ${newStatus}`,
-    );
+  const handleFriendStatusChange = (userId: string, newStatus: FriendStatus, requestId?: string, actionTaken: boolean = false) => {
+    console.log(`Notifications - Friend status changed for ${userId}: ${newStatus}`);
+
 
     // From Claude: Good to know
     // In UserProfile component when accept/reject is clicked
     // onFriendStatusChange(userId, newStatus, true); // true indicates action was taken
 
     // Only remove notifications when an explicit action was taken
-    if (actionTaken && (newStatus === "friends" || newStatus === "none")) {
-      setNotifications((prevNotifications) =>
-        prevNotifications.filter(
-          (notif) =>
-            !(
-              notif.type === NotificationType.FRIEND_REQUEST &&
-              notif.sender?.id === userId
-            ),
-        ),
+    if (actionTaken && (newStatus === 'friends' || newStatus === 'none')) {
+      setNotifications(prevNotifications =>
+        prevNotifications.filter(notif =>
+          !(notif.type === NotificationType.FRIEND_REQUEST && notif.sender?.id === userId)
+        )
       );
     }
   };
 
+
+
   const getIconForType = (type: NotificationType) => {
     switch (type) {
-      case "MEETING_INVITE":
+      case 'MEETING_INVITE':
         return <Ionicons name="calendar" size={24} color="#00cc99" />;
-      case "FRIEND_ACCEPTED":
+      case 'FRIEND_ACCEPTED':
         return <Ionicons name="people" size={24} color="#FF9500" />;
-      case "FRIEND_REQUEST":
+      case 'FRIEND_REQUEST':
         return <Ionicons name="person-add" size={24} color="#007AFF" />;
       default:
         return <Ionicons name="notifications" size={24} color="#00cc99" />;
@@ -208,10 +178,7 @@ export default function Notifications() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.dismiss()}
-          style={styles.backButton}
-        >
+        <TouchableOpacity onPress={() => router.dismiss()} style={styles.backButton}>
           <Ionicons name="close" size={24} color="#00cc99" />
         </TouchableOpacity>
         <View style={styles.headerTitleContainer}>
@@ -228,15 +195,10 @@ export default function Notifications() {
       ) : (
         <FlatList
           data={notifications}
-          keyExtractor={(item, index) =>
-            item._id || `notification_${index}_${Date.now()}`
-          }
+          keyExtractor={(item, index) => item._id || `notification_${index}_${Date.now()}`}
           renderItem={({ item }) => (
             <TouchableOpacity
-              style={[
-                styles.notificationItem,
-                item.read ? styles.readNotification : styles.unreadNotification,
-              ]}
+              style={[styles.notificationItem, item.read ? styles.readNotification : styles.unreadNotification]}
               onPress={() => handleNotificationPress(item)}
             >
               <View style={styles.notificationIcon}>
@@ -245,9 +207,7 @@ export default function Notifications() {
               <View style={styles.notificationContent}>
                 <Text style={styles.notificationTitle}>{item.title}</Text>
                 <Text style={styles.notificationMessage}>{item.message}</Text>
-                <Text style={styles.notificationTimestamp}>
-                  {item.timestamp}
-                </Text>
+                <Text style={styles.notificationTimestamp}>{item.timestamp}</Text>
               </View>
               {!item.read && <View style={styles.unreadDot} />}
             </TouchableOpacity>
@@ -283,14 +243,14 @@ export default function Notifications() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "white",
+    backgroundColor: 'white',
   },
   header: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
+    borderBottomColor: '#f0f0f0',
   },
   backButton: {
     padding: 5,
@@ -298,77 +258,77 @@ const styles = StyleSheet.create({
   },
   headerTitleContainer: {
     flex: 1,
-    alignItems: "center", // Center the title within this container
+    alignItems: 'center', // Center the title within this container
   },
   headerTitle: {
     fontSize: 20,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
   emptySpace: {
     width: 30, // Match the width of backButton for balance
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   loadingText: {
     marginTop: 12,
     fontSize: 16,
-    color: "#666",
+    color: '#666',
   },
   notificationItem: {
-    flexDirection: "row",
+    flexDirection: 'row',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
-    position: "relative",
+    borderBottomColor: '#f0f0f0',
+    position: 'relative',
   },
   unreadNotification: {
-    backgroundColor: "#f8f9fa",
+    backgroundColor: '#f8f9fa',
   },
   readNotification: {
-    backgroundColor: "white",
+    backgroundColor: 'white',
   },
   notificationIcon: {
     marginRight: 16,
-    justifyContent: "center",
+    justifyContent: 'center',
   },
   notificationContent: {
     flex: 1,
   },
   notificationTitle: {
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: 'bold',
     marginBottom: 4,
   },
   notificationMessage: {
     fontSize: 14,
-    color: "#666",
+    color: '#666',
     marginBottom: 4,
   },
   notificationTimestamp: {
     fontSize: 12,
-    color: "#888",
+    color: '#888',
   },
   unreadDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: "#00cc99",
-    position: "absolute",
+    backgroundColor: '#00cc99',
+    position: 'absolute',
     right: 16,
     top: 16,
   },
   emptyState: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     padding: 40,
   },
   emptyStateText: {
     marginTop: 16,
     fontSize: 16,
-    color: "#888",
+    color: '#888',
   },
 });

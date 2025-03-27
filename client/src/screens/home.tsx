@@ -1,4 +1,4 @@
-import { Redirect, type RedirectProps } from "expo-router";
+import { Redirect, type RedirectProps } from 'expo-router';
 
 export default function Home() {
   // Assuming user is authenticated
