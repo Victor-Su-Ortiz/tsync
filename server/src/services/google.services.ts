@@ -54,24 +54,22 @@ export class GoogleService {
   /**
    * Create OAuth client with user credentials
    */
-  public createUserOAuth2Client(tokens: {
+  public setOauthCredentials(tokens: {
     access_token?: string;
     refresh_token?: string;
     expiry_date?: number;
-  }): OAuth2Client {
-    const userClient = new OAuth2Client(
-      process.env.GOOGLE_CLIENT_ID,
-      process.env.GOOGLE_CLIENT_SECRET,
-      process.env.GOOGLE_REDIRECT_URI
-    );
+  }): void {
+    // const userClient = new OAuth2Client(
+    //   process.env.GOOGLE_CLIENT_ID,
+    //   process.env.GOOGLE_CLIENT_SECRET,
+    //   process.env.GOOGLE_REDIRECT_URI
+    // );
 
-    userClient.setCredentials({
+    this.oAuth2Client.setCredentials({
       access_token: tokens.access_token,
       refresh_token: tokens.refresh_token,
       expiry_date: tokens.expiry_date,
     });
-
-    return userClient;
   }
 
   /**
@@ -95,20 +93,20 @@ export class GoogleService {
   /**
    * Exchange authorization code for tokens
    */
-  public async getTokensFromCode(code: string): Promise<{
-    access_token?: string;
-    refresh_token?: string;
-    expiry_date?: number;
-    scope?: string;
-  }> {
-    try {
-      const { tokens } = await this.oAuth2Client.getToken(code);
-      return tokens;
-    } catch (error) {
-      console.error('Error getting tokens from code:', error);
-      throw new Error('Failed to exchange authorization code');
-    }
-  }
+  //   public async getTokensFromCode(code: string): Promise<{
+  //     access_token?: string;
+  //     refresh_token?: string;
+  //     expiry_date?: number;
+  //     scope?: string;
+  //   }> {
+  //     try {
+  //       const { tokens } = await this.oAuth2Client.getToken(code);
+  //       return tokens;
+  //     } catch (error) {
+  //       console.error('Error getting tokens from code:', error);
+  //       throw new Error('Failed to exchange authorization code');
+  //     }
+  //   }
 
   /**
    * Refresh access token using refresh token

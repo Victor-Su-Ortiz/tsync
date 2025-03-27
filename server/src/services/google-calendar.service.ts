@@ -1,26 +1,29 @@
 // src/services/calendar.service.ts
 import { google, calendar_v3 } from 'googleapis';
 import User from '../models/user.model';
-import { NotFoundError, AuthenticationError, ValidationError } from '../utils/errors';
+import { NotFoundError, AuthenticationError } from '../utils/errors';
 import Event from '../models/event.model';
+import { GoogleService } from './google.services';
 
 export class CalendarService {
   /**
    * Create OAuth2 client for Google API
    */
-  private static createOAuth2Client(refreshToken: string) {
-    const oauth2Client = new google.auth.OAuth2(
-      process.env.GOOGLE_CLIENT_ID,
-      process.env.GOOGLE_CLIENT_SECRET,
-      process.env.GOOGLE_REDIRECT_URI
-    );
+  // private static createOAuth2Client(refreshToken: string) {
+  //   const oauth2Client = new google.auth.OAuth2(
+  //     process.env.GOOGLE_CLIENT_ID,
+  //     process.env.GOOGLE_CLIENT_SECRET,
+  //     process.env.GOOGLE_REDIRECT_URI
+  //   );
 
-    oauth2Client.setCredentials({
-      refresh_token: refreshToken,
-    });
+  //   oauth2Client.setCredentials({
+  //     refresh_token: refreshToken,
+  //   });
 
-    return oauth2Client;
-  }
+  //   return oauth2Client;
+  // }
+
+  private static readonly googleClient = GoogleService.getInstance().getOAuth2Client();
 
   /**
    * Get calendar client for a user
@@ -36,7 +39,7 @@ export class CalendarService {
       throw new AuthenticationError('User has not connected Google Calendar');
     }
 
-    const oauth2Client = this.createOAuth2Client(user.googleRefreshToken);
+    const oauth2Client = this.googleClient;
     return google.calendar({ version: 'v3', auth: oauth2Client });
   }
 
@@ -239,89 +242,89 @@ export class CalendarService {
   /**
    * Create calendar event and invite participants
    */
-  // public static async createEvent(
-  //   organizerId: string,
-  //   eventId: string,
-  //   selectedTime: Date,
-  //   duration: number
-  // ) {
-  //   const calendar = await this.getCalendarClient(organizerId);
+  public static async createEvent(
+    organizerId: string,
+    eventId: string,
+    selectedTime: Date,
+    duration: number
+  ) {
+    const calendar = await this.getCalendarClient(organizerId);
 
-  //   try {
-  //     // Get event details from our database
-  //     const event = await Event.findById(eventId)
-  //       .populate('participants', 'email name')
-  //       .populate('organizer', 'email name');
+    try {
+      // Get event details from our database
+      const event = await Event.findById(eventId)
+        .populate('participants', 'email name')
+        .populate('organizer', 'email name');
 
-  //     if (!event) {
-  //       throw new NotFoundError('Event not found');
-  //     }
+      if (!event) {
+        throw new NotFoundError('Event not found');
+      }
 
-  //     if (event.creator._id.toString() !== organizerId) {
-  //       throw new AuthenticationError('Only the organizer can create this calendar event');
-  //     }
+      if (event.creator._id.toString() !== organizerId) {
+        throw new AuthenticationError('Only the organizer can create this calendar event');
+      }
 
-  //     // Create end time based on duration
-  //     const endTime = new Date(selectedTime.getTime() + duration * 60 * 1000);
+      // Create end time based on duration
+      const endTime = new Date(selectedTime.getTime() + duration * 60 * 1000);
 
-  //     // Create attendees list from participants
-  //     const attendees = event.attendees.map(attendee => ({
-  //       email: attendee.email,
-  //       displayName: attendee.name,
-  //       responseStatus: 'needsAction',
-  //     }));
+      // Create attendees list from participants
+      const attendees = event.attendees.map(attendee => ({
+        email: attendee.email,
+        displayName: attendee.name,
+        responseStatus: 'needsAction',
+      }));
 
-  //     // Always add organizer as an attendee
-  //     if (!attendees.some(a => a.email === event.creator.email)) {
-  //       attendees.push({
-  //         email: event.creator.email,
-  //         displayName: event.organizer.name,
-  //         responseStatus: 'accepted',
-  //         organizer: true,
-  //       });
-  //     }
+      // Always add organizer as an attendee
+      if (!attendees.some(a => a.email === event.creator.email)) {
+        attendees.push({
+          email: event.creator.email,
+          displayName: event.organizer.name,
+          responseStatus: 'accepted',
+          organizer: true,
+        });
+      }
 
-  //     // Create Google Calendar event
-  //     const calendarEvent = await calendar.events.insert({
-  //       calendarId: 'primary',
-  //       requestBody: {
-  //         summary: event.title,
-  //         description: event.description,
-  //         start: {
-  //           dateTime: selectedTime.toISOString(),
-  //           timeZone: 'UTC', // You might want to use the user's timezone
-  //         },
-  //         end: {
-  //           dateTime: endTime.toISOString(),
-  //           timeZone: 'UTC', // You might want to use the user's timezone
-  //         },
-  //         attendees,
-  //         // Send notifications to attendees
-  //         sendUpdates: 'all',
-  //       },
-  //     });
+      // Create Google Calendar event
+      const calendarEvent = await calendar.events.insert({
+        calendarId: 'primary',
+        requestBody: {
+          summary: event.title,
+          description: event.description,
+          start: {
+            dateTime: selectedTime.toISOString(),
+            timeZone: 'UTC', // You might want to use the user's timezone
+          },
+          end: {
+            dateTime: endTime.toISOString(),
+            timeZone: 'UTC', // You might want to use the user's timezone
+          },
+          attendees,
+          // Send notifications to attendees
+          sendUpdates: 'all',
+        },
+      });
 
-  //     // Update our event with Google Calendar event ID
-  //     event.googleCalendarEventId = calendarEvent.data.id;
-  //     event.scheduledTime = selectedTime;
-  //     event.endTime = endTime;
-  //     event.status = 'scheduled';
-  //     await event.save();
+      // Update our event with Google Calendar event ID
+      event.googleCalendarEventId = calendarEvent.data.id;
+      event.scheduledTime = selectedTime;
+      event.endTime = endTime;
+      event.status = 'scheduled';
+      await event.save();
 
-  //     return {
-  //       success: true,
-  //       googleEventId: calendarEvent.data.id,
-  //       eventDetails: calendarEvent.data,
-  //       htmlLink: calendarEvent.data.htmlLink,
-  //     };
-  //   } catch (error: any) {
-  //     console.error('Error creating calendar event:', error);
-  //     if (error.response?.status === 401) {
-  //       throw new AuthenticationError('Google Calendar authorization expired');
-  //     }
-  //     throw error;
-  //   }
-  // }
+      return {
+        success: true,
+        googleEventId: calendarEvent.data.id,
+        eventDetails: calendarEvent.data,
+        htmlLink: calendarEvent.data.htmlLink,
+      };
+    } catch (error: any) {
+      console.error('Error creating calendar event:', error);
+      if (error.response?.status === 401) {
+        throw new AuthenticationError('Google Calendar authorization expired');
+      }
+      throw error;
+    }
+  }
 
   /**
    * Connect Google Calendar (save refresh token)

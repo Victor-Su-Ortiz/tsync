@@ -1,12 +1,12 @@
 import User from '../models/user.model';
 import jwt, { Secret, SignOptions } from 'jsonwebtoken';
 import crypto from 'crypto';
-import { OAuth2Client } from 'google-auth-library';
+// import { OAuth2Client } from 'google-auth-library';
 import { google } from 'googleapis';
 import { sendEmail } from '../utils/email';
 import { AuthenticationError, ValidationError, NotFoundError } from '../utils/errors';
 import GoogleAuthService from './google-auth.service';
-// import { OAuthState } from '../models/OAuth.model';
+import { GoogleService } from './google.services';
 
 // Types
 export interface RegisterUserInput {
@@ -32,10 +32,7 @@ export interface AuthResponse {
 }
 
 export class AuthService {
-  private static readonly googleClient = new OAuth2Client(
-    process.env.GOOGLE_CLIENT_ID,
-    process.env.GOOGLE_CLIENT_SECRET
-  );
+  private static readonly googleClient = GoogleService.getInstance().getOAuth2Client();
 
   /**
    * Generate a profile picture for payload
@@ -176,12 +173,16 @@ export class AuthService {
       }
 
       // Set the token on your existing client
-      this.googleClient.setCredentials({ access_token: accessToken });
-      const googleTokens = await GoogleAuthService.generateTokens(code);
 
+      const googleTokens = await GoogleAuthService.generateTokens(code);
       if (!googleTokens.refresh_token) {
         throw new AuthenticationError('Failed to get refresh token');
       }
+
+      this.googleClient.setCredentials({
+        access_token: accessToken,
+        refresh_token: googleTokens.refresh_token,
+      });
 
       if (!payload.picture) {
         await this.setProfilePicture(payload);
