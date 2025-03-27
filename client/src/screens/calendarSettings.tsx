@@ -1,5 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Switch, Alert, ActivityIndicator, TouchableOpacity, StatusBar } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Switch,
+  Alert,
+  ActivityIndicator,
+  TouchableOpacity,
+  StatusBar,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCalendar } from '../hooks/useCalendar';
@@ -29,16 +38,16 @@ export default function CalendarSettingsScreen() {
       'Are you sure you want to disconnect your Google Calendar? This will affect meeting scheduling functionality.',
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Disconnect', 
+        {
+          text: 'Disconnect',
           style: 'destructive',
           onPress: async () => {
             setIsDisconnecting(true);
             await disconnectCalendar();
             setIsDisconnecting(false);
-          }
-        }
-      ]
+          },
+        },
+      ],
     );
   };
 
@@ -47,10 +56,10 @@ export default function CalendarSettingsScreen() {
       <SafeAreaView style={styles.container}>
         <ActivityIndicator size="large" color="#007AFF" style={{ marginTop: 20 }} />
         <Text style={styles.loadingText}>
-          {isTogglingSync 
-            ? 'Updating sync settings...' 
-            : isDisconnecting 
-              ? 'Disconnecting calendar...' 
+          {isTogglingSync
+            ? 'Updating sync settings...'
+            : isDisconnecting
+              ? 'Disconnecting calendar...'
               : 'Loading calendar settings...'}
         </Text>
       </SafeAreaView>
@@ -61,48 +70,42 @@ export default function CalendarSettingsScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.contentContainer}>
         <Text style={styles.title}>Calendar Settings</Text>
-        
+
         {isCalendarConnected ? (
           <>
             <View style={styles.connectedContainer}>
-              <Text style={styles.connectedText}>
-                ✓ Your Google Calendar is connected
-              </Text>
+              <Text style={styles.connectedText}>✓ Your Google Calendar is connected</Text>
             </View>
-            
+
             <View style={styles.settingRow}>
               <Text style={styles.settingText}>Sync calendar events</Text>
               <Switch
                 value={isCalendarSyncEnabled}
                 onValueChange={handleToggleSync}
-                trackColor={{ false: "#ddd", true: "#4caf50" }}
-                thumbColor={isCalendarSyncEnabled ? "#fff" : "#f4f3f4"}
+                trackColor={{ false: '#ddd', true: '#4caf50' }}
+                thumbColor={isCalendarSyncEnabled ? '#fff' : '#f4f3f4'}
               />
             </View>
-            
+
             <Text style={styles.infoText}>
               When enabled, your meetings will automatically be added to your Google Calendar.
             </Text>
-            
-            <TouchableOpacity
-              onPress={handleDisconnect}
-              style={styles.disconnectButton}
-            >
+
+            <TouchableOpacity onPress={handleDisconnect} style={styles.disconnectButton}>
               <Text style={styles.disconnectButtonText}>Disconnect Calendar</Text>
             </TouchableOpacity>
           </>
         ) : (
           <>
             <View style={styles.notConnectedContainer}>
-              <Text style={styles.notConnectedText}>
-                Your Google Calendar is not connected
-              </Text>
+              <Text style={styles.notConnectedText}>Your Google Calendar is not connected</Text>
             </View>
-            
+
             <Text style={styles.infoText}>
-              Connect your Google Calendar to schedule meetings seamlessly and never miss an important event.
+              Connect your Google Calendar to schedule meetings seamlessly and never miss an
+              important event.
             </Text>
-            
+
             <TouchableOpacity
               onPress={() => connectCalendar('./calendarSettings')}
               style={styles.connectButton}

@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Alert, TouchableOpacity, Image, StatusBar } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+  Alert,
+  TouchableOpacity,
+  Image,
+  StatusBar,
+} from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useRouter, useLocalSearchParams, RelativePathString } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,7 +23,7 @@ export default function CalendarConnectionScreen() {
   const { authToken } = useAuth();
   const router = useRouter();
   const params = useLocalSearchParams();
-  const redirectPath = params.redirectPath as string || './(tabs)/home';
+  const redirectPath = (params.redirectPath as string) || './(tabs)/home';
 
   useEffect(() => {
     fetchGoogleAuthUrl();
@@ -24,9 +33,9 @@ export default function CalendarConnectionScreen() {
     try {
       setLoading(true);
       const response = await api.get('/calendar/auth-url', {
-        headers: { Authorization: `Bearer ${authToken}` }
+        headers: { Authorization: `Bearer ${authToken}` },
       });
-      console.log("oauth:", response.data.authUrl)
+      console.log('oauth:', response.data.authUrl);
       setAuthUrl(response.data.authUrl);
     } catch (error) {
       Alert.alert('Error', 'Failed to get Google authorization URL');
@@ -37,31 +46,28 @@ export default function CalendarConnectionScreen() {
   };
 
   const handleNavigationStateChange = async (event: any) => {
-    console.log("changing navigation")
+    console.log('changing navigation');
     // Check if the URL is your callback URL with a code parameter
     const redirectUri = GOOGLE_WEB_ID;
-    console.log(event.url)
-    
+    console.log(event.url);
+
     if (event.url.includes(redirectUri) && event.url.includes('code=')) {
       setConnecting(true);
-      
-      
+
       // Extract the authorization code from the URL
       const code = event.url.split('code=')[1].split('&')[0];
-      console.log("code:",code)
-      
+      console.log('code:', code);
+
       try {
         // Send the code to your backend
         await api.get(`/calendar/callback?code=${code}`, {
-          headers: { Authorization: `Bearer ${authToken}` }
+          headers: { Authorization: `Bearer ${authToken}` },
         });
-        
+
         // Connection successful
-        Alert.alert(
-          'Success',
-          'Google Calendar connected successfully!',
-          [{ text: 'OK', onPress: () => router.push(redirectPath as RelativePathString) }]
-        );
+        Alert.alert('Success', 'Google Calendar connected successfully!', [
+          { text: 'OK', onPress: () => router.push(redirectPath as RelativePathString) },
+        ]);
       } catch (error) {
         Alert.alert('Error', 'Failed to connect Google Calendar');
         console.error('Calendar connection error:', error);
@@ -107,31 +113,32 @@ export default function CalendarConnectionScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.contentContainer}>
-        <Image 
-          source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg' }}
+        <Image
+          source={{
+            uri: 'https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg',
+          }}
           style={styles.calendarIcon}
         />
-        
+
         <Text style={styles.title}>Connect Google Calendar</Text>
-        
+
         <Text style={styles.infoText}>
           To use the meeting scheduling features, you need to connect your Google Calendar.
         </Text>
-        
-        <TouchableOpacity 
-          onPress={fetchGoogleAuthUrl} 
-          style={styles.connectButton}
-        >
+
+        <TouchableOpacity onPress={fetchGoogleAuthUrl} style={styles.connectButton}>
           <View style={styles.buttonContent}>
             <Image
-              source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg' }}
+              source={{
+                uri: 'https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg',
+              }}
               style={styles.googleIcon}
             />
             <Text style={styles.buttonText}>Connect with Google</Text>
           </View>
         </TouchableOpacity>
-        
-        <TouchableOpacity 
+
+        <TouchableOpacity
           onPress={() => router.push(redirectPath as RelativePathString)}
           style={styles.skipButton}
         >

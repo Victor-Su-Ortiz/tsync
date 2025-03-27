@@ -32,14 +32,14 @@ export const useCalendar = () => {
     try {
       setStatus(prev => ({ ...prev, loading: true, error: null }));
       const response = await api.get('/calendar/status', {
-        headers: { Authorization: `Bearer ${authToken}` }
+        headers: { Authorization: `Bearer ${authToken}` },
       });
-      
+
       setStatus({
         isConnected: response.data.isConnected,
         syncEnabled: response.data.syncEnabled,
         loading: false,
-        error: null
+        error: null,
       });
     } catch (error) {
       console.error('Failed to fetch calendar status:', error);
@@ -47,80 +47,90 @@ export const useCalendar = () => {
         isConnected: false,
         syncEnabled: false,
         loading: false,
-        error: 'Failed to fetch calendar status'
+        error: 'Failed to fetch calendar status',
       });
     }
-  // }, [authToken, isAuthenticated]);
-  }, [authToken]); 
+    // }, [authToken, isAuthenticated]);
+  }, [authToken]);
 
   // Fetch status on mount and when auth changes
   useEffect(() => {
     fetchCalendarStatus();
   }, [fetchCalendarStatus]);
 
-  const connectCalendar = useCallback((redirectPath?: string) => {
-    // Use Expo Router's push method with searchParams for the redirect
-    router.push({
-      pathname: '/calendarConnection' as RelativePathString,
-      params: { redirectPath: redirectPath || './(tabs)/home' }
-    });
-  }, [router]);
+  const connectCalendar = useCallback(
+    (redirectPath?: string) => {
+      // Use Expo Router's push method with searchParams for the redirect
+      router.push({
+        pathname: '/calendarConnection' as RelativePathString,
+        params: { redirectPath: redirectPath || './(tabs)/home' },
+      });
+    },
+    [router],
+  );
 
-  const requireCalendarConnection = useCallback((redirectPath?: string) => {
-    if (status.loading) return false;
-    
-    if (!status.isConnected) {
-      Alert.alert(
-        'Calendar Connection Required',
-        'To use this feature, you need to connect your Google Calendar.',
-        [
-          { text: 'Not Now', style: 'cancel' },
-          { text: 'Connect Calendar', onPress: () => connectCalendar(redirectPath) }
-        ]
-      );
-      return false;
-    }
-    
-    return true;
-  }, [status.isConnected, status.loading, connectCalendar]);
+  const requireCalendarConnection = useCallback(
+    (redirectPath?: string) => {
+      if (status.loading) return false;
 
-  const toggleCalendarSync = useCallback(async (enabled: boolean) => {
-    try {
-      setStatus(prev => ({ ...prev, loading: true }));
-      const response = await api.patch('/calendar/toggle-sync', 
-        { enabled },
-        { headers: { Authorization: `Bearer ${authToken}` } }
-      );
-      
-      setStatus(prev => ({
-        ...prev,
-        syncEnabled: response.data.syncEnabled,
-        loading: false
-      }));
-      
+      if (!status.isConnected) {
+        Alert.alert(
+          'Calendar Connection Required',
+          'To use this feature, you need to connect your Google Calendar.',
+          [
+            { text: 'Not Now', style: 'cancel' },
+            { text: 'Connect Calendar', onPress: () => connectCalendar(redirectPath) },
+          ],
+        );
+        return false;
+      }
+
       return true;
-    } catch (error) {
-      console.error('Failed to toggle calendar sync:', error);
-      setStatus(prev => ({ ...prev, loading: false }));
-      Alert.alert('Error', 'Failed to update calendar sync settings');
-      return false;
-    }
-  }, [authToken]);
+    },
+    [status.isConnected, status.loading, connectCalendar],
+  );
+
+  const toggleCalendarSync = useCallback(
+    async (enabled: boolean) => {
+      try {
+        setStatus(prev => ({ ...prev, loading: true }));
+        const response = await api.patch(
+          '/calendar/toggle-sync',
+          { enabled },
+          { headers: { Authorization: `Bearer ${authToken}` } },
+        );
+
+        setStatus(prev => ({
+          ...prev,
+          syncEnabled: response.data.syncEnabled,
+          loading: false,
+        }));
+
+        return true;
+      } catch (error) {
+        console.error('Failed to toggle calendar sync:', error);
+        setStatus(prev => ({ ...prev, loading: false }));
+        Alert.alert('Error', 'Failed to update calendar sync settings');
+        return false;
+      }
+    },
+    [authToken],
+  );
 
   const disconnectCalendar = useCallback(async () => {
     try {
       setStatus(prev => ({ ...prev, loading: true }));
       await api.delete('/calendar/disconnect', {
-        headers: { Authorization: `Bearer ${authToken}` }
+        headers: { Authorization: `Bearer ${authToken}` },
       });
-      
+
       setStatus({
         isConnected: false,
         syncEnabled: false,
         loading: false,
-        error: null
+        error: null,
       });
-      
+
       return true;
     } catch (error) {
       console.error('Failed to disconnect calendar:', error);
@@ -139,7 +149,7 @@ export const useCalendar = () => {
     connectCalendar,
     requireCalendarConnection,
     toggleCalendarSync,
-    disconnectCalendar
+    disconnectCalendar,
   };
 };
 
