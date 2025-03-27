@@ -9,7 +9,7 @@ export enum FriendStatus {
 export enum FriendRequestStatus {
   PENDING = 'pending',
   ACCEPTED = 'accepted',
-  REJECTED = 'rejected'
+  REJECTED = 'rejected',
 }
 
 export enum FriendRequestEventType {
@@ -17,11 +17,11 @@ export enum FriendRequestEventType {
   FRIEND_ACCEPTED = 'FRIEND_ACCEPTED',
   FRIEND_REJECTED = 'FRIEND_REJECTED',
   FRIEND_REMOVED = 'FRIEND_REMOVED',
-  FRIEND_REQUEST_CANCELED = 'FRIEND_REQUEST_CANCELED'
+  FRIEND_REQUEST_CANCELED = 'FRIEND_REQUEST_CANCELED',
 }
 
 export enum NotificationType {
   MEETING_INVITE = 'MEETING_INVITE',
   FRIEND_ACCEPTED = 'FRIEND_ACCEPTED',
-  FRIEND_REQUEST = 'FRIEND_REQUEST'
+  FRIEND_REQUEST = 'FRIEND_REQUEST',
 }

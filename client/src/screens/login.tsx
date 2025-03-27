@@ -1,11 +1,19 @@
 import React, { useState } from 'react';
-import { Text, TextInput, TouchableOpacity, Alert, StyleSheet, Keyboard, Button } from 'react-native';
-import { api } from "../utils/api"; // Import the API instance
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  StyleSheet,
+  Keyboard,
+  Button,
+} from 'react-native';
+import { api } from '../utils/api'; // Import the API instance
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import '../../global.css';
-import { ArrowLeft } from "lucide-react-native";
+import { ArrowLeft } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
@@ -16,7 +24,6 @@ const Login = () => {
   const { setUserInfo, setAuthToken } = useAuth();
 
   const handleForget = async () => {
-
     if (!email || !password) {
       Alert.alert('Error', 'Please enter both email and password.');
       return;
@@ -24,11 +31,11 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const response = await api.post("/auth/resetPassword", { email, password });
+      const response = await api.post('/auth/resetPassword', { email, password });
       const { token } = response.data;
     } catch (error: any) {
-      console.error("Login error:", error);
-      Alert.alert("Login Failed", error.response?.data?.message || "Something went wrong.");
+      console.error('Login error:', error);
+      Alert.alert('Login Failed', error.response?.data?.message || 'Something went wrong.');
     } finally {
       setLoading(false);
     }
@@ -41,29 +48,31 @@ const Login = () => {
     }
     setLoading(true);
     try {
-      const response = await api.post("/auth/login", { email, password });
+      const response = await api.post('/auth/login', { email, password });
       const { user, token } = response.data;
 
       console.log(user);
       setAuthToken(token);
       setUserInfo(user);
-      Alert.alert("Success", "Login successful!");
+      Alert.alert('Success', 'Login successful!');
       router.push('./(tabs)/home');
     } catch (error: any) {
-      console.error("Login error:", error);
-      Alert.alert("Login Failed", error.response?.data?.message || "Something went wrong.");
+      console.error('Login error:', error);
+      Alert.alert('Login Failed', error.response?.data?.message || 'Something went wrong.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-
-    <SafeAreaView className='flex-1 justify-center px-5  bg-gray-100'>
-      <TouchableOpacity onPress={() => router.back()} className="absolute top-14 left-5 p-2 bg-white shadow-md shadow-zinc-300 rounded-full">
+    <SafeAreaView className="flex-1 justify-center px-5  bg-gray-100">
+      <TouchableOpacity
+        onPress={() => router.back()}
+        className="absolute top-14 left-5 p-2 bg-white shadow-md shadow-zinc-300 rounded-full"
+      >
         <ArrowLeft size={24} />
       </TouchableOpacity>
-      <Text className='pb-5 text-2xl font-bold text-center'>Sign In 🧋</Text>
+      <Text className="pb-5 text-2xl font-bold text-center">Sign In 🧋</Text>
       <TextInput
         style={styles.input}
         placeholder="Email"
@@ -78,10 +87,13 @@ const Login = () => {
         onChangeText={setPassword}
         secureTextEntry
       />
-      <Button title={loading ? "Logging in..." : "Login"} onPress={handleLogin} disabled={loading} />
-      <Button title={"Forgot my password"} onPress={handleForget} disabled={loading} />
-
-    </SafeAreaView >
+      <Button
+        title={loading ? 'Logging in...' : 'Login'}
+        onPress={handleLogin}
+        disabled={loading}
+      />
+      <Button title={'Forgot my password'} onPress={handleForget} disabled={loading} />
+    </SafeAreaView>
   );
 };
 
@@ -108,6 +120,5 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
-
 
 export default Login;

@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  View,
+  FlatList,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -24,16 +32,13 @@ export default function Notifications() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [selectedRequestId, setSelectedRequestId] = useState<string | undefined>(undefined);
 
-
   // Fetch friend requests when component mounts and reset notification count
   useEffect(() => {
     fetchNotifications();
 
     // Reset notification count when the notifications screen is opened
     resetNotificationCount();
-
   }, []);
-
 
   // Do not call friend reqs api and call notifs
   const fetchNotifications = async () => {
@@ -44,13 +49,16 @@ export default function Notifications() {
       // Call your API endpoint to get pending friend requests
       const response = await api.get('/notifications', {
         headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
+          Authorization: `Bearer ${authToken}`,
+        },
       });
 
       let notifications = response.data.notifications;
-      console.log("current notifications: ", notifications);
-      notifications.forEach((notification: any) => ({ ...notification, timestamp: formatTimestamp(notification.updatedAt) }));
+      console.log('current notifications: ', notifications);
+      notifications.forEach((notification: any) => ({
+        ...notification,
+        timestamp: formatTimestamp(notification.updatedAt),
+      }));
       setNotifications([...notifications]);
     } catch (error) {
       console.error('Error fetching friend requests:', error);
@@ -86,9 +94,7 @@ export default function Notifications() {
 
   const markAsRead = (id: string) => {
     setNotifications(
-      notifications.map(notif =>
-        notif._id === id ? { ...notif, read: true } : notif
-      )
+      notifications.map(notif => (notif._id === id ? { ...notif, read: true } : notif)),
     );
   };
 
@@ -100,7 +106,7 @@ export default function Notifications() {
       // Mark notification as read
       markAsRead(notification._id);
 
-      console.log("RELATED ID:", notification.relatedId);
+      console.log('RELATED ID:', notification.relatedId);
 
       let friendStatus = FriendStatus.NONE;
       if (notification.relatedId?.status === FriendRequestStatus.PENDING) {
@@ -108,16 +114,16 @@ export default function Notifications() {
       } else if (notification.relatedId?.status === FriendRequestStatus.ACCEPTED) {
         friendStatus = FriendStatus.FRIENDS;
       }
-      
+
       // Set up the user object for the profile
       const user: User = {
         id: notification.sender.id,
         name: notification.sender.name,
-        profilePicture: notification.sender.profilePicture || "",
-        friendStatus
+        profilePicture: notification.sender.profilePicture || '',
+        friendStatus,
       };
 
-      console.log("FRIEND STATUS:", friendStatus);
+      console.log('FRIEND STATUS:', friendStatus);
       // Set selected user and request ID
       setSelectedUser(user);
       setSelectedRequestId(notification.relatedId?._id);
@@ -133,18 +139,25 @@ export default function Notifications() {
     markAsRead(notification._id);
 
     // If it's a friend request, directly show the user profile
-    if ((notification.type === NotificationType.FRIEND_REQUEST || notification.type == NotificationType.FRIEND_ACCEPTED) && notification.sender) {
+    if (
+      (notification.type === NotificationType.FRIEND_REQUEST ||
+        notification.type == NotificationType.FRIEND_ACCEPTED) &&
+      notification.sender
+    ) {
       showUserProfile(notification);
-      console.log("NOTIFICATION TYPE", notification.type);
-
+      console.log('NOTIFICATION TYPE', notification.type);
     } else {
-      console.log("DID NOT SHOW USER PROIFLE, NOTIFICATION TYPE", notification.type);
+      console.log('DID NOT SHOW USER PROIFLE, NOTIFICATION TYPE', notification.type);
     }
   };
 
-  const handleFriendStatusChange = (userId: string, newStatus: FriendStatus, requestId?: string, actionTaken: boolean = false) => {
+  const handleFriendStatusChange = (
+    userId: string,
+    newStatus: FriendStatus,
+    requestId?: string,
+    actionTaken: boolean = false,
+  ) => {
     console.log(`Notifications - Friend status changed for ${userId}: ${newStatus}`);
-
 
     // From Claude: Good to know
     // In UserProfile component when accept/reject is clicked
@@ -153,14 +166,12 @@ export default function Notifications() {
     // Only remove notifications when an explicit action was taken
     if (actionTaken && (newStatus === 'friends' || newStatus === 'none')) {
       setNotifications(prevNotifications =>
-        prevNotifications.filter(notif =>
-          !(notif.type === NotificationType.FRIEND_REQUEST && notif.sender?.id === userId)
-        )
+        prevNotifications.filter(
+          notif => !(notif.type === NotificationType.FRIEND_REQUEST && notif.sender?.id === userId),
+        ),
       );
     }
   };
-
-
 
   const getIconForType = (type: NotificationType) => {
     switch (type) {
@@ -198,12 +209,13 @@ export default function Notifications() {
           keyExtractor={(item, index) => item._id || `notification_${index}_${Date.now()}`}
           renderItem={({ item }) => (
             <TouchableOpacity
-              style={[styles.notificationItem, item.read ? styles.readNotification : styles.unreadNotification]}
+              style={[
+                styles.notificationItem,
+                item.read ? styles.readNotification : styles.unreadNotification,
+              ]}
               onPress={() => handleNotificationPress(item)}
             >
-              <View style={styles.notificationIcon}>
-                {getIconForType(item.type)}
-              </View>
+              <View style={styles.notificationIcon}>{getIconForType(item.type)}</View>
               <View style={styles.notificationContent}>
                 <Text style={styles.notificationTitle}>{item.title}</Text>
                 <Text style={styles.notificationMessage}>{item.message}</Text>

@@ -8,7 +8,7 @@ import {
   SafeAreaView,
   Platform,
   ScrollView,
-  Alert
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -34,7 +34,7 @@ type DateTimePickerModalProps = {
 const formatShortDate = (date: Date) => {
   return date.toLocaleDateString('en-US', {
     month: 'short',
-    day: 'numeric'
+    day: 'numeric',
   });
 };
 
@@ -43,14 +43,16 @@ const DateTimePickerModal = ({
   onClose,
   onConfirm,
   existingRanges,
-  title
+  title,
 }: DateTimePickerModalProps) => {
   // State to manage all date/time ranges
   const [ranges, setRanges] = useState<DateTimeRange[]>(existingRanges);
 
   // State for picker modes
   const [showCalendar, setShowCalendar] = useState(false);
-  const [currentMode, setCurrentMode] = useState<'startDate' | 'endDate' | 'startTime' | 'endTime'>('startDate');
+  const [currentMode, setCurrentMode] = useState<'startDate' | 'endDate' | 'startTime' | 'endTime'>(
+    'startDate',
+  );
 
   // Initialize new range with default values
   const initializeNewRange = () => {
@@ -63,7 +65,7 @@ const DateTimePickerModal = ({
       startDate: now,
       endDate: now,
       startTime: now,
-      endTime: later
+      endTime: later,
     };
   };
 
@@ -79,22 +81,31 @@ const DateTimePickerModal = ({
   };
 
   // Check if a new date range is an exact duplicate of an existing range
-  const isExactDuplicate = (newStartDate: Date, newEndDate: Date, newStartTime: Date, newEndTime: Date): boolean => {
+  const isExactDuplicate = (
+    newStartDate: Date,
+    newEndDate: Date,
+    newStartTime: Date,
+    newEndTime: Date,
+  ): boolean => {
     return ranges.some(range => {
       // Check if dates match (day, month, year)
-      const sameStartDate = range.startDate.getDate() === newStartDate.getDate() &&
+      const sameStartDate =
+        range.startDate.getDate() === newStartDate.getDate() &&
         range.startDate.getMonth() === newStartDate.getMonth() &&
         range.startDate.getFullYear() === newStartDate.getFullYear();
 
-      const sameEndDate = range.endDate.getDate() === newEndDate.getDate() &&
+      const sameEndDate =
+        range.endDate.getDate() === newEndDate.getDate() &&
         range.endDate.getMonth() === newEndDate.getMonth() &&
         range.endDate.getFullYear() === newEndDate.getFullYear();
 
       // Check if times match (hours and minutes)
-      const sameStartTime = range.startTime.getHours() === newStartTime.getHours() &&
+      const sameStartTime =
+        range.startTime.getHours() === newStartTime.getHours() &&
         range.startTime.getMinutes() === newStartTime.getMinutes();
 
-      const sameEndTime = range.endTime.getHours() === newEndTime.getHours() &&
+      const sameEndTime =
+        range.endTime.getHours() === newEndTime.getHours() &&
         range.endTime.getMinutes() === newEndTime.getMinutes();
 
       // Return true if all components match
@@ -132,8 +143,11 @@ const DateTimePickerModal = ({
         updated.startTime = updateTimeOnly(prev.startTime, selectedValue);
 
         // If same day and end time is before new start time, update end time
-        if (prev.startDate?.toDateString() === prev.endDate?.toDateString() &&
-          prev.endTime && selectedValue > prev.endTime) {
+        if (
+          prev.startDate?.toDateString() === prev.endDate?.toDateString() &&
+          prev.endTime &&
+          selectedValue > prev.endTime
+        ) {
           const endTime = new Date(selectedValue);
           endTime.setMinutes(endTime.getMinutes() + 30); // Default to 30 minutes later
           updated.endTime = endTime;
@@ -147,7 +161,7 @@ const DateTimePickerModal = ({
   };
 
   // Handle date selection from calendar
-  const handleDateSelect = (day: { dateString: string, timestamp: number }) => {
+  const handleDateSelect = (day: { dateString: string; timestamp: number }) => {
     // Create a date using the dateString (YYYY-MM-DD) to avoid timezone issues
     const dateParts = day.dateString.split('-');
     const year = parseInt(dateParts[0]);
@@ -229,16 +243,10 @@ const DateTimePickerModal = ({
 
     // Create date objects with combined date and time for validation
     const startDateTime = new Date(newRange.startDate!);
-    startDateTime.setHours(
-      newRange.startTime!.getHours(),
-      newRange.startTime!.getMinutes()
-    );
+    startDateTime.setHours(newRange.startTime!.getHours(), newRange.startTime!.getMinutes());
 
     const endDateTime = new Date(newRange.endDate!);
-    endDateTime.setHours(
-      newRange.endTime!.getHours(),
-      newRange.endTime!.getMinutes()
-    );
+    endDateTime.setHours(newRange.endTime!.getHours(), newRange.endTime!.getMinutes());
 
     // Validate that end date is not before start date
     if (newRange.endDate! < newRange.startDate!) {
@@ -247,15 +255,27 @@ const DateTimePickerModal = ({
     }
 
     // Validate that end is after start (if same day)
-    if (newRange.startDate!.toDateString() === newRange.endDate!.toDateString() &&
-      endDateTime < startDateTime) {
+    if (
+      newRange.startDate!.toDateString() === newRange.endDate!.toDateString() &&
+      endDateTime < startDateTime
+    ) {
       Alert.alert('Invalid Time Range', 'End time must be after start time on the same day.');
       return;
     }
 
     // Check for exact duplicates of existing ranges
-    if (isExactDuplicate(newRange.startDate!, newRange.endDate!, newRange.startTime!, newRange.endTime!)) {
-      Alert.alert('Duplicate Schedule', 'This exact date and time range already exists. Please select a different time range.');
+    if (
+      isExactDuplicate(
+        newRange.startDate!,
+        newRange.endDate!,
+        newRange.startTime!,
+        newRange.endTime!,
+      )
+    ) {
+      Alert.alert(
+        'Duplicate Schedule',
+        'This exact date and time range already exists. Please select a different time range.',
+      );
       return;
     }
 
@@ -290,7 +310,7 @@ const DateTimePickerModal = ({
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
-      year: 'numeric'
+      year: 'numeric',
     });
   };
 
@@ -299,15 +319,18 @@ const DateTimePickerModal = ({
     return time.toLocaleTimeString('en-US', {
       hour: 'numeric',
       minute: '2-digit',
-      hour12: true
+      hour12: true,
     });
   };
 
   const getCurrentValue = () => {
     switch (currentMode) {
-      case 'startTime': return newRange.startTime || new Date();
-      case 'endTime': return newRange.endTime || new Date();
-      default: return new Date();
+      case 'startTime':
+        return newRange.startTime || new Date();
+      case 'endTime':
+        return newRange.endTime || new Date();
+      default:
+        return new Date();
     }
   };
 
@@ -332,12 +355,7 @@ const DateTimePickerModal = ({
   };
 
   return (
-    <Modal
-      visible={isVisible}
-      animationType="slide"
-      transparent={true}
-      onRequestClose={onClose}
-    >
+    <Modal visible={isVisible} animationType="slide" transparent={true} onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
         <SafeAreaView style={styles.modalContainer}>
           <View style={styles.modalHeader}>
@@ -365,13 +383,14 @@ const DateTimePickerModal = ({
                   style={styles.rangesList}
                   contentContainerStyle={styles.rangesListContent}
                 >
-                  {ranges.map((range) => (
+                  {ranges.map(range => (
                     <View key={range.id} style={styles.rangeCard}>
                       <View style={styles.rangeContentContainer}>
                         <Text style={styles.rangeDate}>
                           {formatShortDate(range.startDate)}
-                          {range.startDate.toDateString() !== range.endDate.toDateString() ?
-                            ` - ${formatShortDate(range.endDate)}` : ''}
+                          {range.startDate.toDateString() !== range.endDate.toDateString()
+                            ? ` - ${formatShortDate(range.endDate)}`
+                            : ''}
                         </Text>
                         <Text style={styles.rangeTime}>
                           {formatTime(range.startTime)} - {formatTime(range.endTime)}
@@ -398,7 +417,10 @@ const DateTimePickerModal = ({
                 {/* All dates in one row */}
                 <View style={styles.datesRow}>
                   <TouchableOpacity
-                    style={[styles.dateButton, currentMode === 'startDate' && styles.activeSelection]}
+                    style={[
+                      styles.dateButton,
+                      currentMode === 'startDate' && styles.activeSelection,
+                    ]}
                     onPress={() => {
                       setCurrentMode('startDate');
                       setShowCalendar(true);
@@ -423,7 +445,10 @@ const DateTimePickerModal = ({
                 {/* All times in one row */}
                 <View style={styles.timesRow}>
                   <TouchableOpacity
-                    style={[styles.timeButton, currentMode === 'startTime' && styles.activeSelection]}
+                    style={[
+                      styles.timeButton,
+                      currentMode === 'startTime' && styles.activeSelection,
+                    ]}
                     onPress={() => {
                       setCurrentMode('startTime');
                       setShowCalendar(false);
@@ -482,10 +507,7 @@ const DateTimePickerModal = ({
                 </View>
               )}
 
-              <TouchableOpacity
-                style={styles.addRangeButton}
-                onPress={addNewRange}
-              >
+              <TouchableOpacity style={styles.addRangeButton} onPress={addNewRange}>
                 <Ionicons name="add-circle-outline" size={18} color="#fff" />
                 <Text style={styles.addRangeText}>Add This Date Range</Text>
               </TouchableOpacity>

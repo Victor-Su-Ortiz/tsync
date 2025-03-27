@@ -6,10 +6,9 @@ interface UserInfo {
   name?: string | null;
   email?: string;
   profilePicture?: string | null; // URL to profile picture
-  picture?: string | null // URL for test accounts
+  picture?: string | null; // URL for test accounts
   bio?: string;
 }
-
 
 interface AuthContextType {
   authToken: string;
@@ -159,7 +158,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         userInfo,
         setUserInfo,
         isLoading,
-        logout
+        logout,
       }}
     >
       {children}
