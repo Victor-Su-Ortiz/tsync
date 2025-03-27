@@ -10,8 +10,7 @@ const router = Router();
 router.use(protect);
 
 // Event routes
-router
-  .route('/')
+router.route('/')
   .get(EventController.getUserEvents)
   .post(validateRequest(eventValidation.createEvent), EventController.createEvent);
 
@@ -19,8 +18,7 @@ router
 router.get('/upcoming', EventController.getUpcomingEvents);
 
 // Single event routes
-router
-  .route('/:id')
+router.route('/:id')
   .get(EventController.getEvent)
   .patch(validateRequest(eventValidation.updateEvent), EventController.updateEvent)
   .delete(EventController.deleteEvent);

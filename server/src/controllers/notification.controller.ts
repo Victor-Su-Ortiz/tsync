@@ -10,18 +10,18 @@ export class NotificationController {
   static async getUserNotifications(req: Request, res: Response, next: NextFunction) {
     try {
       const { page, limit, unreadOnly } = req.query;
-
+      
       const options = {
         page: page ? parseInt(page as string) : undefined,
         limit: limit ? parseInt(limit as string) : undefined,
-        unreadOnly: unreadOnly === 'true',
+        unreadOnly: unreadOnly === 'true'
       };
 
       const result = await NotificationService.getUserNotifications(
         req.userId!.toString(),
         options
       );
-      console.log('notifications ', result);
+      console.log("notifications ", result);
 
       res.status(200).json(result);
     } catch (error) {
@@ -35,13 +35,16 @@ export class NotificationController {
   static async markAsRead(req: Request, res: Response, next: NextFunction) {
     try {
       const { notificationIds } = req.body;
-
+      
       // Validate notificationIds if provided
       if (notificationIds && !Array.isArray(notificationIds)) {
         throw new ValidationError('notificationIds must be an array');
       }
 
-      const result = await NotificationService.markAsRead(req.userId!.toString(), notificationIds);
+      const result = await NotificationService.markAsRead(
+        req.userId!.toString(),
+        notificationIds
+      );
 
       res.status(200).json(result);
     } catch (error) {
@@ -55,7 +58,7 @@ export class NotificationController {
   static async deleteNotifications(req: Request, res: Response, next: NextFunction) {
     try {
       const { notificationIds } = req.body;
-
+      
       // Validate notificationIds
       if (!Array.isArray(notificationIds) || notificationIds.length === 0) {
         throw new ValidationError('notificationIds must be a non-empty array');

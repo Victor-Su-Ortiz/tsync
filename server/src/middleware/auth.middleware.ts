@@ -1,20 +1,29 @@
 // src/middleware/auth.middleware.ts
-import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-import { AuthenticationError, ForbiddenError } from '../utils/errors';
-import User from '../models/user.model';
+import { Request, Response, NextFunction } from "express";
+import jwt from "jsonwebtoken";
+import { AuthenticationError, ForbiddenError } from "../utils/errors";
+import User from "../models/user.model";
 // import { IUser, IUserMethods } from "../types/user";
 
-export const protect = async (req: Request, _: Response, next: NextFunction) => {
+
+export const protect = async (
+  req: Request,
+  _: Response,
+  next: NextFunction
+) => {
   try {
     let token;
 
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-      token = req.headers.authorization.split(' ')[1];
+    if (
+      req.headers.authorization &&
+      req.headers.authorization.startsWith("Bearer")
+    ) {
+      token = req.headers.authorization.split(" ")[1];
     }
 
+
     if (!token) {
-      throw new AuthenticationError('Not authorized to access this route');
+      throw new AuthenticationError("Not authorized to access this route");
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
@@ -23,7 +32,7 @@ export const protect = async (req: Request, _: Response, next: NextFunction) => 
 
     next();
   } catch (error) {
-    next(new AuthenticationError('Not authorized to access this route'));
+    next(new AuthenticationError("Not authorized to access this route"));
   }
 };
 
@@ -37,18 +46,20 @@ export const restrictTo = (...roles: string[]) => {
     try {
       // Check if userId exists (protect middleware should run first)
       if (!req.userId) {
-        throw new AuthenticationError('Not authenticated');
+        throw new AuthenticationError("Not authenticated");
       }
 
       // Get user from database to check role
       const user = await User.findById(req.userId);
       if (!user) {
-        throw new AuthenticationError('User not found');
+        throw new AuthenticationError("User not found");
       }
 
       // Check if user role is allowed
       if (!roles.includes(user.role)) {
-        throw new ForbiddenError('You do not have permission to perform this action');
+        throw new ForbiddenError(
+          "You do not have permission to perform this action"
+        );
       }
 
       next();
@@ -57,3 +68,4 @@ export const restrictTo = (...roles: string[]) => {
     }
   };
 };
+

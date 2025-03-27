@@ -3,6 +3,9 @@ import { FriendService } from '../services/friends.service';
 // import User from '../models/user.model';
 
 export class FriendController {
+
+
+
   /**
    * Check if a friend request exists between users
    * returns a boolean indicating if a request exists and its status
@@ -27,7 +30,7 @@ export class FriendController {
       const friends = await FriendService.getFriends(req.userId!.toString());
       res.status(200).json({
         success: true,
-        friends,
+        friends
       });
     } catch (error) {
       next(error);
@@ -41,7 +44,7 @@ export class FriendController {
       const requests = await FriendService.getSentRequests(req.userId!.toString());
       res.status(200).json({
         success: true,
-        requests,
+        requests
       });
     } catch (error) {
       next(error);
@@ -55,7 +58,7 @@ export class FriendController {
       const requests = await FriendService.getSentPendingRequests(req.userId!.toString());
       res.status(200).json({
         success: true,
-        requests,
+        requests
       });
     } catch (error) {
       next(error);
@@ -70,7 +73,7 @@ export class FriendController {
       const requests = await FriendService.getReceivedRequests(req.userId!.toString());
       res.status(200).json({
         success: true,
-        requests,
+        requests
       });
     } catch (error) {
       next(error);
@@ -85,7 +88,7 @@ export class FriendController {
       const requests = await FriendService.getReceivedPendingRequests(req.userId!.toString());
       res.status(200).json({
         success: true,
-        requests,
+        requests
       });
     } catch (error) {
       next(error);

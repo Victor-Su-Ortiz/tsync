@@ -1,24 +1,24 @@
 // src/models/User.ts
-import mongoose, { Types, Schema, Document } from 'mongoose';
-import bcrypt from 'bcryptjs';
-import { IUser, IUserMethods, IUserModel, PublicUser } from '../types/user.types';
-import { IFriendRequest } from '../types/friendRequest.types';
-import FriendRequest from './friendRequest.model'; // Import the FriendRequest model
-import { FriendEventType, FriendRequestStatus, EventType } from '../utils/enums';
-import Notification from './notification.model';
+import mongoose, { Types, Schema, Document } from "mongoose";
+import bcrypt from "bcryptjs";
+import { IUser, IUserMethods, IUserModel, PublicUser } from "../types/user.types";
+import { IFriendRequest } from "../types/friendRequest.types";
+import FriendRequest from "./friendRequest.model"; // Import the FriendRequest model
+import { FriendEventType, FriendRequestStatus, EventType } from "../utils/enums";
+import Notification from "./notification.model";
 
 const userSchema = new Schema<IUser, IUserModel, IUserMethods>(
   {
     name: {
       type: String,
-      required: [true, 'Please provide your name'],
+      required: [true, "Please provide your name"],
       trim: true,
-      minlength: [2, 'Name must be at least 2 characters long'],
-      maxlength: [50, 'Name cannot be more than 50 characters'],
+      minlength: [2, "Name must be at least 2 characters long"],
+      maxlength: [50, "Name cannot be more than 50 characters"],
     },
     email: {
       type: String,
-      required: [true, 'Please provide your email'],
+      required: [true, "Please provide your email"],
       unique: true,
       trim: true,
       lowercase: true,
@@ -32,17 +32,17 @@ const userSchema = new Schema<IUser, IUserModel, IUserMethods>(
     },
     password: {
       type: String,
-      required: [true, 'Please provide a password'],
-      minlength: [8, 'Password must be at least 8 characters long'],
+      required: [true, "Please provide a password"],
+      minlength: [8, "Password must be at least 8 characters long"],
       select: false, // Don't include password in queries by default
     },
     role: {
       type: String,
       enum: {
-        values: ['user', 'admin'],
-        message: '{VALUE} is not a valid role',
+        values: ["user", "admin"],
+        message: "{VALUE} is not a valid role",
       },
-      default: 'user',
+      default: "user",
     },
     googleId: {
       type: String,
@@ -67,7 +67,7 @@ const userSchema = new Schema<IUser, IUserModel, IUserMethods>(
     },
     profilePicture: {
       type: String,
-      default: 'default-avatar.png',
+      default: "default-avatar.png",
     },
     isEmailVerified: {
       type: Boolean,
@@ -80,20 +80,16 @@ const userSchema = new Schema<IUser, IUserModel, IUserMethods>(
       type: Date,
       default: null,
     },
-    friends: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: 'User',
-      },
-    ],
+    friends: [{
+      type: Schema.Types.ObjectId,
+      ref: 'User'
+    }],
 
-    blockedUsers: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: 'User',
-        sparse: true,
-      },
-    ],
+    blockedUsers: [{
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      sparse: true
+    }]
   },
   {
     timestamps: true, // Automatically manage createdAt and updatedAt
@@ -106,20 +102,20 @@ const userSchema = new Schema<IUser, IUserModel, IUserMethods>(
 userSchema.virtual('sentFriendRequests', {
   ref: 'FriendRequest',
   localField: '_id',
-  foreignField: 'sender',
+  foreignField: 'sender'
 });
 
 // Virtual field to get all friend requests received by this user
 userSchema.virtual('receivedFriendRequests', {
   ref: 'FriendRequest',
   localField: '_id',
-  foreignField: 'receiver',
+  foreignField: 'receiver'
 });
 
 // Pre-save middleware to hash password
-userSchema.pre('save', async function (next) {
+userSchema.pre("save", async function (next) {
   // Only hash password if it has been modified
-  if (!this.isModified('password')) return next();
+  if (!this.isModified("password")) return next();
 
   try {
     const salt = await bcrypt.genSalt(10);
@@ -131,11 +127,13 @@ userSchema.pre('save', async function (next) {
 });
 
 // Method to compare password
-userSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
+userSchema.methods.comparePassword = async function (
+  candidatePassword: string
+): Promise<boolean> {
   try {
     return await bcrypt.compare(candidatePassword, this.password);
   } catch (error) {
-    throw new Error('Error comparing passwords');
+    throw new Error("Error comparing passwords");
   }
 };
 
@@ -157,9 +155,7 @@ userSchema.methods.getPublicProfile = function (): PublicUser {
 
 // Updated friend-related methods to use the new FriendRequest model
 // Make sure these methods match the IUserMethods interface return types
-userSchema.methods.sendFriendRequest = async function (
-  friendId: string
-): Promise<IFriendRequest & Document> {
+userSchema.methods.sendFriendRequest = async function (friendId: string): Promise<IFriendRequest & Document> {
   if (this._id.toString() === friendId) {
     throw new Error('Cannot send friend request to self');
   }
@@ -170,10 +166,8 @@ userSchema.methods.sendFriendRequest = async function (
   }
 
   // Check if blocked
-  if (
-    this.blockedUsers.some((id: Types.ObjectId) => id.toString() === friendId) ||
-    (await User.findById(friendId))?.blockedUsers.includes(this._id)
-  ) {
+  if (this.blockedUsers.some((id: Types.ObjectId) => id.toString() === friendId) ||
+    (await User.findById(friendId))?.blockedUsers.includes(this._id)) {
     throw new Error('Unable to send friend request');
   }
 
@@ -186,7 +180,7 @@ userSchema.methods.sendFriendRequest = async function (
   let friendRequest = await FriendRequest.findOne({
     sender: this._id,
     receiver: friendId,
-    status: FriendRequestStatus.REJECTED,
+    status: FriendRequestStatus.REJECTED
   });
 
   // If there is a rejected request, update it to pending
@@ -198,11 +192,13 @@ userSchema.methods.sendFriendRequest = async function (
     friendRequest = new FriendRequest({
       sender: this._id,
       receiver: friendId,
-      status: FriendRequestStatus.PENDING,
+      status: FriendRequestStatus.PENDING
     });
 
     await friendRequest.save();
   }
+
+  
 
   // Create notification
   const { default: NotificationService } = await import('../services/notification.service');
@@ -212,14 +208,11 @@ userSchema.methods.sendFriendRequest = async function (
     type: EventType.FRIEND_REQUEST,
     message: `${this.name} sent you a friend request`,
     relatedId: friendRequest._id ? friendRequest._id.toString() : friendRequest.id,
-    onModel: 'FriendRequest',
+    onModel: 'FriendRequest'
   });
 
   const { default: SocketService } = await import('../services/socket.service');
-  SocketService.sendToUser(friendId, 'friend_request_status_changed', {
-    event: FriendEventType.FRIEND_REQUEST_RECEIVED,
-    data: friendRequest,
-  });
+  SocketService.sendToUser(friendId, 'friend_request_status_changed', {event: FriendEventType.FRIEND_REQUEST_RECEIVED, data: friendRequest});
 
   return friendRequest;
 };
@@ -229,29 +222,26 @@ userSchema.methods.sendFriendRequest = async function (
  */
 userSchema.methods.cancelFriendRequest = async function (requestId: string): Promise<void> {
   const request = await FriendRequest.findOne({
-    _id: requestId,
+    _id: requestId
   });
 
   if (!request) {
     throw new Error('Invalid friend request');
   }
 
-  await Notification.deleteOne({ relatedId: requestId });
+  await Notification.deleteOne({relatedId: requestId});
 
   await FriendRequest.deleteOne({ _id: requestId });
 
   const { default: SocketService } = await import('../services/socket.service');
-  SocketService.sendToUser(request.receiver.toString(), 'friend_request_status_changed', {
-    event: FriendEventType.FRIEND_REQUEST_CANCELED,
-    data: request,
-  });
-};
+  SocketService.sendToUser(request.receiver.toString(), 'friend_request_status_changed', {event: FriendEventType.FRIEND_REQUEST_CANCELED, data: request});
+}
 
 userSchema.methods.acceptFriendRequest = async function (requestId: string): Promise<void> {
   const request = await FriendRequest.findOne({
     _id: requestId,
     receiver: this._id,
-    status: FriendRequestStatus.PENDING,
+    status: FriendRequestStatus.PENDING
   });
 
   if (!request) {
@@ -265,7 +255,7 @@ userSchema.methods.acceptFriendRequest = async function (requestId: string): Pro
   // Add to friends list for both users
   this.friends.push(request.sender);
   await User.findByIdAndUpdate(request.sender, {
-    $push: { friends: this._id },
+    $push: { friends: this._id }
   });
 
   await this.save();
@@ -278,21 +268,18 @@ userSchema.methods.acceptFriendRequest = async function (requestId: string): Pro
     type: EventType.FRIEND_ACCEPTED,
     message: `${this.name} accepted your friend request`,
     relatedId: request._id ? request._id.toString() : request.id,
-    onModel: 'FriendRequest',
+    onModel: 'FriendRequest'
   });
 
   const { default: SocketService } = await import('../services/socket.service');
-  SocketService.sendToUser(request.sender.toString(), 'friend_request_status_changed', {
-    event: FriendEventType.FRIEND_ACCEPTED,
-    data: request,
-  });
+  SocketService.sendToUser(request.sender.toString(), 'friend_request_status_changed', {event: FriendEventType.FRIEND_ACCEPTED, data: request});
 };
 
 userSchema.methods.rejectFriendRequest = async function (requestId: string): Promise<void> {
   const request = await FriendRequest.findOne({
     _id: requestId,
     receiver: this._id,
-    status: FriendRequestStatus.PENDING,
+    status: FriendRequestStatus.PENDING
   });
 
   if (!request) {
@@ -301,11 +288,8 @@ userSchema.methods.rejectFriendRequest = async function (requestId: string): Pro
 
   request.status = FriendRequestStatus.REJECTED;
   await request.save();
-  const { default: SocketService } = await import('../services/socket.service');
-  SocketService.sendToUser(request.sender.toString(), 'friend_request_status_changed', {
-    event: FriendEventType.FRIEND_REJECTED,
-    data: request,
-  });
+  const {default: SocketService} = await import('../services/socket.service');
+  SocketService.sendToUser(request.sender.toString(), 'friend_request_status_changed', {event: FriendEventType.FRIEND_REJECTED, data:request});
 };
 
 userSchema.methods.removeFriend = async function (friendId: string) {
@@ -316,7 +300,7 @@ userSchema.methods.removeFriend = async function (friendId: string) {
   // Remove from both users' friend lists
   this.friends = this.friends.filter(id => id.toString() !== friendId);
   await User.findByIdAndUpdate(friendId, {
-    $pull: { friends: this._id },
+    $pull: { friends: this._id }
   });
 
   await this.save();
@@ -325,32 +309,30 @@ userSchema.methods.removeFriend = async function (friendId: string) {
   await FriendRequest.deleteMany({
     $or: [
       { sender: this._id, receiver: friendId },
-      { sender: friendId, receiver: this._id },
-    ],
+      { sender: friendId, receiver: this._id }
+    ]
   });
 };
 
 // Helper method to get all pending friend requests
-userSchema.methods.getPendingFriendRequests = async function (): Promise<
-  (IFriendRequest & Document)[]
-> {
+userSchema.methods.getPendingFriendRequests = async function (): Promise<(IFriendRequest & Document)[]> {
   return FriendRequest.find({
     receiver: this._id,
-    status: FriendRequestStatus.PENDING,
+    status: FriendRequestStatus.PENDING
   });
 };
 
 // Static method to find user by email
-userSchema.static('findByEmail', async function findByEmail(email: string) {
+userSchema.static("findByEmail", async function findByEmail(email: string) {
   return this.findOne({ email });
 });
 
 // Virtual for full name
-userSchema.virtual('fullName').get(function (this: IUser) {
+userSchema.virtual("fullName").get(function (this: IUser) {
   return `${this.name}`;
 });
 
 // Create the model
-const User = mongoose.model<IUser, IUserModel>('User', userSchema);
+const User = mongoose.model<IUser, IUserModel>("User", userSchema);
 
 export default User;

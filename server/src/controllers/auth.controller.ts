@@ -1,6 +1,6 @@
-import { Request, Response, NextFunction } from 'express';
-import { AuthService } from '../services/auth.service';
-import User from '../models/user.model';
+import { Request, Response, NextFunction } from "express";
+import { AuthService } from "../services/auth.service";
+import User from "../models/user.model";
 // import { AuthRequest } from "../middleware/auth.middleware";
 
 export class AuthController {
@@ -28,18 +28,19 @@ export class AuthController {
   //   Google authentication
   static async googleAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { idToken, accessToken, serverAuthCode } = req.body;
+
+      const { idToken, accessToken } = req.body;
       if (!idToken) {
-        res.status(400).json({ message: 'Missing ID Token' });
+        res.status(400).json({ message: "Missing ID Token" });
         return;
       }
 
-      const authResponse = await AuthService.googleAuth(idToken, accessToken, serverAuthCode);
-      console.log('✅ Google Auth Success:', authResponse);
+      const authResponse = await AuthService.googleAuth(idToken, accessToken);
+      console.log("✅ Google Auth Success:", authResponse);
 
       res.status(200).json(authResponse);
     } catch (error) {
-      console.error('❌ Google Auth Failed:', error);
+      console.error("❌ Google Auth Failed:", error);
       next(error); // ✅ Pass error to Express error handler
     }
   }
@@ -56,7 +57,11 @@ export class AuthController {
   }
 
   // Request password reset
-  static async requestPasswordReset(req: Request, res: Response, next: NextFunction) {
+  static async requestPasswordReset(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
     try {
       const { email } = req.body;
       const result = await AuthService.requestPasswordReset(email);
@@ -79,7 +84,11 @@ export class AuthController {
   }
 
   // Get current user
-  static async getCurrentUser(req: Request, res: Response, next: NextFunction) {
+  static async getCurrentUser(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
     try {
       const user = await User.findById(req.userId);
       res.status(200).json({ user: user!.getPublicProfile() });

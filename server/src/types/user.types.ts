@@ -1,5 +1,5 @@
-import { Document, Model, Types } from 'mongoose';
-import { IFriendRequest } from './friendRequest.types';
+import { Document, Model, Types } from "mongoose";
+import { IFriendRequest } from "./friendRequest.types";
 
 // Interface to define the User document structure
 export interface IUser extends Document {
@@ -7,7 +7,7 @@ export interface IUser extends Document {
   name: string;
   email: string;
   password: string;
-  role: 'user' | 'admin';
+  role: "user" | "admin";
   googleId?: string;
   googleRefreshToken?: string;
   isGoogleCalendarConnected: boolean;
@@ -26,12 +26,13 @@ export interface IUser extends Document {
   friends: Types.ObjectId[];
   // List of blocked users
   blockedUsers: Types.ObjectId[];
+
 }
 
 export interface IUserMethods {
   comparePassword(candidatePassword: string): Promise<boolean>;
   getPublicProfile(): PublicUser;
-  sendFriendRequest(friendId: string): Promise<IFriendRequest & Document>;
+  sendFriendRequest(friendId: string): Promise<(IFriendRequest & Document)>;
   acceptFriendRequest(requestId: string): Promise<void>;
   rejectFriendRequest(requestId: string): Promise<void>;
   removeFriend(friendId: string): Promise<void>;
@@ -42,9 +43,15 @@ export interface IUserMethods {
 // Public user data type (for API responses)
 export type PublicUser = Omit<
   IUser,
-  'password' | 'verificationToken' | 'resetPasswordToken' | 'resetPasswordExpire' | 'blockedUsers'
+  | 'password'
+  | 'verificationToken'
+  | 'resetPasswordToken'
+  | 'resetPasswordExpire'
+  | 'blockedUsers'
 >;
 
 export interface IUserModel extends Model<IUser, {}, IUserMethods> {
-  findByEmail(email: string): Promise<Document<unknown, any, IUser> & IUser & IUserMethods>;
+  findByEmail(
+    email: string
+  ): Promise<Document<unknown, any, IUser> & IUser & IUserMethods>;
 }

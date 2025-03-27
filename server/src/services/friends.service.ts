@@ -6,6 +6,7 @@ import { PublicUser } from '../types/user.types';
 import { IFriendRequest } from '../types/friendRequest.types';
 import { FriendRequestStatus } from '../utils/enums';
 
+
 export class FriendService {
   /**
    * Check if a friend request already exists between users
@@ -13,10 +14,7 @@ export class FriendService {
    * @param receiverId ID of the user who received the request
    * @returns Boolean indicating if a request exists and its status
    */
-  public static async checkFriendRequestExists(
-    senderId: string,
-    receiverId: string
-  ): Promise<{ exists: boolean; status?: string; receiver?: string; sender?: string }> {
+  public static async checkFriendRequestExists(senderId: string, receiverId: string): Promise<{ exists: boolean, status?: string, receiver?: string, sender?: string }> {
     try {
       // Validate IDs
       if (!Types.ObjectId.isValid(senderId) || !Types.ObjectId.isValid(receiverId)) {
@@ -29,12 +27,7 @@ export class FriendService {
         return { exists: false };
       }
 
-      return {
-        exists: true,
-        status: request.status,
-        receiver: request.receiver.toString(),
-        sender: request.sender.toString(),
-      };
+      return { exists: true, status: request.status, receiver: request.receiver.toString() , sender: request.sender.toString() };
     } catch (error) {
       if (error instanceof NotFoundError || error instanceof BadRequestError) {
         throw error;
@@ -47,7 +40,8 @@ export class FriendService {
    * Get all friends of a user
    */
   public static async getFriends(userId: string): Promise<PublicUser[]> {
-    const user = await User.findById(userId).populate('friends', 'name email profilePicture');
+    const user = await User.findById(userId)
+      .populate('friends', 'name email profilePicture');
 
     if (!user) {
       throw new NotFoundError('User not found');
@@ -60,7 +54,7 @@ export class FriendService {
    */
   public static async getSentRequests(userId: string): Promise<(IFriendRequest & Document)[]> {
     const requests = await FriendRequest.find({
-      sender: userId,
+      sender: userId
     }).populate('receiver', 'name email profilePicture');
 
     if (!requests || requests.length === 0) {
@@ -72,12 +66,10 @@ export class FriendService {
   /**
    * Get all sent requests that are pending
    */
-  public static async getSentPendingRequests(
-    userId: string
-  ): Promise<(IFriendRequest & Document)[]> {
+  public static async getSentPendingRequests(userId: string): Promise<(IFriendRequest & Document)[]> {
     const pendingRequests = await FriendRequest.find({
       sender: userId,
-      status: FriendRequestStatus.PENDING,
+      status: FriendRequestStatus.PENDING
     }).populate('receiver', 'name email profilePicture');
 
     if (!pendingRequests || pendingRequests.length === 0) {
@@ -93,7 +85,7 @@ export class FriendService {
    * */
   public static async getReceivedRequests(userId: string): Promise<(IFriendRequest & Document)[]> {
     const requests = await FriendRequest.find({
-      receiver: userId,
+      receiver: userId
     }).populate('sender', 'name email profilePicture');
 
     if (!requests || requests.length === 0) {
@@ -106,12 +98,10 @@ export class FriendService {
   /**
    * Get all incoming requests that are pending
    */
-  public static async getReceivedPendingRequests(
-    userId: string
-  ): Promise<(IFriendRequest & Document)[]> {
+  public static async getReceivedPendingRequests(userId: string): Promise<(IFriendRequest & Document)[]> {
     const pendingRequests = await FriendRequest.find({
-      receiver: userId,
-      status: FriendRequestStatus.PENDING,
+      receiver: userId, 
+      status: FriendRequestStatus.PENDING
     }).populate('sender', 'name email profilePicture');
 
     if (!pendingRequests || pendingRequests.length === 0) {
@@ -119,7 +109,7 @@ export class FriendService {
     }
 
     // Format the requests into the response format
-    return pendingRequests;
+    return pendingRequests
   }
 
   /**
@@ -128,7 +118,8 @@ export class FriendService {
   public static async sendRequest(
     senderId: string,
     receiverId: string
-  ): Promise<{ success: boolean; message: string; friendRequest: IFriendRequest }> {
+  ): Promise<{ success: boolean; message: string, friendRequest: IFriendRequest }> {
+
     const user = await User.findById(senderId);
     if (!user) {
       throw new NotFoundError('User not found');
@@ -137,7 +128,7 @@ export class FriendService {
     return {
       success: true,
       message: 'Friend request sent successfully',
-      friendRequest,
+      friendRequest
     };
   }
 
@@ -158,7 +149,7 @@ export class FriendService {
 
     return {
       success: true,
-      message: 'Friend request accepted successfully',
+      message: 'Friend request accepted successfully'
     };
   }
 
@@ -166,18 +157,19 @@ export class FriendService {
     userId: string,
     requestId: string
   ): Promise<{ success: boolean; message: string }> {
-    const user = await User.findById(userId);
+    const user = await User.findById(userId)
 
     if (!user) {
-      throw new NotFoundError('User not found');
+      throw new NotFoundError('User not found')
     }
 
-    user.cancelFriendRequest(requestId);
+    user.cancelFriendRequest(requestId)
     return {
       success: true,
-      message: 'Friend request cancelled successfully',
-    };
+      message: 'Friend request cancelled successfully'
+    }
   }
+
 
   /**
    * Reject a friend request
@@ -196,7 +188,7 @@ export class FriendService {
 
     return {
       success: true,
-      message: 'Friend request rejected successfully',
+      message: 'Friend request rejected successfully'
     };
   }
 
@@ -207,7 +199,10 @@ export class FriendService {
     userId: string,
     friendId: string
   ): Promise<{ success: boolean; message: string }> {
-    const [user, friend] = await Promise.all([User.findById(userId), User.findById(friendId)]);
+    const [user, friend] = await Promise.all([
+      User.findById(userId),
+      User.findById(friendId)
+    ]);
 
     if (!user || !friend) {
       throw new NotFoundError('User not found');
@@ -222,7 +217,7 @@ export class FriendService {
 
     return {
       success: true,
-      message: 'Friend removed successfully',
+      message: 'Friend removed successfully'
     };
   }
 }

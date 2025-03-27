@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Modal,
   View,
@@ -10,12 +10,12 @@ import {
   ImageBackground,
   SafeAreaView,
   StatusBar,
-  Platform
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import * as Location from 'expo-location';
-import axios from 'axios';
-import { GOOGLE_PLACES_API } from '@env';
+  Platform,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import * as Location from "expo-location";
+import axios from "axios";
+import { GOOGLE_PLACES_API } from "@env";
 
 type Place = {
   place_id: string;
@@ -34,9 +34,10 @@ type TeaShopSelectionModalProps = {
 const TeaShopSelectionModal = ({
   isVisible,
   onClose,
-  onSelectTeaShop
+  onSelectTeaShop,
 }: TeaShopSelectionModalProps) => {
-  const [location, setLocation] = useState<Location.LocationObjectCoords | null>(null);
+  const [location, setLocation] =
+    useState<Location.LocationObjectCoords | null>(null);
   const [shops, setShops] = useState<Place[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -45,7 +46,7 @@ const TeaShopSelectionModal = ({
   const getUserLocation = async () => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
+      if (status !== "granted") {
         console.error("Permission to access location was denied");
         return;
       }
@@ -61,7 +62,7 @@ const TeaShopSelectionModal = ({
   const getNearbyStores = async (latitude: number, longitude: number) => {
     setLoading(true);
     const radius = 5000;
-    const type = 'cafe';
+    const type = "cafe";
 
     const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${latitude},${longitude}&radius=${radius}&type=${type}&keyword=tea&key=${GOOGLE_PLACES_API_KEY}`;
 
@@ -127,11 +128,17 @@ const TeaShopSelectionModal = ({
 
               return (
                 <TouchableOpacity onPress={() => handleTeaShopPress(item)}>
-                  <ImageBackground source={{ uri: imageUrl }} style={styles.itemContainer} imageStyle={styles.image}>
+                  <ImageBackground
+                    source={{ uri: imageUrl }}
+                    style={styles.itemContainer}
+                    imageStyle={styles.image}
+                  >
                     <View style={styles.overlay}>
                       <Text style={styles.name}>{item.name}</Text>
                       <Text style={styles.address}>{item.vicinity}</Text>
-                      <Text style={styles.rating}>Rating: ⭐ {item.rating || 'N/A'}</Text>
+                      <Text style={styles.rating}>
+                        Rating: ⭐ {item.rating || "N/A"}
+                      </Text>
                     </View>
                   </ImageBackground>
                 </TouchableOpacity>
@@ -148,37 +155,37 @@ const TeaShopSelectionModal = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+    backgroundColor: "#fff",
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingVertical: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: "#f0f0f0",
   },
   closeButton: {
     padding: 8,
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   placeholder: {
     width: 40,
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   loadingText: {
     marginTop: 10,
     fontSize: 16,
-    color: '#666',
+    color: "#666",
   },
   listContent: {
     padding: 16,

@@ -1,8 +1,8 @@
-import express from 'express';
-import { FriendController } from '../controllers/friends.controller';
-import { protect } from '../middleware/auth.middleware';
-import { validateRequest } from '../middleware/validation.middleware';
-import { friendValidation } from '../validations/friends.validation';
+import express from "express";
+import { FriendController } from "../controllers/friends.controller";
+import { protect } from "../middleware/auth.middleware";
+import { validateRequest } from "../middleware/validation.middleware";
+import { friendValidation } from "../validations/friends.validation";
 
 const router = express.Router();
 
@@ -10,54 +10,53 @@ const router = express.Router();
 router.use(protect);
 
 // Get friend lists
-router.get('/', FriendController.getFriends);
+router.get("/", FriendController.getFriends);
 
 // Get incoming friend requests
-router.get('/requests/received', FriendController.getReceivedRequests);
+router.get("/requests/received", FriendController.getReceivedRequests);
 
 // Get pending friend requests
-router.get('/requests/received/pending', FriendController.getReceivedPendingRequests);
+router.get("/requests/received/pending", FriendController.getReceivedPendingRequests);
 
 // Get outgoing friend requests
-router.get('/requests/sent', FriendController.getSentRequests);
+router.get("/requests/sent", FriendController.getSentRequests);
 
-router.get('/requests/sent/pending', FriendController.getSentPendingRequests);
+router.get("/requests/sent/pending", FriendController.getSentPendingRequests);
+
 
 // Check if there exists a friend request between two users
-router.get(
-  '/requests/:userId',
+router.get("/requests/:userId",
   validateRequest(friendValidation.checkFriendRequest),
-  FriendController.checkFriendRequest
-);
+  FriendController.checkFriendRequest);
 
 // Friend request operations
 router.post(
-  '/requests/:userId',
+  "/requests/:userId",
   validateRequest(friendValidation.sendRequest),
   FriendController.sendRequest
 );
 
 router.put(
-  '/requests/:requestId/accept',
+  "/requests/:requestId/accept",
   validateRequest(friendValidation.handleRequest),
   FriendController.acceptRequest
 );
 
 router.put(
-  '/requests/:requestId/reject',
+  "/requests/:requestId/reject",
   validateRequest(friendValidation.handleRequest),
   FriendController.rejectRequest
 );
 
 router.delete(
-  '/requests/:requestId',
+  "/requests/:requestId",
   validateRequest(friendValidation.handleRequest),
   FriendController.cancelRequest
-);
+)
 
 // Friend removal
 router.delete(
-  '/:friendId',
+  "/:friendId",
   validateRequest(friendValidation.removeFriend),
   FriendController.removeFriend
 );

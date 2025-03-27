@@ -1,25 +1,27 @@
-import Joi from 'joi';
+import Joi from "joi";
 
 export const authValidation = {
   register: Joi.object({
     name: Joi.string().required().min(2).max(50).messages({
-      'string.min': 'Name must be at least 2 characters long',
-      'string.max': 'Name cannot be more than 50 characters',
-      'any.required': 'Name is required',
+      "string.min": "Name must be at least 2 characters long",
+      "string.max": "Name cannot be more than 50 characters",
+      "any.required": "Name is required",
     }),
     email: Joi.string().required().email().messages({
-      'string.email': 'Please provide a valid email address',
-      'any.required': 'Email is required',
+      "string.email": "Please provide a valid email address",
+      "any.required": "Email is required",
     }),
     password: Joi.string()
       .required()
       .min(8)
-      .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/)
+      .pattern(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
+      )
       .messages({
-        'string.min': 'Password must be at least 8 characters long',
-        'string.pattern.base':
-          'Password must contain at least one uppercase letter, one lowercase letter, one number and one special character',
-        'any.required': 'Password is required',
+        "string.min": "Password must be at least 8 characters long",
+        "string.pattern.base":
+          "Password must contain at least one uppercase letter, one lowercase letter, one number and one special character",
+        "any.required": "Password is required",
       }),
   }),
 
@@ -31,7 +33,6 @@ export const authValidation = {
   googleAuth: Joi.object({
     idToken: Joi.string().required(),
     accessToken: Joi.string().required(),
-    // serverAuthCode: Joi.string().required(),
   }),
 
   verifyEmail: Joi.object({
@@ -46,10 +47,15 @@ export const authValidation = {
     password: Joi.string()
       .required()
       .min(8)
-      .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/),
-    confirmPassword: Joi.string().required().valid(Joi.ref('password')).messages({
-      'any.only': 'Passwords do not match',
-    }),
+      .pattern(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
+      ),
+    confirmPassword: Joi.string()
+      .required()
+      .valid(Joi.ref("password"))
+      .messages({
+        "any.only": "Passwords do not match",
+      }),
   }),
 
   changePassword: Joi.object({
@@ -57,10 +63,15 @@ export const authValidation = {
     newPassword: Joi.string()
       .required()
       .min(8)
-      .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/),
-    confirmNewPassword: Joi.string().required().valid(Joi.ref('newPassword')).messages({
-      'any.only': 'Passwords do not match',
-    }),
+      .pattern(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
+      ),
+    confirmNewPassword: Joi.string()
+      .required()
+      .valid(Joi.ref("newPassword"))
+      .messages({
+        "any.only": "Passwords do not match",
+      }),
   }),
 
   updateProfile: Joi.object({

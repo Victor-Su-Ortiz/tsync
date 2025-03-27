@@ -1,10 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import { Tabs, router, usePathname } from "expo-router";
-import { View, TouchableOpacity, StyleSheet, GestureResponderEvent, Image } from "react-native";
+import {
+  View,
+  TouchableOpacity,
+  StyleSheet,
+  GestureResponderEvent,
+  Image,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import images from "../../constants/images";
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from "../../context/AuthContext";
 
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
@@ -12,34 +18,42 @@ export default function TabsLayout() {
   const pathname = usePathname();
 
   // Track the current screen for returning to it after add-event
-  const [currentScreen, setCurrentScreen] = useState('/home');
+  const [currentScreen, setCurrentScreen] = useState("/home");
 
   // Update the current screen when the pathname changes
   useEffect(() => {
     // Only update for main tab screens, not for the add-event screen
-    if (pathname && !pathname.includes('add-event')) {
+    if (pathname && !pathname.includes("add-event")) {
       setCurrentScreen(pathname);
     }
   }, [pathname]);
 
-  const CustomTabBarButton = ({ children, onPress }: { children: React.ReactNode; onPress?: (event: GestureResponderEvent) => void }) => (
+  const CustomTabBarButton = ({
+    children,
+    onPress,
+  }: {
+    children: React.ReactNode;
+    onPress?: (event: GestureResponderEvent) => void;
+  }) => (
     <TouchableOpacity
       style={{
         top: -20,
-        justifyContent: 'center',
-        alignItems: 'center',
+        justifyContent: "center",
+        alignItems: "center",
       }}
       onPress={onPress}
     >
-      <View style={{
-        width: 70,
-        height: 70,
-        borderRadius: 35,
-        backgroundColor: '#00cc99',
-        ...styles.shadow,
-        justifyContent: 'center',
-        alignItems: 'center',
-      }}>
+      <View
+        style={{
+          width: 70,
+          height: 70,
+          borderRadius: 35,
+          backgroundColor: "#00cc99",
+          ...styles.shadow,
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
         {children}
       </View>
     </TouchableOpacity>
@@ -51,11 +65,11 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarShowLabel: false,
         tabBarStyle: {
-          position: 'absolute',
-          backgroundColor: '#ffffff',
+          position: "absolute",
+          backgroundColor: "#ffffff",
           borderTopWidth: 0,
           height: 60 + (insets.bottom > 0 ? insets.bottom - 5 : 0),
-          ...styles.shadow
+          ...styles.shadow,
         },
       }}
     >
@@ -64,7 +78,11 @@ export default function TabsLayout() {
         options={{
           title: "Home",
           tabBarIcon: ({ focused }) => (
-            <Ionicons name="home" size={24} color={focused ? "#00cc99" : "#748c94"} />
+            <Ionicons
+              name="home"
+              size={24}
+              color={focused ? "#00cc99" : "#748c94"}
+            />
           ),
         }}
       />
@@ -74,7 +92,11 @@ export default function TabsLayout() {
         options={{
           title: "meme",
           tabBarIcon: ({ focused }) => (
-            <Ionicons name="help" size={24} color={focused ? "#00cc99" : "#748c94"} />
+            <Ionicons
+              name="help"
+              size={24}
+              color={focused ? "#00cc99" : "#748c94"}
+            />
           ),
         }}
       />
@@ -88,15 +110,15 @@ export default function TabsLayout() {
               onPress={() => {
                 // Pass the current screen as a query parameter
                 router.push({
-                  pathname: './add-event',
-                  params: { sourceScreen: currentScreen }
+                  pathname: "./add-event",
+                  params: { sourceScreen: currentScreen },
                 });
               }}
             >
               <Ionicons name="add" size={30} color="#ffffff" />
             </CustomTabBarButton>
           ),
-          tabBarStyle: { display: 'none' },
+          tabBarStyle: { display: "none" },
         }}
       />
 
@@ -105,7 +127,11 @@ export default function TabsLayout() {
         options={{
           title: "Events",
           tabBarIcon: ({ focused }) => (
-            <Ionicons name="calendar" size={24} color={focused ? "#00cc99" : "#748c94"} />
+            <Ionicons
+              name="calendar"
+              size={24}
+              color={focused ? "#00cc99" : "#748c94"}
+            />
           ),
         }}
       />
@@ -116,7 +142,11 @@ export default function TabsLayout() {
           title: "Profile",
           tabBarIcon: ({ focused }) => (
             <Image
-              source={userInfo?.picture || userInfo?.profilePicture ? { uri: userInfo?.picture || userInfo?.profilePicture } : images.defaultpfp}
+              source={
+                userInfo?.picture || userInfo?.profilePicture
+                  ? { uri: userInfo?.picture || userInfo?.profilePicture }
+                  : images.defaultpfp
+              }
               style={{
                 width: 34,
                 height: 33,
@@ -124,7 +154,7 @@ export default function TabsLayout() {
                 borderWidth: 1.5,
                 borderColor: focused ? "#00cc99" : "#748c94",
                 opacity: focused ? 1 : 0.85,
-                backgroundColor: focused ? undefined : "#f5f5f5"
+                backgroundColor: focused ? undefined : "#f5f5f5",
               }}
             />
           ),
@@ -136,13 +166,13 @@ export default function TabsLayout() {
 
 const styles = StyleSheet.create({
   shadow: {
-    shadowColor: '#7F5DF0',
+    shadowColor: "#7F5DF0",
     shadowOffset: {
       width: 0,
       height: 10,
     },
     shadowOpacity: 0.25,
     shadowRadius: 3.5,
-    elevation: 5
-  }
+    elevation: 5,
+  },
 });

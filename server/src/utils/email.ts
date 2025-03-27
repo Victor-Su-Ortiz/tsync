@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer';
+import nodemailer from "nodemailer";
 
 /**
  * Sends an email using Nodemailer
@@ -16,7 +16,7 @@ export const sendEmail = async ({
 }): Promise<void> => {
   try {
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
+      service: "gmail",
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
@@ -24,7 +24,7 @@ export const sendEmail = async ({
     });
 
     // Ensure text version exists if not provided
-    const plainText = text || html.replace(/<[^>]+>/g, '');
+    const plainText = text || html.replace(/<[^>]+>/g, "");
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
@@ -37,7 +37,7 @@ export const sendEmail = async ({
     await transporter.sendMail(mailOptions);
     console.log(`Email sent successfully to ${to}`);
   } catch (error) {
-    console.error('Error sending email:', error);
-    throw new Error('Failed to send email');
+    console.error("Error sending email:", error);
+    throw new Error("Failed to send email");
   }
 };

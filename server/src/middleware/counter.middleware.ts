@@ -9,11 +9,11 @@ const requestStats: Record<string, number> = {};
 export const requestCounter = (req: Request, _res: Response, next: NextFunction) => {
   // Increment total count
   requestCount++;
-
+  
   // Track by endpoint
   const endpoint = `${req.method} ${req.originalUrl.split('?')[0]}`;
   requestStats[endpoint] = (requestStats[endpoint] || 0) + 1;
-
+  
   next();
 };
 
@@ -21,7 +21,7 @@ export const requestCounter = (req: Request, _res: Response, next: NextFunction)
 export const getRequestStats = (_req: Request, res: Response) => {
   res.status(200).json({
     totalRequests: requestCount,
-    byEndpoint: requestStats,
+    byEndpoint: requestStats
   });
 };
 
@@ -31,8 +31,8 @@ export const resetRequestStats = (_req: Request, res: Response) => {
   Object.keys(requestStats).forEach(key => {
     requestStats[key] = 0;
   });
-
+  
   res.status(200).json({
-    message: 'Request statistics have been reset',
+    message: 'Request statistics have been reset'
   });
 };
