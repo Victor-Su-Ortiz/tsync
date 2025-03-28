@@ -236,12 +236,12 @@ export default function Notifications() {
       {/* User Profile Modal */}
       {selectedUser && (
         <UserProfile
-          visible={userProfileVisible}
-          onClose={() => {
-            setUserProfileVisible(false);
-            setSelectedUser(null);
-            setSelectedRequestId(undefined);
-          }}
+          // visible={userProfileVisible}
+          // onClose={() => {
+          //   setUserProfileVisible(false);
+          //   setSelectedUser(null);
+          //   setSelectedRequestId(undefined);
+          // }}
           user={selectedUser}
           onFriendStatusChange={handleFriendStatusChange}
           requestId={selectedRequestId}

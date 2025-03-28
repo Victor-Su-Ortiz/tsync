@@ -209,17 +209,21 @@ export default function Home() {
       </View>
 
       {/* Search Button */}
-      <TouchableOpacity style={styles.searchButton} onPress={() => setSearchModalVisible(true)}>
+      <TouchableOpacity
+        style={styles.searchButton}
+        onPress={() => router.push('./../search/userSearch')
+        }
+      >
         <Ionicons name="search" size={20} color="#fff" />
         <Text style={styles.searchButtonText}>Search nearby users</Text>
       </TouchableOpacity>
 
-      {/* User Search Modal Component */}
+      {/* User Search Modal Component
       <UserSearch
         visible={searchModalVisible}
         onClose={() => setSearchModalVisible(false)}
         accessToken={authToken}
-      />
+      /> */}
 
       {loading ? (
         <View style={{ flex: 1, justifyContent: 'center' }}>

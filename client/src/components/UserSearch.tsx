@@ -19,6 +19,7 @@ import UserProfile from './UserProfile';
 import { debounce } from 'lodash';
 import { api } from '../utils/api'; // Import your API utility
 import { FriendStatus } from '../utils/enums';
+import { router } from 'expo-router';
 
 // Define request interface for consistency
 export interface FriendRequestData {
@@ -296,100 +297,121 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
     // Also update the search results list if this user is in it
     setUsers(prev =>
       prev.map(user =>
-        user.id === userId ? { ...user, friendStatus: newStatus, requestId } : user,
-      ),
+        user.id === userId
+          ? { ...user, friendStatus: newStatus, requestId }
+          : user
+      )
     );
   };
+};
 
-  const handleUserPress = (user: User) => {
-    console.log('Selected user:', user);
-    setSelectedUser(user);
+// const handleUserPress = (user: User) => {
+//   // console.log("Selected user:", user);
+//   // setSelectedUser(user);
 
-    // Add a slight delay to ensure the state updates before showing the profile
-    setTimeout(() => {
-      setProfileVisible(true);
-    }, 50);
-  };
+//   // // Add a slight delay to ensure the state updates before showing the profile
+//   // setTimeout(() => {
+//   //   setProfileVisible(true);
+//   // }, 50);
+//   try {
+//     router.replace('./');
+//   } catch {
+//     console.log("cant do it");
+//   }
+// };
 
-  const handleProfileClose = () => {
-    setProfileVisible(false);
-    // Delay clearing the selected user to prevent visual glitches
-    setTimeout(() => setSelectedUser(null), 300);
-  };
+const handleUserPress = (user: User) => {
+  console.log("selected user:", user);
+  router.push({
+    pathname: './../(modal)/userProfile',
+    params: { user: JSON.stringify(user) },
+  });
+};
 
-  // Handle text input changes
-  const handleSearchChange = (text: string) => {
-    setSearchQuery(text);
-  };
+const handleProfileClose = () => {
+  setProfileVisible(false);
+  // Delay clearing the selected user to prevent visual glitches
+  setTimeout(() => setSelectedUser(null), 300);
+};
 
-  return (
-    <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
-      >
-        <View style={styles.container}>
-          {/* Header with close button and search input */}
-          <View style={styles.header}>
-            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <Ionicons name="close" size={24} color="#333" />
-            </TouchableOpacity>
+// Handle text input changes
+const handleSearchChange = (text: string) => {
+  setSearchQuery(text);
+};
 
-            <View style={styles.searchContainer}>
-              <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
-              <TextInput
-                ref={inputRef}
-                style={styles.searchInput}
-                placeholder="Search for nearby users..."
-                value={searchQuery}
-                onChangeText={handleSearchChange}
-                returnKeyType="search"
-                clearButtonMode="while-editing"
-                autoFocus={true}
-              />
-            </View>
+return (
+  <KeyboardAvoidingView
+    style={{ flex: 1 }}
+    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
+  >
+    <View style={styles.container}>
+      {/* Header with close button and search input */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.closeButton}
+          onPress={onClose}
+        >
+          <Ionicons name="close" size={24} color="#333" />
+        </TouchableOpacity>
+
+        <View style={styles.searchContainer}>
+          <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
+          <TextInput
+            ref={inputRef}
+            style={styles.searchInput}
+            placeholder="Search for nearby users..."
+            value={searchQuery}
+            onChangeText={handleSearchChange}
+            returnKeyType="search"
+            clearButtonMode="while-editing"
+            autoFocus={true}
+          />
+        </View>
+      </View>
+
+      {/* User Results */}
+      {isSearching ? (
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color="#00cc99" />
+          <Text style={styles.loadingText}>Searching users...</Text>
+        </View>
+      ) : hasSearched ? (
+        users.length > 0 ? (
+          <FlatList
+            data={users}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.userItem}
+                onPress={() => handleUserPress(item)}
+              >
+                <Image
+                  source={{ uri: item.profilePicture || "https://via.placeholder.com/150" }}
+                  style={styles.userAvatar}
+                />
+                <View style={styles.userInfo}>
+                  <Text style={styles.userName}>{item.name}</Text>
+                </View>
+              </TouchableOpacity>
+            )}
+            contentContainerStyle={styles.userList}
+          />
+        ) : (
+          <View style={styles.centered}>
+            <Ionicons name="search-outline" size={50} color="#ccc" />
+            <Text style={styles.noUsersText}>No users found matching "{searchQuery}"</Text>
           </View>
+        )
+      ) : (
+        <View style={styles.centered}>
+          <Ionicons name="people-outline" size={70} color="#ddd" />
+          <Text style={styles.instructionText}>Search for tea enthusiasts</Text>
+        </View>
+      )}
 
-          {/* User Results */}
-          {isSearching ? (
-            <View style={styles.centered}>
-              <ActivityIndicator size="large" color="#00cc99" />
-              <Text style={styles.loadingText}>Searching users...</Text>
-            </View>
-          ) : hasSearched ? (
-            users.length > 0 ? (
-              <FlatList
-                data={users}
-                keyExtractor={item => item.id}
-                renderItem={({ item }) => (
-                  <TouchableOpacity style={styles.userItem} onPress={() => handleUserPress(item)}>
-                    <Image
-                      source={{ uri: item.profilePicture || 'https://via.placeholder.com/150' }}
-                      style={styles.userAvatar}
-                    />
-                    <View style={styles.userInfo}>
-                      <Text style={styles.userName}>{item.name}</Text>
-                    </View>
-                  </TouchableOpacity>
-                )}
-                contentContainerStyle={styles.userList}
-              />
-            ) : (
-              <View style={styles.centered}>
-                <Ionicons name="search-outline" size={50} color="#ccc" />
-                <Text style={styles.noUsersText}>No users found matching "{searchQuery}"</Text>
-              </View>
-            )
-          ) : (
-            <View style={styles.centered}>
-              <Ionicons name="people-outline" size={70} color="#ddd" />
-              <Text style={styles.instructionText}>Search for tea enthusiasts</Text>
-            </View>
-          )}
-
-          {/* User Profile Modal */}
-          {selectedUser && (
+      {/* User Profile Modal */}
+      {/* {selectedUser && (
             <UserProfile
               visible={profileVisible}
               onClose={handleProfileClose}
@@ -398,11 +420,10 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
               requestId={selectedUser.requestId}
               requestStatus={selectedUser.friendStatus}
             />
-          )}
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
-  );
+          )} */}
+    </View>
+  </KeyboardAvoidingView>
+);
 };
 
 const styles = StyleSheet.create({
