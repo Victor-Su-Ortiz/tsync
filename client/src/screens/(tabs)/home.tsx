@@ -1,6 +1,17 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { StyleSheet, Alert, Text, ActivityIndicator, FlatList, View, Image, ImageBackground, TouchableOpacity, AppState } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  StyleSheet,
+  Alert,
+  Text,
+  ActivityIndicator,
+  FlatList,
+  View,
+  Image,
+  ImageBackground,
+  TouchableOpacity,
+  AppState,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import axios from 'axios';
 import { GOOGLE_PLACES_API, EXPO_PUBLIC_API_URL } from '@env';
@@ -27,7 +38,6 @@ export type Notification = {
   };
   requestId?: string; // Added to track the original request ID
 };
-
 
 type Place = {
   place_id: string;
@@ -82,12 +92,11 @@ export default function Home() {
       // Use the notifications endpoint to get unread count
       const response = await api.get('/notifications', {
         headers: {
-          'Authorization': `Bearer ${authToken}`
+          Authorization: `Bearer ${authToken}`,
         },
         params: {
-          unreadOnly: true
-        }
-
+          unreadOnly: true,
+        },
       });
       console.log('API Notifications:', response.data);
 
@@ -96,14 +105,12 @@ export default function Home() {
         console.log('Unread notifications count:', unreadCount);
 
         updateNotifcationCount(unreadCount);
-        setNotifications(response.data.notifications)
+        setNotifications(response.data.notifications);
       }
     } catch (error) {
       console.error('Error checking notifications:', error);
     }
   };
-
-
 
   // Detect when screen comes to focus
   useEffect(() => {
@@ -125,17 +132,18 @@ export default function Home() {
     // Navigate to the notifications screen using the modal route
 
     try {
-      const notificationIds = notifications.map(notification => (notification._id))
-      const response = await api.patch("notifications/read",
+      const notificationIds = notifications.map(notification => notification._id);
+      const response = await api.patch(
+        'notifications/read',
         { notificationIds }, // This is the request body
         {
           headers: {
-            'Authorization': `Bearer ${authToken}`
-          }
-        }
+            Authorization: `Bearer ${authToken}`,
+          },
+        },
       );
     } catch (error: any) {
-      console.log("ERROR WHILE MARKING NOTIFS AS READ:", error)
+      console.log('ERROR WHILE MARKING NOTIFS AS READ:', error);
     } finally {
       router.push('./../(modal)/notifications');
     }
@@ -146,7 +154,7 @@ export default function Home() {
   const getUserLocation = async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert("Permission denied", 'Allow location access to find nearby stores!');
+      Alert.alert('Permission denied', 'Allow location access to find nearby stores!');
       return;
     }
     const location = await Location.getCurrentPositionAsync({});
@@ -188,10 +196,7 @@ export default function Home() {
         <Text style={styles.headerTitle}>Nearby Tea Shops 🍵</Text>
 
         {/* Notification Icon */}
-        <TouchableOpacity
-          style={styles.notificationButton}
-          onPress={handleNotificationPress}
-        >
+        <TouchableOpacity style={styles.notificationButton} onPress={handleNotificationPress}>
           <Ionicons name="notifications" size={24} color="#00cc99" />
           {notificationCount > 0 && (
             <View style={styles.notificationBadge}>
@@ -204,10 +209,7 @@ export default function Home() {
       </View>
 
       {/* Search Button */}
-      <TouchableOpacity
-        style={styles.searchButton}
-        onPress={() => setSearchModalVisible(true)}
-      >
+      <TouchableOpacity style={styles.searchButton} onPress={() => setSearchModalVisible(true)}>
         <Ionicons name="search" size={20} color="#fff" />
         <Text style={styles.searchButtonText}>Search nearby users</Text>
       </TouchableOpacity>
@@ -220,22 +222,26 @@ export default function Home() {
       />
 
       {loading ? (
-        <View style={{ flex: 1, justifyContent: "center" }}>
+        <View style={{ flex: 1, justifyContent: 'center' }}>
           <ActivityIndicator size="large" color="#00cc99" />
         </View>
       ) : (
         <FlatList
           data={shops as Place[]}
-          keyExtractor={(item) => item.place_id}
+          keyExtractor={item => item.place_id}
           renderItem={({ item }) => {
             const photoRef = item.photos?.[0]?.photo_reference;
             const imageUrl = photoRef
               ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photoRef}&key=${GOOGLE_PLACES_API_KEY}`
-              : "https://via.placeholder.com/400";
+              : 'https://via.placeholder.com/400';
 
             return (
               <TouchableOpacity onPress={() => handleTeaShopPress(item)}>
-                <ImageBackground source={{ uri: imageUrl }} style={styles.itemContainer} imageStyle={styles.image}>
+                <ImageBackground
+                  source={{ uri: imageUrl }}
+                  style={styles.itemContainer}
+                  imageStyle={styles.image}
+                >
                   <View style={styles.overlay}>
                     <Text style={styles.name}>{item.name}</Text>
                     <Text style={styles.address}>{item.vicinity}</Text>
@@ -256,11 +262,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16
+    marginBottom: 16,
   },
   headerTitle: {
     fontSize: 24,
-    fontWeight: 'bold'
+    fontWeight: 'bold',
   },
   notificationButton: {
     position: 'relative',
@@ -301,28 +307,28 @@ const styles = StyleSheet.create({
   itemContainer: {
     height: 150,
     borderRadius: 10,
-    overflow: "hidden",
+    overflow: 'hidden',
     marginBottom: 10,
-    justifyContent: "flex-end",
+    justifyContent: 'flex-end',
   },
   image: {
     borderRadius: 10,
   },
   overlay: {
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     padding: 10,
   },
   name: {
     fontSize: 18,
-    fontWeight: "bold",
-    color: "white",
+    fontWeight: 'bold',
+    color: 'white',
   },
   address: {
-    color: "#ddd",
+    color: '#ddd',
   },
   rating: {
     marginTop: 4,
     fontSize: 14,
-    color: "white",
+    color: 'white',
   },
 });

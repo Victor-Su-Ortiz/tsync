@@ -1,6 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Alert, Text, ActivityIndicator, FlatList, View, Image, ImageBackground, TouchableOpacity } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  StyleSheet,
+  Alert,
+  Text,
+  ActivityIndicator,
+  FlatList,
+  View,
+  Image,
+  ImageBackground,
+  TouchableOpacity,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import axios from 'axios';
 import { GOOGLE_PLACES_API } from '@env';
@@ -16,7 +26,6 @@ type Place = {
 };
 
 export default function Home() {
-
   const params = useLocalSearchParams();
   const isSelectingTeaShop = params.selectingTeaShop === 'true';
 
@@ -47,7 +56,6 @@ export default function Home() {
     checkNavigationMode();
   }, [params.selectingTeaShop]);
 
-
   const handleTeaShopPress = async (teaShop: Place) => {
     if (selectionMode === 'tea-shop-selection') {
       // If we're in selection mode, navigate back to add-event with the selected shop
@@ -58,22 +66,21 @@ export default function Home() {
         pathname: './add-event',
         params: {
           teaShopName: teaShop.name,
-        }
+        },
       });
     } else {
       // Normal tea shop interaction (e.g., view details)
-      console.log("Implement normal tea shop interaction.");
+      console.log('Implement normal tea shop interaction.');
       // Implement your normal tea shop interaction here
     }
   };
-
 
   const GOOGLE_PLACES_API_KEY = GOOGLE_PLACES_API;
 
   const getUserLocation = async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert("Permission denied", 'Allow location access to find nearby stores!');
+      Alert.alert('Permission denied', 'Allow location access to find nearby stores!');
       return;
     }
     const location = await Location.getCurrentPositionAsync({});
@@ -118,22 +125,26 @@ export default function Home() {
       </View>
 
       {loading ? (
-        <View style={{ flex: 1, justifyContent: "center" }}>
+        <View style={{ flex: 1, justifyContent: 'center' }}>
           <ActivityIndicator size="large" color="#00cc99" />
         </View>
       ) : (
         <FlatList
           data={shops as Place[]}
-          keyExtractor={(item) => item.place_id}
+          keyExtractor={item => item.place_id}
           renderItem={({ item }) => {
             const photoRef = item.photos?.[0]?.photo_reference;
             const imageUrl = photoRef
               ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photoRef}&key=${GOOGLE_PLACES_API_KEY}`
-              : "https://via.placeholder.com/400";
+              : 'https://via.placeholder.com/400';
 
             return (
               <TouchableOpacity onPress={() => handleTeaShopPress(item)}>
-                <ImageBackground source={{ uri: imageUrl }} style={styles.itemContainer} imageStyle={styles.image}>
+                <ImageBackground
+                  source={{ uri: imageUrl }}
+                  style={styles.itemContainer}
+                  imageStyle={styles.image}
+                >
                   <View style={styles.overlay}>
                     <Text style={styles.name}>{item.name}</Text>
                     <Text style={styles.address}>{item.vicinity}</Text>
@@ -154,38 +165,37 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16
+    marginBottom: 16,
   },
   headerTitle: {
     fontSize: 24,
-    fontWeight: 'bold'
+    fontWeight: 'bold',
   },
   itemContainer: {
     height: 150,
     borderRadius: 10,
-    overflow: "hidden",
+    overflow: 'hidden',
     marginBottom: 10,
-    justifyContent: "flex-end",
+    justifyContent: 'flex-end',
   },
   image: {
     borderRadius: 10,
   },
   overlay: {
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     padding: 10,
   },
   name: {
     fontSize: 18,
-    fontWeight: "bold",
-    color: "white",
+    fontWeight: 'bold',
+    color: 'white',
   },
   address: {
-    color: "#ddd",
+    color: '#ddd',
   },
   rating: {
     marginTop: 4,
     fontSize: 14,
-    color: "white",
+    color: 'white',
   },
 });
-

@@ -10,7 +10,7 @@ import {
   Platform,
   SafeAreaView,
   Alert,
-  ActivityIndicator
+  ActivityIndicator,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -98,9 +98,7 @@ export default function AddEventScreen() {
         router.push(sourceScreen as any);
       } else {
         // For relative paths like "./events" ensure in correct format
-        const normalizedPath = sourceScreen.startsWith('.')
-          ? sourceScreen
-          : `./${sourceScreen}`;
+        const normalizedPath = sourceScreen.startsWith('.') ? sourceScreen : `./${sourceScreen}`;
 
         router.push(normalizedPath as any);
       }
@@ -120,7 +118,7 @@ export default function AddEventScreen() {
         [
           {
             text: 'Cancel',
-            style: 'cancel'
+            style: 'cancel',
           },
           {
             text: 'Discard',
@@ -137,9 +135,9 @@ export default function AddEventScreen() {
 
               // Navigate back to source screen
               navigateBack();
-            }
-          }
-        ]
+            },
+          },
+        ],
       );
     } else {
       // No changes to discard, just navigate back
@@ -176,11 +174,11 @@ export default function AddEventScreen() {
       endDate: dateTimeRanges[0].endDate.toISOString(),
 
       // Include other fields that might be required
-      attendees: selectedFriends.map((friend) => ({
+      attendees: selectedFriends.map(friend => ({
         userId: (friend as Friend).id,
         name: (friend as Friend).name,
         email: (friend as Friend).email,
-      }))
+      })),
     };
 
     try {
@@ -192,8 +190,8 @@ export default function AddEventScreen() {
       // Call the API to create the event, with explicit auth header
       const response = await api.post('/events', newEvent, {
         headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
+          Authorization: `Bearer ${authToken}`,
+        },
       });
 
       console.log('Event created successfully:', response.data);
@@ -202,16 +200,14 @@ export default function AddEventScreen() {
       setFormDirty(false);
 
       // Show success message and navigate back to source screen
-      Alert.alert(
-        'Success!',
-        'Event has been created successfully.',
-        [{
-          text: 'OK', onPress: () => {
+      Alert.alert('Success!', 'Event has been created successfully.', [
+        {
+          text: 'OK',
+          onPress: () => {
             navigateBack(), resetForm();
-          }
-        }]
-
-      );
+          },
+        },
+      ]);
     } catch (error: any) {
       console.error('Error creating event:', error);
 
@@ -234,11 +230,7 @@ export default function AddEventScreen() {
         errorMessage = 'No response from server. Please check your internet connection.';
       }
 
-      Alert.alert(
-        'Error',
-        errorMessage,
-        [{ text: 'OK' }]
-      );
+      Alert.alert('Error', errorMessage, [{ text: 'OK' }]);
     } finally {
       setIsLoading(false);
     }
@@ -257,29 +249,29 @@ export default function AddEventScreen() {
 
   const formatDateTimeRangeSummary = () => {
     if (dateTimeRanges.length === 0) {
-      return "Tap to add dates and times";
+      return 'Tap to add dates and times';
     }
 
     if (dateTimeRanges.length === 1) {
       const range = dateTimeRanges[0];
       const startDateStr = range.startDate.toLocaleDateString('en-US', {
         month: 'short',
-        day: 'numeric'
+        day: 'numeric',
       });
       const endDateStr = range.endDate.toLocaleDateString('en-US', {
         month: 'short',
-        day: 'numeric'
+        day: 'numeric',
       });
 
       const startTimeStr = range.startTime.toLocaleTimeString('en-US', {
         hour: 'numeric',
         minute: '2-digit',
-        hour12: true
+        hour12: true,
       });
       const endTimeStr = range.endTime.toLocaleTimeString('en-US', {
         hour: 'numeric',
         minute: '2-digit',
-        hour12: true
+        hour12: true,
       });
 
       if (range.startDate.toDateString() === range.endDate.toDateString()) {
@@ -316,14 +308,12 @@ export default function AddEventScreen() {
               onPress={handleSelectTeaShop}
             >
               <Text style={teaShopInfo ? styles.teaShopText : styles.placeholderText}>
-                {teaShopInfo || "Tap to select a tea shop"}
+                {teaShopInfo || 'Tap to select a tea shop'}
               </Text>
               <Ionicons name="chevron-forward" size={20} color="#aaa" />
             </TouchableOpacity>
 
-            {teaShopAddress ? (
-              <Text style={styles.addressText}>{teaShopAddress}</Text>
-            ) : null}
+            {teaShopAddress ? <Text style={styles.addressText}>{teaShopAddress}</Text> : null}
 
             <Text style={styles.label}>Event Name</Text>
             <TextInput
@@ -346,7 +336,10 @@ export default function AddEventScreen() {
 
             <Text style={styles.label}>Date & Time</Text>
             <TouchableOpacity
-              style={[styles.dateTimeButton, dateTimeRanges.length > 0 && styles.dateTimeButtonActive]}
+              style={[
+                styles.dateTimeButton,
+                dateTimeRanges.length > 0 && styles.dateTimeButtonActive,
+              ]}
               onPress={() => setDateTimeModalVisible(true)}
             >
               <Text
@@ -361,29 +354,36 @@ export default function AddEventScreen() {
               <View style={styles.rangesPreview}>
                 {dateTimeRanges.map((range, index) => (
                   <View key={range.id} style={styles.rangePreviewItem}>
-                    <Ionicons name="time-outline" size={16} color="#00cc99" style={styles.rangeIcon} />
+                    <Ionicons
+                      name="time-outline"
+                      size={16}
+                      color="#00cc99"
+                      style={styles.rangeIcon}
+                    />
                     <Text style={styles.rangePreviewText}>
                       {range.startDate.toLocaleDateString('en-US', {
                         weekday: 'short',
                         month: 'short',
-                        day: 'numeric'
+                        day: 'numeric',
                       })}
-                      {range.startDate.toDateString() !== range.endDate.toDateString() ?
-                        ` — ${range.endDate.toLocaleDateString('en-US', {
-                          weekday: 'short',
-                          month: 'short',
-                          day: 'numeric'
-                        })}` :
-                        ''}
+                      {range.startDate.toDateString() !== range.endDate.toDateString()
+                        ? ` — ${range.endDate.toLocaleDateString('en-US', {
+                            weekday: 'short',
+                            month: 'short',
+                            day: 'numeric',
+                          })}`
+                        : ''}
                       {', '}
                       {range.startTime.toLocaleTimeString('en-US', {
                         hour: 'numeric',
                         minute: '2-digit',
-                        hour12: true
-                      })} — {range.endTime.toLocaleTimeString('en-US', {
+                        hour12: true,
+                      })}{' '}
+                      —{' '}
+                      {range.endTime.toLocaleTimeString('en-US', {
                         hour: 'numeric',
                         minute: '2-digit',
-                        hour12: true
+                        hour12: true,
                       })}
                     </Text>
                   </View>
@@ -423,7 +423,7 @@ export default function AddEventScreen() {
       <DateTimePickerModal
         isVisible={dateTimeModalVisible}
         onClose={() => setDateTimeModalVisible(false)}
-        onConfirm={(selectedRanges) => setDateTimeRanges(selectedRanges)}
+        onConfirm={selectedRanges => setDateTimeRanges(selectedRanges)}
         existingRanges={dateTimeRanges}
         title="Select Dates"
       />

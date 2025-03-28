@@ -6,8 +6,6 @@ import { createAdapter } from '@socket.io/redis-adapter';
 import { createClient } from 'redis';
 import User from '../models/user.model';
 
-
-
 export class SocketService {
   private static instance: SocketService;
   private io: Server | null = null;
@@ -27,9 +25,9 @@ export class SocketService {
     this.io = new Server(httpServer, {
       cors: {
         origin: '*',
-        methods: ["GET", "POST"],
-        credentials: true
-      }
+        methods: ['GET', 'POST'],
+        credentials: true,
+      },
     });
 
     // Setup Redis adapter for horizontal scaling (optional)
@@ -68,9 +66,9 @@ export class SocketService {
     try {
       const pubClient = createClient({ url: process.env.REDIS_URL });
       const subClient = pubClient.duplicate();
-      
+
       await Promise.all([pubClient.connect(), subClient.connect()]);
-      
+
       this.io?.adapter(createAdapter(pubClient, subClient));
       console.log('Redis adapter for Socket.IO configured');
     } catch (error) {
@@ -110,7 +108,7 @@ export class SocketService {
    */
   public sendToUser(userId: string, event: string, data: any): void {
     if (!this.io) return;
-    
+
     this.io.to(`user:${userId}`).emit(event, data);
   }
 
@@ -126,7 +124,7 @@ export class SocketService {
    */
   public broadcast(event: string, data: any): void {
     if (!this.io) return;
-    
+
     this.io.emit(event, data);
   }
 

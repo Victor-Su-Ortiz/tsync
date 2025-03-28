@@ -1,8 +1,8 @@
-import User from "../models/user.model";
-import crypto from "crypto";
-import { sendEmail } from "../utils/email";
-import { NotFoundError } from "../utils/errors";
-import FriendRequest from "../models/friendRequest.model";
+import User from '../models/user.model';
+import crypto from 'crypto';
+import { sendEmail } from '../utils/email';
+import { NotFoundError } from '../utils/errors';
+import FriendRequest from '../models/friendRequest.model';
 
 export interface UserSearchResult {
   _id: string;
@@ -13,22 +13,21 @@ export interface UserSearchResult {
 }
 
 export class UserService {
-
   /**
    * Send verification email for updated email address
    */
   public static async sendVerificationEmail(userId: string, newEmail: string): Promise<boolean> {
     const user = await User.findById(userId);
     if (!user) {
-      throw new NotFoundError("User not found");
+      throw new NotFoundError('User not found');
     }
 
     // Generate verification token
-    const verificationToken = crypto.randomBytes(32).toString("hex");
+    const verificationToken = crypto.randomBytes(32).toString('hex');
     const hashedVerificationToken = crypto
-      .createHash("sha256")
+      .createHash('sha256')
       .update(verificationToken)
-      .digest("hex");
+      .digest('hex');
 
     // Update user with new token
     user.verificationToken = hashedVerificationToken;
@@ -37,11 +36,11 @@ export class UserService {
     try {
       // Construct verification URL
       const verificationUrl = `${process.env.CLIENT_URL}/verify-email/${verificationToken}`;
-      
+
       // Send verification email
       await sendEmail({
         to: newEmail,
-        subject: "Verify your new email address",
+        subject: 'Verify your new email address',
         text: `Please click the link to verify your new email address: ${verificationUrl}`,
         html: `
           <div>
@@ -56,8 +55,8 @@ export class UserService {
 
       return true;
     } catch (error) {
-      console.error("Error sending verification email:", error);
-      throw new Error("Failed to send verification email");
+      console.error('Error sending verification email:', error);
+      throw new Error('Failed to send verification email');
     }
   }
 
@@ -68,17 +67,17 @@ export class UserService {
     const total = await User.countDocuments();
     const verified = await User.countDocuments({ isEmailVerified: true });
     const googleUsers = await User.countDocuments({ googleId: { $exists: true, $ne: null } });
-    const admins = await User.countDocuments({ role: "admin" });
-    
+    const admins = await User.countDocuments({ role: 'admin' });
+
     const lastWeekDate = new Date();
     lastWeekDate.setDate(lastWeekDate.getDate() - 7);
-    
-    const newLastWeek = await User.countDocuments({ 
-      createdAt: { $gte: lastWeekDate }
+
+    const newLastWeek = await User.countDocuments({
+      createdAt: { $gte: lastWeekDate },
     });
-    
-    const activeLastWeek = await User.countDocuments({ 
-      lastLogin: { $gte: lastWeekDate }
+
+    const activeLastWeek = await User.countDocuments({
+      lastLogin: { $gte: lastWeekDate },
     });
 
     return {
@@ -88,35 +87,39 @@ export class UserService {
       admins,
       newLastWeek,
       activeLastWeek,
-      verificationRate: total > 0 ? Math.round((verified / total) * 100) : 0
+      verificationRate: total > 0 ? Math.round((verified / total) * 100) : 0,
     };
   }
 
   /**
    * Search users by name or email
    */
-  public static async searchUsers(query: string, limit: number = 10, currentUserId?: string): Promise<UserSearchResult[]> {
+  public static async searchUsers(
+    query: string,
+    limit: number = 10,
+    currentUserId?: string
+  ): Promise<UserSearchResult[]> {
     if (!query || query.length < 3) {
       return [];
     }
     // Create a MongoDB text search query
     // This requires a text index on name and email fields
     const searchQuery = {
-        $or: [
-            { name: { $regex: query, $options: 'i' } },
-            { email: { $regex: query, $options: 'i' } }
-        ]
+      $or: [
+        { name: { $regex: query, $options: 'i' } },
+        { email: { $regex: query, $options: 'i' } },
+      ],
     };
-    
+
     // Exclude current user from results if provided
     if (currentUserId) {
-        Object.assign(searchQuery, { _id: { $ne: currentUserId } });
+      Object.assign(searchQuery, { _id: { $ne: currentUserId } });
     }
-    
+
     const users = await User.find(searchQuery)
-        .limit(limit)
-        .select('_id name email profilePicture friends')
-        .sort({ name: 1 });
+      .limit(limit)
+      .select('_id name email profilePicture friends')
+      .sort({ name: 1 });
 
     // If currentUserId is provided, fetch relationship information
     if (currentUserId && users.length > 0) {
@@ -133,8 +136,8 @@ export class UserService {
       const friendRequests = await FriendRequest.find({
         $or: [
           { sender: currentUserId, receiver: { $in: userIds } },
-          { receiver: currentUserId, sender: { $in: userIds } }
-        ]
+          { receiver: currentUserId, sender: { $in: userIds } },
+        ],
       });
 
       // Create lookup maps for faster access
@@ -162,7 +165,10 @@ export class UserService {
           friendStatus = 'friends';
         } else if (sentRequestsMap.has(userId) && sentRequestsMap.get(userId) === 'pending') {
           friendStatus = 'pending_sent';
-        } else if (receivedRequestsMap.has(userId) && receivedRequestsMap.get(userId) === 'pending') {
+        } else if (
+          receivedRequestsMap.has(userId) &&
+          receivedRequestsMap.get(userId) === 'pending'
+        ) {
           friendStatus = 'pending_received';
         }
 
@@ -171,77 +177,77 @@ export class UserService {
           name: user.name,
           email: user.email,
           profilePicture: user.profilePicture,
-          friendStatus
+          friendStatus,
         };
       });
     }
-      // If no current user provided, return users without relationship info
+    // If no current user provided, return users without relationship info
     return users.map(user => ({
       _id: user._id.toString(),
       name: user.name,
       email: user.email,
       profilePicture: user.profilePicture,
-      friendStatus: 'none'
+      friendStatus: 'none',
     }));
-}
+  }
 
   /**
    * Get users with friend status for current user
    */
-//   public static async getUsersWithFriendStatus(userId: string, page: number = 1, limit: number = 10): Promise<any> {
-//     const currentUser = await User.findById(userId);
-//     if (!currentUser) {
-//       throw new NotFoundError("User not found");
-//     }
+  //   public static async getUsersWithFriendStatus(userId: string, page: number = 1, limit: number = 10): Promise<any> {
+  //     const currentUser = await User.findById(userId);
+  //     if (!currentUser) {
+  //       throw new NotFoundError("User not found");
+  //     }
 
-//     const skip = (page - 1) * limit;
-    
-//     // Get users
-//     const users = await User.find({ _id: { $ne: userId } })
-//       .select("_id name email profilePicture")
-//       .skip(skip)
-//       .limit(limit);
-    
-//     const friendIds = new Set(currentUser.friends.map(id => id.toString()));
-    
-//     // Map pending requests by from user ID
-//     const pendingRequests = new Map();
-//     currentUser.friendRequests.forEach(request => {
-//       if (request.status === 'pending') {
-//         pendingRequests.set(request.from.toString(), request._id);
-//       }
-//     });
-    
-//     // Enhanced users with friend status
-//     const enhancedUsers = users.map(user => {
-//       const userObject = user.toObject();
-      
-//       // Determine friend status
-//       if (friendIds.has(user._id.toString())) {
-//         userObject.friendStatus = 'friends';
-//       } else if (pendingRequests.has(user._id.toString())) {
-//         userObject.friendStatus = 'request-received';
-//         userObject.requestId = pendingRequests.get(user._id.toString());
-//       } else {
-//         // To determine if current user sent request, we need to check target user's friend requests
-//         userObject.friendStatus = 'not-friends';
-//       }
-      
-//       return userObject;
-//     });
-    
-//     const total = await User.countDocuments({ _id: { $ne: userId } });
-    
-//     return {
-//       users: enhancedUsers,
-//       pagination: {
-//         total,
-//         page,
-//         pages: Math.ceil(total / limit),
-//         limit
-//       }
-//     };
-//   }
+  //     const skip = (page - 1) * limit;
+
+  //     // Get users
+  //     const users = await User.find({ _id: { $ne: userId } })
+  //       .select("_id name email profilePicture")
+  //       .skip(skip)
+  //       .limit(limit);
+
+  //     const friendIds = new Set(currentUser.friends.map(id => id.toString()));
+
+  //     // Map pending requests by from user ID
+  //     const pendingRequests = new Map();
+  //     currentUser.friendRequests.forEach(request => {
+  //       if (request.status === 'pending') {
+  //         pendingRequests.set(request.from.toString(), request._id);
+  //       }
+  //     });
+
+  //     // Enhanced users with friend status
+  //     const enhancedUsers = users.map(user => {
+  //       const userObject = user.toObject();
+
+  //       // Determine friend status
+  //       if (friendIds.has(user._id.toString())) {
+  //         userObject.friendStatus = 'friends';
+  //       } else if (pendingRequests.has(user._id.toString())) {
+  //         userObject.friendStatus = 'request-received';
+  //         userObject.requestId = pendingRequests.get(user._id.toString());
+  //       } else {
+  //         // To determine if current user sent request, we need to check target user's friend requests
+  //         userObject.friendStatus = 'not-friends';
+  //       }
+
+  //       return userObject;
+  //     });
+
+  //     const total = await User.countDocuments({ _id: { $ne: userId } });
+
+  //     return {
+  //       users: enhancedUsers,
+  //       pagination: {
+  //         total,
+  //         page,
+  //         pages: Math.ceil(total / limit),
+  //         limit
+  //       }
+  //     };
+  //   }
 }
 
 export default UserService;

@@ -9,8 +9,8 @@ import {
   Modal,
   Alert,
   ScrollView,
-  ActivityIndicator
-} from "react-native";
+  ActivityIndicator,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
@@ -40,7 +40,7 @@ const UserProfile = ({
   user,
   onFriendStatusChange,
   requestId: initialRequestId,
-  requestStatus
+  requestStatus,
 }: UserProfileProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingStatus, setLoadingStatus] = useState(false);
@@ -76,33 +76,33 @@ const UserProfile = ({
       console.log('Received friend_status_changed event:', event, data);
 
       switch (event) {
-        case "FRIEND_REQUEST_RECEIVED":
+        case 'FRIEND_REQUEST_RECEIVED':
           setCurrentStatus(FriendStatus.INCOMING_REQUEST);
           setRequestId(data._id);
           if (onFriendStatusChange) {
             onFriendStatusChange(user.id, FriendStatus.INCOMING_REQUEST, data._id);
           }
           break;
-        case "FRIEND_ACCEPTED":
+        case 'FRIEND_ACCEPTED':
           setCurrentStatus(FriendStatus.FRIENDS);
           if (onFriendStatusChange) {
             onFriendStatusChange(user.id, FriendStatus.FRIENDS, undefined);
           }
           break;
-        case "FRIEND_REJECTED":
+        case 'FRIEND_REJECTED':
           setCurrentStatus(FriendStatus.NONE);
           if (onFriendStatusChange) {
             onFriendStatusChange(user.id, FriendStatus.NONE, undefined);
           }
           break;
-        case "FRIEND_REQUEST_CANCELED":
+        case 'FRIEND_REQUEST_CANCELED':
           setCurrentStatus(FriendStatus.NONE);
           if (onFriendStatusChange) {
             onFriendStatusChange(user.id, FriendStatus.NONE, undefined);
           }
           break;
       }
-    }
+    };
     if (socket) {
       console.log('Setting up socket listener for friend_request_status_changed');
       socket.on('friend_request_status_changed', handleFriendStatusChange);
@@ -114,26 +114,24 @@ const UserProfile = ({
         socket.off('friend_request_status_changed', handleFriendStatusChange);
       }
     };
-
   }, [socket]);
 
   const handleSendFriendRequest = async () => {
     if (!user) return;
 
-    // console.log("REQUEST ID:", requestId);
-    if (!user.id) {
-      user.id = requestId || ""
-    }
-
     setIsLoading(true);
 
     try {
       // Send friend request using our API route
-      const request = await api.post(`/friends/requests/${user.id}`, {}, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
-      });
+      const request = await api.post(
+        `/friends/requests/${user.id}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        },
+      );
 
       // Update local status
       setCurrentStatus(FriendStatus.PENDING);
@@ -147,15 +145,15 @@ const UserProfile = ({
       }
 
       // Show success message
-      Alert.alert("Friend Request Sent", `Your friend request to ${user.name} has been sent.`);
+      Alert.alert('Friend Request Sent', `Your friend request to ${user.name} has been sent.`);
     } catch (error: any) {
-      console.error("Error sending friend request:", error.response?.data || error);
+      console.error('Error sending friend request:', error.response?.data || error);
 
       // Show a more specific error message based on the error response
       if (error.response?.data?.message) {
-        Alert.alert("Error", error.response.data.message);
+        Alert.alert('Error', error.response.data.message);
       } else {
-        Alert.alert("Error", "Failed to send friend request. Please try again.");
+        Alert.alert('Error', 'Failed to send friend request. Please try again.');
       }
     } finally {
       setIsLoading(false);
@@ -164,21 +162,21 @@ const UserProfile = ({
 
   const handleCancelFriendRequest = async () => {
     if (!user || !requestId) {
-      console.error("Missing user or requestId");
-      Alert.alert("Error", "Cannot cancel request: Missing information");
+      console.error('Missing user or requestId');
+      Alert.alert('Error', 'Cannot cancel request: Missing information');
       return;
     }
     setIsLoading(true);
 
     try {
-      console.log("Trying to cancel request")
+      console.log('Trying to cancel request');
       // You'll need to implement a cancel request endpoint on your backend
       await api.delete(`/friends/requests/${requestId}`, {
         headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
+          Authorization: `Bearer ${authToken}`,
+        },
       });
-      console.log("Request cancelled")
+      console.log('Request cancelled');
 
       // Update local status
       setCurrentStatus(FriendStatus.NONE);
@@ -191,10 +189,10 @@ const UserProfile = ({
         onFriendStatusChange(user.id, FriendStatus.NONE, requestId);
       }
 
-      Alert.alert("Request Cancelled", "Friend request has been cancelled.");
+      Alert.alert('Request Cancelled', 'Friend request has been cancelled.');
     } catch (error: any) {
-      console.error("Error cancelling request:", error);
-      Alert.alert("Error", "Failed to cancel request. Please try again.");
+      console.error('Error cancelling request:', error);
+      Alert.alert('Error', 'Failed to cancel request. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -202,19 +200,23 @@ const UserProfile = ({
 
   const handleAcceptFriendRequest = async () => {
     if (!user || !requestId) {
-      console.error("Missing user or requestId");
-      Alert.alert("Error", "Cannot accept request: Missing information");
+      console.error('Missing user or requestId');
+      Alert.alert('Error', 'Cannot accept request: Missing information');
       return;
     }
     setIsLoading(true);
 
     try {
       // Accept friend request using our API route
-      await api.put(`/friends/requests/${requestId}/accept`, {}, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
-      });
+      await api.put(
+        `/friends/requests/${requestId}/accept`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        },
+      );
 
       // Update local status
       setCurrentStatus(FriendStatus.FRIENDS);
@@ -225,18 +227,18 @@ const UserProfile = ({
       }
 
       // Show success message
-      Alert.alert("Friend Request Accepted", `You are now friends with ${user.name}.`);
+      Alert.alert('Friend Request Accepted', `You are now friends with ${user.name}.`);
 
       // Close the profile after accepting
       setTimeout(() => onClose(), 1500);
     } catch (error: any) {
-      console.error("Error accepting friend request:", error);
+      console.error('Error accepting friend request:', error);
 
       // Show a more specific error message
       if (error.response?.data?.message) {
-        Alert.alert("Error", error.response.data.message);
+        Alert.alert('Error', error.response.data.message);
       } else {
-        Alert.alert("Error", "Failed to accept friend request. Please try again.");
+        Alert.alert('Error', 'Failed to accept friend request. Please try again.');
       }
     } finally {
       setIsLoading(false);
@@ -245,8 +247,8 @@ const UserProfile = ({
 
   const handleDeclineFriendRequest = async () => {
     if (!user || !requestId) {
-      console.error("Missing user or requestId");
-      Alert.alert("Error", "Cannot decline request: Missing information");
+      console.error('Missing user or requestId');
+      Alert.alert('Error', 'Cannot decline request: Missing information');
       return;
     }
 
@@ -254,11 +256,15 @@ const UserProfile = ({
 
     try {
       // Reject friend request using our API route
-      await api.put(`/friends/requests/${requestId}/reject`, {}, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
-      });
+      await api.put(
+        `/friends/requests/${requestId}/reject`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        },
+      );
 
       // Update local status
       setCurrentStatus(FriendStatus.NONE);
@@ -269,18 +275,18 @@ const UserProfile = ({
       }
 
       // Show success message
-      Alert.alert("Friend Request Declined", `Friend request from ${user.name} has been declined.`);
+      Alert.alert('Friend Request Declined', `Friend request from ${user.name} has been declined.`);
 
       // Close the profile after declining
       setTimeout(() => onClose(), 1500);
     } catch (error: any) {
-      console.error("Error declining friend request:", error);
+      console.error('Error declining friend request:', error);
 
       // Show a more specific error message
       if (error.response?.data?.message) {
-        Alert.alert("Error", error.response.data.message);
+        Alert.alert('Error', error.response.data.message);
       } else {
-        Alert.alert("Error", "Failed to decline friend request. Please try again.");
+        Alert.alert('Error', 'Failed to decline friend request. Please try again.');
       }
     } finally {
       setIsLoading(false);
@@ -295,16 +301,13 @@ const UserProfile = ({
       animationType="slide"
       transparent={false}
       onRequestClose={onClose}
-      presentationStyle='fullScreen'
+      presentationStyle="fullScreen"
     >
       <View style={styles.modalContainer}>
         <View style={styles.container}>
           {/* Header with back button */}
           <View style={styles.header}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={onClose}
-            >
+            <TouchableOpacity style={styles.backButton} onPress={onClose}>
               <Ionicons name="arrow-back" size={24} color="#333" />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>{user.name}</Text>
@@ -315,7 +318,7 @@ const UserProfile = ({
             {/* Profile Header */}
             <View style={styles.profileHeader}>
               <Image
-                source={{ uri: user.profilePicture || "https://via.placeholder.com/150" }}
+                source={{ uri: user.profilePicture || 'https://via.placeholder.com/150' }}
                 style={styles.profileImage}
               />
               <Text style={styles.userName}>{user.name}</Text>
@@ -585,7 +588,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 24,
     color: '#333',
-  }
+  },
 });
 
 export default UserProfile;

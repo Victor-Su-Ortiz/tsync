@@ -12,8 +12,8 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
-  Modal
-} from "react-native";
+  Modal,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import UserProfile from './UserProfile';
 import { debounce } from 'lodash';
@@ -66,20 +66,19 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
 
   // Cache of friend requests to avoid repeated API calls
   const [friendRequestsCache, setFriendRequestsCache] = useState<{
-    incoming: Record<string, string>, // userId -> requestId
-    outgoing: Record<string, string>, // userId -> requestId
-    friends: string[] // array of friend userIds
+    incoming: Record<string, string>; // userId -> requestId
+    outgoing: Record<string, string>; // userId -> requestId
+    friends: string[]; // array of friend userIds
   }>({
     incoming: {},
     outgoing: {},
-    friends: []
+    friends: [],
   });
 
   // Define the searchUsers function without debounce first
   const searchUsers = async (query: string) => {
-
     if (!query.trim()) {
-      console.log("⚠️ Empty query, exiting searchUsers");
+      console.log('⚠️ Empty query, exiting searchUsers');
       return;
     }
 
@@ -93,22 +92,19 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
 
     try {
       // Get search results
-      const searchResponse = await api.get(
-        '/users/search',
-        {
-          params: { q: query, limit: 10 },
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
+      const searchResponse = await api.get('/users/search', {
+        params: { q: query, limit: 10 },
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
 
       const searchedUsers = searchResponse.data.users || [];
 
       // Get the current friend requests cache state
       // This ensures we use the latest state
       const currentCache = friendRequestsCache;
-      console.log("Searched Users:", searchedUsers);
+      console.log('Searched Users:', searchedUsers);
 
       // Apply friend statuses from our cache
       const updatedUsers = searchedUsers.map((user: User) => {
@@ -132,20 +128,20 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
           friendStatus = FriendStatus.PENDING;
           requestId = currentCache.outgoing[userId];
         }
-        console.log("User:", user.name, "Status:", friendStatus);
+        console.log('User:', user.name, 'Status:', friendStatus);
 
         return {
           ...user,
           id: userId, // Ensure id is consistently available
           friendStatus,
-          requestId
+          requestId,
         };
       });
 
       setUsers(updatedUsers);
     } catch (error: any) {
-      console.error("❌ Error searching for users:", error);
-      console.error("⚠️ API Error Response:", error.response?.status, error.response?.data);
+      console.error('❌ Error searching for users:', error);
+      console.error('⚠️ API Error Response:', error.response?.status, error.response?.data);
 
       // Just show empty results if there's an error
       setUsers([]);
@@ -208,14 +204,14 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
       // Fetch all friend relationships in parallel for efficiency
       const [incomingResponse, outgoingResponse, friendsResponse] = await Promise.all([
         api.get('/friends/requests/received/pending', {
-          headers: { Authorization: `Bearer ${accessToken}` }
+          headers: { Authorization: `Bearer ${accessToken}` },
         }),
         api.get('/friends/requests/sent/pending', {
-          headers: { Authorization: `Bearer ${accessToken}` }
+          headers: { Authorization: `Bearer ${accessToken}` },
         }),
         api.get('/friends', {
-          headers: { Authorization: `Bearer ${accessToken}` }
-        })
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }),
       ]);
       // console.log('incoming request data:', incomingResponse.data);
       // console.log('outgoing request data:', outgoingResponse.data);
@@ -251,13 +247,13 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
       setFriendRequestsCache({
         incoming: incomingRequests,
         outgoing: outgoingRequests,
-        friends: friendsList
+        friends: friendsList,
       });
 
       console.log('Friend data loaded:', {
         incomingCount: Object.keys(incomingRequests).length,
         outgoingCount: Object.keys(outgoingRequests).length,
-        friendsCount: friendsList.length
+        friendsCount: friendsList.length,
       });
     } catch (error) {
       console.error('Error fetching friend data:', error);
@@ -265,8 +261,19 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
   };
 
   // Handle friend status changes from the UserProfile component
-  const handleFriendStatusChange = (userId: string, newStatus: FriendStatus, requestId?: string) => {
-    console.log("updating friend status for user:", userId, "to:", newStatus, "requestId:", requestId);
+  const handleFriendStatusChange = (
+    userId: string,
+    newStatus: FriendStatus,
+    requestId?: string,
+  ) => {
+    console.log(
+      'updating friend status for user:',
+      userId,
+      'to:',
+      newStatus,
+      'requestId:',
+      requestId,
+    );
     // Update our cache based on the new status
     const newCache = { ...friendRequestsCache };
 
@@ -289,15 +296,13 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
     // Also update the search results list if this user is in it
     setUsers(prev =>
       prev.map(user =>
-        user.id === userId
-          ? { ...user, friendStatus: newStatus, requestId }
-          : user
-      )
+        user.id === userId ? { ...user, friendStatus: newStatus, requestId } : user,
+      ),
     );
   };
 
   const handleUserPress = (user: User) => {
-    console.log("Selected user:", user);
+    console.log('Selected user:', user);
     setSelectedUser(user);
 
     // Add a slight delay to ensure the state updates before showing the profile
@@ -318,12 +323,7 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
   };
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent={false}
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -332,10 +332,7 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
         <View style={styles.container}>
           {/* Header with close button and search input */}
           <View style={styles.header}>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={onClose}
-            >
+            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
               <Ionicons name="close" size={24} color="#333" />
             </TouchableOpacity>
 
@@ -364,14 +361,11 @@ const UserSearch = ({ visible, onClose, accessToken }: UserSearchProps) => {
             users.length > 0 ? (
               <FlatList
                 data={users}
-                keyExtractor={(item) => item.id}
+                keyExtractor={item => item.id}
                 renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={styles.userItem}
-                    onPress={() => handleUserPress(item)}
-                  >
+                  <TouchableOpacity style={styles.userItem} onPress={() => handleUserPress(item)}>
                     <Image
-                      source={{ uri: item.profilePicture || "https://via.placeholder.com/150" }}
+                      source={{ uri: item.profilePicture || 'https://via.placeholder.com/150' }}
                       style={styles.userAvatar}
                     />
                     <View style={styles.userInfo}>

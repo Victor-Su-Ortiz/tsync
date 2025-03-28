@@ -1,26 +1,21 @@
-import Joi from "joi";
+import Joi from 'joi';
 
 export const friendValidation = {
-
   // Validate friend request params (receiverId)
   checkFriendRequest: Joi.object({
     params: Joi.object({
-      userId: Joi.string()
-        .required()
-        .messages({
-          'any.required': 'Receiver ID is required'
-        })
-    })
+      userId: Joi.string().required().messages({
+        'any.required': 'Receiver ID is required',
+      }),
+    }),
   }),
 
   checkPendingRequest: Joi.object({
     params: Joi.object({
-      userId: Joi.string()
-        .required()
-        .messages({
-          'any.required': 'User ID is required'
-        })
-    })
+      userId: Joi.string().required().messages({
+        'any.required': 'User ID is required',
+      }),
+    }),
   }),
 
   sendRequest: Joi.object({
@@ -29,8 +24,8 @@ export const friendValidation = {
         .required()
         .regex(/^[0-9a-fA-F]{24}$/)
         .messages({
-          "string.pattern.base": "Invalid user ID format",
-          "any.required": "User ID is required",
+          'string.pattern.base': 'Invalid user ID format',
+          'any.required': 'User ID is required',
         }),
     }),
   }),
@@ -41,8 +36,8 @@ export const friendValidation = {
         .required()
         .regex(/^[0-9a-fA-F]{24}$/)
         .messages({
-          "string.pattern.base": "Invalid request ID format",
-          "any.required": "Request ID is required",
+          'string.pattern.base': 'Invalid request ID format',
+          'any.required': 'Request ID is required',
         }),
     }),
   }),
@@ -53,8 +48,8 @@ export const friendValidation = {
         .required()
         .regex(/^[0-9a-fA-F]{24}$/)
         .messages({
-          "string.pattern.base": "Invalid friend ID format",
-          "any.required": "Friend ID is required",
+          'string.pattern.base': 'Invalid friend ID format',
+          'any.required': 'Friend ID is required',
         }),
     }),
   }),
@@ -65,8 +60,8 @@ export const friendValidation = {
         .required()
         .regex(/^[0-9a-fA-F]{24}$/)
         .messages({
-          "string.pattern.base": "Invalid user ID format",
-          "any.required": "User ID is required",
+          'string.pattern.base': 'Invalid user ID format',
+          'any.required': 'User ID is required',
         }),
     }),
   }),
@@ -77,7 +72,7 @@ export const friendValidation = {
       .regex(/^[0-9a-fA-F]{24}$/),
     settings: Joi.object({
       notifications: Joi.boolean(),
-      visibility: Joi.string().valid("public", "friends", "private"),
+      visibility: Joi.string().valid('public', 'friends', 'private'),
     }).min(1),
   }),
 };

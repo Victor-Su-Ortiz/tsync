@@ -19,9 +19,9 @@ type SocketContextType = {
 const SocketContext = createContext<SocketContextType>({
   socket: null,
   notificationCount: 0,
-  incrementNotificationCount: () => { },
-  resetNotificationCount: () => { },
-  updateNotifcationCount: (number: number) => { },
+  incrementNotificationCount: () => {},
+  resetNotificationCount: () => {},
+  updateNotifcationCount: (number: number) => {},
 });
 
 // Create the provider component
@@ -34,7 +34,6 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const resetNotificationCount = () => setNotificationCount(0);
 
   const updateNotifcationCount = (value: number) => setNotificationCount(value);
-
 
   useEffect(() => {
     if (!authToken) {
@@ -60,7 +59,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       console.log('Setting up socket connection with token:', authToken);
       const newSocket = io(SOCKET_URL, {
         auth: {
-          token: authToken
+          token: authToken,
         },
         autoConnect: true,
         reconnectionAttempts: 5,
@@ -69,7 +68,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         transports: ['websocket', 'polling'],
         // Add timeout and other options
         timeout: 10000,
-        forceNew: true
+        forceNew: true,
       });
 
       setSocket(newSocket);
@@ -79,21 +78,21 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         Alert.alert('Debug', 'Socket connected successfully');
       });
 
-      newSocket.on('connect_error', (err) => {
+      newSocket.on('connect_error', err => {
         console.error('Socket connection error:', err);
         console.error('Error details:', JSON.stringify(err));
         Alert.alert('Socket Error', `Connection error: ${err.message}`);
       });
 
       // Listen for generic notification events
-      newSocket.on('notification', (data) => {
+      newSocket.on('notification', data => {
         console.log('Received notification event:', data);
         incrementNotificationCount();
         Alert.alert('Notification Received', JSON.stringify(data));
       });
 
       // Listen for friend request specific events
-      newSocket.on('friend_request', (data) => {
+      newSocket.on('friend_request', data => {
         console.log('Received friend request event:', data);
         incrementNotificationCount();
         Alert.alert('Friend Request', `Request from: ${data?.from?.name || 'Someone'}`);
@@ -101,7 +100,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
       // Listen for the user-specific channel
       // This is how the server will likely emit events for a specific user
-      newSocket.on(`user:${userId}`, (data) => {
+      newSocket.on(`user:${userId}`, data => {
         console.log(`Received event on user_${userId}:`, data);
         incrementNotificationCount();
         Alert.alert('User Event', `New notification for user ${userId}`);
@@ -127,13 +126,15 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   }, [authToken, userInfo?.id]);
 
   return (
-    <SocketContext.Provider value={{
-      socket,
-      notificationCount,
-      incrementNotificationCount,
-      resetNotificationCount,
-      updateNotifcationCount,
-    }}>
+    <SocketContext.Provider
+      value={{
+        socket,
+        notificationCount,
+        incrementNotificationCount,
+        resetNotificationCount,
+        updateNotifcationCount,
+      }}
+    >
       {children}
     </SocketContext.Provider>
   );

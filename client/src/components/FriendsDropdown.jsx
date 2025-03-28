@@ -9,7 +9,7 @@ import {
   Modal,
   Animated,
   ActivityIndicator,
-  Image
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '../utils/api';
@@ -54,7 +54,9 @@ const FriendsDropdown = ({ selectedFriends, setSelectedFriends }) => {
     setError(null);
 
     try {
-      const response = await api.get('/friends', { headers: { Authorization: `Bearer ${authToken}` } });
+      const response = await api.get('/friends', {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
       const { success, friends } = response.data;
       console.log(friends);
 
@@ -77,8 +79,8 @@ const FriendsDropdown = ({ selectedFriends, setSelectedFriends }) => {
   // Filter friends based on search query
   useEffect(() => {
     if (searchQuery) {
-      const filtered = friends.filter(friend =>
-        friend.name && friend.name.toLowerCase().includes(searchQuery.toLowerCase())
+      const filtered = friends.filter(
+        friend => friend.name && friend.name.toLowerCase().includes(searchQuery.toLowerCase()),
       );
       setFilteredFriends(filtered);
     } else {
@@ -87,12 +89,12 @@ const FriendsDropdown = ({ selectedFriends, setSelectedFriends }) => {
   }, [searchQuery, friends]);
 
   // Check if a friend is selected
-  const isFriendSelected = (friendId) => {
+  const isFriendSelected = friendId => {
     return selectedFriends.some(friend => friend._id === friendId);
   };
 
   // Toggle friend selection
-  const toggleFriendSelection = (friend) => {
+  const toggleFriendSelection = friend => {
     if (isFriendSelected(friend._id)) {
       setSelectedFriends(selectedFriends.filter(f => f._id !== friend._id));
     } else {
@@ -106,24 +108,16 @@ const FriendsDropdown = ({ selectedFriends, setSelectedFriends }) => {
 
     return (
       <TouchableOpacity
-        style={[
-          styles.friendItem,
-          isSelected && styles.selectedFriendItem
-        ]}
+        style={[styles.friendItem, isSelected && styles.selectedFriendItem]}
         onPress={() => toggleFriendSelection(item)}
       >
         <View style={styles.friendInfo}>
-            <Image source={{uri: item.profilePicture}} style={styles.avatar}/>
-          <Text style={[
-            styles.friendName,
-            isSelected && styles.selectedFriendName
-          ]}>
+          <Image source={{ uri: item.profilePicture }} style={styles.avatar} />
+          <Text style={[styles.friendName, isSelected && styles.selectedFriendName]}>
             {item.name || `User ${item._id.slice(-5)}`}
           </Text>
         </View>
-        {isSelected && (
-          <Ionicons name="checkmark-circle" size={20} color="#00cc99" />
-        )}
+        {isSelected && <Ionicons name="checkmark-circle" size={20} color="#00cc99" />}
       </TouchableOpacity>
     );
   };
@@ -143,10 +137,7 @@ const FriendsDropdown = ({ selectedFriends, setSelectedFriends }) => {
         <View style={styles.emptyStateContainer}>
           <Ionicons name="alert-circle-outline" size={40} color="#ff6b6b" />
           <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity
-            style={styles.retryButton}
-            onPress={fetchFriends}
-          >
+          <TouchableOpacity style={styles.retryButton} onPress={fetchFriends}>
             <Text style={styles.retryButtonText}>Retry</Text>
           </TouchableOpacity>
         </View>
@@ -176,14 +167,11 @@ const FriendsDropdown = ({ selectedFriends, setSelectedFriends }) => {
 
   return (
     <View>
-      <TouchableOpacity
-        style={styles.dropdownButton}
-        onPress={() => setModalVisible(true)}
-      >
+      <TouchableOpacity style={styles.dropdownButton} onPress={() => setModalVisible(true)}>
         <Text style={selectedFriends.length ? styles.dropdownText : styles.placeholderText}>
           {selectedFriends.length
             ? `${selectedFriends.length} friend${selectedFriends.length !== 1 ? 's' : ''} selected`
-            : "Select friends"}
+            : 'Select friends'}
         </Text>
         <Ionicons name="chevron-down" size={20} color="#aaa" />
       </TouchableOpacity>
@@ -194,11 +182,11 @@ const FriendsDropdown = ({ selectedFriends, setSelectedFriends }) => {
             data={selectedFriends}
             horizontal
             showsHorizontalScrollIndicator={false}
-            keyExtractor={(item) => item._id}
+            keyExtractor={item => item._id}
             renderItem={({ item }) => (
               <View style={styles.selectedFriendChip}>
                 {/* <Text style={styles.chipAvatar}>{getInitial(item.name)}</Text> */}
-                <Image source={{uri: item.profilePicture}} style={styles.chipAvatar}/>
+                <Image source={{ uri: item.profilePicture }} style={styles.chipAvatar} />
                 <Text style={styles.selectedFriendChipText}>
                   {item.name || `User ${item._id.slice(-5)}`}
                 </Text>
@@ -221,12 +209,7 @@ const FriendsDropdown = ({ selectedFriends, setSelectedFriends }) => {
         onRequestClose={() => setModalVisible(false)}
       >
         {/* Animated overlay with fade effect */}
-        <Animated.View
-          style={[
-            styles.modalOverlay,
-            { opacity: fadeAnim }
-          ]}
-        />
+        <Animated.View style={[styles.modalOverlay, { opacity: fadeAnim }]} />
 
         {/* Modal content - slides up from bottom */}
         <View style={styles.modalContainer}>
@@ -262,7 +245,7 @@ const FriendsDropdown = ({ selectedFriends, setSelectedFriends }) => {
 
             <FlatList
               data={filteredFriends}
-              keyExtractor={(item) => item._id}
+              keyExtractor={item => item._id}
               renderItem={renderFriendItem}
               style={styles.friendsList}
               showsVerticalScrollIndicator={false}
@@ -270,10 +253,7 @@ const FriendsDropdown = ({ selectedFriends, setSelectedFriends }) => {
               contentContainerStyle={filteredFriends.length === 0 ? { flex: 1 } : null}
             />
 
-            <TouchableOpacity
-              style={styles.doneButton}
-              onPress={() => setModalVisible(false)}
-            >
+            <TouchableOpacity style={styles.doneButton} onPress={() => setModalVisible(false)}>
               <Text style={styles.doneButtonText}>Done</Text>
             </TouchableOpacity>
           </View>

@@ -4,6 +4,7 @@ import { Stack, router } from 'expo-router';
 import images from '../../constants/images';
 import { useAuth } from '../../context/AuthContext';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { RelativePathString } from 'expo-router';
 import UserProfile from '@/src/components/UserProfile';
 
 export default function ProfileScreen() {
@@ -13,7 +14,7 @@ export default function ProfileScreen() {
   const stats = {
     friends: 42,
     eventsAttended: 10,
-    eventsHosted: 10
+    eventsHosted: 10,
   };
 
   useEffect(() => console.log(userInfo));
@@ -28,7 +29,7 @@ export default function ProfileScreen() {
       await logout();
 
       // Navigate to login screen
-      router.replace('./');
+      router.replace('/' as RelativePathString);
     } catch (error) {
       console.error('Error signing out:', error);
     }
@@ -40,7 +41,11 @@ export default function ProfileScreen() {
 
       <View style={styles.avatarContainer}>
         <Image
-          source={userInfo?.picture || userInfo?.profilePicture ? { uri: userInfo?.picture || userInfo?.profilePicture } : images.defaultpfp}
+          source={
+            userInfo?.picture || userInfo?.profilePicture
+              ? { uri: userInfo?.picture || userInfo?.profilePicture }
+              : images.defaultpfp
+          }
           style={styles.avatar}
         />
       </View>
@@ -62,10 +67,7 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      <TouchableOpacity
-        style={styles.signOutButton}
-        onPress={handleSignOut}
-      >
+      <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
         <Text style={styles.signOutText}>Sign Out</Text>
       </TouchableOpacity>
     </SafeAreaView>
@@ -148,5 +150,5 @@ const styles = StyleSheet.create({
   signOutText: {
     color: '#666',
     fontSize: 16,
-  }
+  },
 });

@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Tabs, router, usePathname } from "expo-router";
-import { View, TouchableOpacity, StyleSheet, GestureResponderEvent, Image } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import images from "../../constants/images";
+import { Tabs, router, usePathname } from 'expo-router';
+import { View, TouchableOpacity, StyleSheet, GestureResponderEvent, Image } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import images from '../../constants/images';
 import { useAuth } from '../../context/AuthContext';
 
 export default function TabsLayout() {
@@ -22,7 +22,13 @@ export default function TabsLayout() {
     }
   }, [pathname]);
 
-  const CustomTabBarButton = ({ children, onPress }: { children: React.ReactNode; onPress?: (event: GestureResponderEvent) => void }) => (
+  const CustomTabBarButton = ({
+    children,
+    onPress,
+  }: {
+    children: React.ReactNode;
+    onPress?: (event: GestureResponderEvent) => void;
+  }) => (
     <TouchableOpacity
       style={{
         top: -20,
@@ -31,15 +37,17 @@ export default function TabsLayout() {
       }}
       onPress={onPress}
     >
-      <View style={{
-        width: 70,
-        height: 70,
-        borderRadius: 35,
-        backgroundColor: '#00cc99',
-        ...styles.shadow,
-        justifyContent: 'center',
-        alignItems: 'center',
-      }}>
+      <View
+        style={{
+          width: 70,
+          height: 70,
+          borderRadius: 35,
+          backgroundColor: '#00cc99',
+          ...styles.shadow,
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
         {children}
       </View>
     </TouchableOpacity>
@@ -55,16 +63,16 @@ export default function TabsLayout() {
           backgroundColor: '#ffffff',
           borderTopWidth: 0,
           height: 60 + (insets.bottom > 0 ? insets.bottom - 5 : 0),
-          ...styles.shadow
+          ...styles.shadow,
         },
       }}
     >
       <Tabs.Screen
         name="home"
         options={{
-          title: "Home",
+          title: 'Home',
           tabBarIcon: ({ focused }) => (
-            <Ionicons name="home" size={24} color={focused ? "#00cc99" : "#748c94"} />
+            <Ionicons name="home" size={24} color={focused ? '#00cc99' : '#748c94'} />
           ),
         }}
       />
@@ -72,9 +80,9 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="meme"
         options={{
-          title: "meme",
+          title: 'meme',
           tabBarIcon: ({ focused }) => (
-            <Ionicons name="help" size={24} color={focused ? "#00cc99" : "#748c94"} />
+            <Ionicons name="help" size={24} color={focused ? '#00cc99' : '#748c94'} />
           ),
         }}
       />
@@ -82,14 +90,14 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="add-event"
         options={{
-          title: "Add Event",
-          tabBarButton: (props) => (
+          title: 'Add Event',
+          tabBarButton: props => (
             <CustomTabBarButton
               onPress={() => {
                 // Pass the current screen as a query parameter
                 router.push({
                   pathname: './add-event',
-                  params: { sourceScreen: currentScreen }
+                  params: { sourceScreen: currentScreen },
                 });
               }}
             >
@@ -103,9 +111,9 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="events"
         options={{
-          title: "Events",
+          title: 'Events',
           tabBarIcon: ({ focused }) => (
-            <Ionicons name="calendar" size={24} color={focused ? "#00cc99" : "#748c94"} />
+            <Ionicons name="calendar" size={24} color={focused ? '#00cc99' : '#748c94'} />
           ),
         }}
       />
@@ -113,18 +121,22 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="profileScreen"
         options={{
-          title: "Profile",
+          title: 'Profile',
           tabBarIcon: ({ focused }) => (
             <Image
-              source={userInfo?.picture || userInfo?.profilePicture ? { uri: userInfo?.picture || userInfo?.profilePicture } : images.defaultpfp}
+              source={
+                userInfo?.picture || userInfo?.profilePicture
+                  ? { uri: userInfo?.picture || userInfo?.profilePicture }
+                  : images.defaultpfp
+              }
               style={{
                 width: 34,
                 height: 33,
                 borderRadius: 22,
                 borderWidth: 1.5,
-                borderColor: focused ? "#00cc99" : "#748c94",
+                borderColor: focused ? '#00cc99' : '#748c94',
                 opacity: focused ? 1 : 0.85,
-                backgroundColor: focused ? undefined : "#f5f5f5"
+                backgroundColor: focused ? undefined : '#f5f5f5',
               }}
             />
           ),
@@ -143,6 +155,6 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.25,
     shadowRadius: 3.5,
-    elevation: 5
-  }
+    elevation: 5,
+  },
 });
