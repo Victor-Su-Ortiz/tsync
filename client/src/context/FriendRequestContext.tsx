@@ -1,10 +1,11 @@
 // src/context/FriendContext.tsx
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import { api } from '../utils/api';
 import { useAuth } from './AuthContext';
 import { useSocket } from './SocketContext';
 import { EXPO_PUBLIC_API_URL } from '@env';
+import { FriendRequestStatus } from '../utils/enums';
 
 // Define types for friend data
 export type Friend = {
@@ -17,7 +18,7 @@ export type Friend = {
 export type FriendRequest = {
   _id: string;
   from: Friend;
-  status: 'pending' | 'accepted' | 'rejected';
+  status: FriendRequestStatus;
   createdAt: string;
 };
 
@@ -58,21 +59,12 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
   const [sentRequests, setSentRequests] = useState<FriendRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { authToken, isAuthenticated } = useAuth();
+  const { authToken } = useAuth();
   const { socket } = useSocket();
-
-  // Configure axios default headers
-  const api = axios.create({
-    baseURL: EXPO_PUBLIC_API_URL,
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${authToken}`,
-    },
-  });
 
   // Function to fetch all friend data
   const refreshFriendData = async () => {
-    if (!isAuthenticated) return;
+    if (!authToken) return;
 
     setLoading(true);
     setError(null);
@@ -99,10 +91,10 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Load friend data on component mount or when auth state changes
   useEffect(() => {
-    if (isAuthenticated) {
+    if (authToken) {
       refreshFriendData();
     }
-  }, [isAuthenticated]);
+  }, [authToken]);
 
   // Listen for friend-related socket events
   useEffect(() => {
