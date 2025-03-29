@@ -41,8 +41,8 @@ export default function AddEventScreen() {
   const { authToken } = useAuth(); // Get the auth token from context
   const sourceScreen = params.sourceScreen as string;
 
-  // const [teaShopInfo, setTeaShopInfo] = useState<ILocation | null>(null);
-  const [teaShopInfo, setTeaShopInfo] = useState('');
+  const [teaShopInfo, setTeaShopInfo] = useState<ILocation | null>(null);
+  // const [teaShopInfo, setTeaShopInfo] = useState('');
   const [teaShopAddress, setTeaShopAddress] = useState('');
   const [eventName, setEventName] = useState('');
   const [description, setDescription] = useState('');
@@ -59,14 +59,6 @@ export default function AddEventScreen() {
 
   // Track loading state during API calls
   const [isLoading, setIsLoading] = useState(false);
-
-  // Check if tea shop info was passed via URL params
-  useEffect(() => {
-    if (params.teaShopName) {
-      setTeaShopInfo(params.teaShopName as string);
-      setFormDirty(true);
-    }
-  }, [params.teaShopName]);
 
   // Update formDirty state whenever any form field changes
   useEffect(() => {
@@ -88,7 +80,8 @@ export default function AddEventScreen() {
 
   const handleTeaShopSelection = (teaShop: any) => {
     console.log('Selected tea shop:', teaShop);
-    setTeaShopInfo(teaShop.name);
+    const location = convertGooglePlaceToEventLocation(teaShop);
+    setTeaShopInfo(location);
     setTeaShopAddress(teaShop.vicinity);
   };
 
@@ -101,6 +94,7 @@ export default function AddEventScreen() {
     // Extract the address from vicinity or formatted_address
     const address = placesData.vicinity || placesData.formatted_address || '';
 
+    const name = placesData.name || '';
     // Extract coordinates
     const latitude = placesData.geometry?.location?.lat || null;
     const longitude = placesData.geometry?.location?.lng || null;
@@ -111,6 +105,7 @@ export default function AddEventScreen() {
     // Create the location object
     const location = {
       address,
+      name,
       coordinates: {
         latitude,
         longitude,
@@ -159,7 +154,7 @@ export default function AddEventScreen() {
             style: 'destructive',
             onPress: () => {
               // Clear all form fields first
-              setTeaShopInfo('');
+              setTeaShopInfo(null);
               setTeaShopAddress('');
               setEventName('');
               setDescription('');
@@ -272,7 +267,7 @@ export default function AddEventScreen() {
 
   // Clear all form fields
   const resetForm = () => {
-    setTeaShopInfo('');
+    setTeaShopInfo(null);
     setTeaShopAddress('');
     setEventName('');
     setDescription('');
@@ -342,7 +337,7 @@ export default function AddEventScreen() {
               onPress={handleSelectTeaShop}
             >
               <Text style={teaShopInfo ? styles.teaShopText : styles.placeholderText}>
-                {teaShopInfo || 'Tap to select a tea shop'}
+                {teaShopInfo?.name || 'Tap to select a tea shop'}
               </Text>
               <Ionicons name="chevron-forward" size={20} color="#aaa" />
             </TouchableOpacity>
