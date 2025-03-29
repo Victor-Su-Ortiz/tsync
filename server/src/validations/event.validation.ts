@@ -21,8 +21,23 @@ export const eventValidation = {
       'date.greater': 'End time must be after start time',
       'any.required': 'End time is required',
     }),
-    location: Joi.string().allow('').max(100).messages({
-      'string.max': 'Location cannot exceed 100 characters',
+    // <Fix>
+    location: Joi.object({
+      address: Joi.string().required(),
+      name: Joi.string().required(),
+      coordinates: Joi.object({
+        latitude: Joi.number().min(-90).max(90).required(),
+        longitude: Joi.number().min(-180).max(180).required(),
+      }).required(),
+      virtual: Joi.boolean().default(false),
+      meetingLink: Joi.string()
+        .uri()
+        .when('virtual', {
+          is: true,
+          then: Joi.required(),
+          otherwise: Joi.optional().allow('', null),
+        }),
+      metadata: Joi.any(),
     }),
     isVirtual: Joi.boolean().default(false),
     meetingLink: Joi.string().uri().allow('').max(500).messages({

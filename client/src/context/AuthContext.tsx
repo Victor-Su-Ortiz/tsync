@@ -13,6 +13,7 @@ interface UserInfo {
 interface AuthContextType {
   authToken: string;
   setAuthToken: (token: string) => void;
+  isAuthenticated: boolean;
   idToken: string;
   setIdToken: (token: string) => void;
   accessToken: string;
@@ -146,11 +147,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const isAuthenticated = !!(authToken && userInfo);
+
   return (
     <AuthContext.Provider
       value={{
         authToken,
         setAuthToken,
+        isAuthenticated,
         idToken,
         setIdToken,
         accessToken,

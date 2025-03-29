@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs';
 import { IUser, IUserMethods, IUserModel, PublicUser } from '../types/user.types';
 import { IFriendRequest } from '../types/friendRequest.types';
 import FriendRequest from './friendRequest.model'; // Import the FriendRequest model
-import { FriendEventType, FriendRequestStatus, EventType } from '../utils/enums';
+import { FriendRequestStatus, EventType } from '../utils/enums';
 import Notification from './notification.model';
 
 const userSchema = new Schema<IUser, IUserModel, IUserMethods>(
@@ -216,11 +216,7 @@ userSchema.methods.sendFriendRequest = async function (
   });
 
   const { default: SocketService } = await import('../services/socket.service');
-  SocketService.sendToUser(friendId, 'friend_request_status_changed', {
-    event: FriendEventType.FRIEND_REQUEST_RECEIVED,
-    data: friendRequest,
-  });
-
+  SocketService.sendToUser(friendId, 'friend_request', friendRequest);
   return friendRequest;
 };
 
@@ -241,10 +237,7 @@ userSchema.methods.cancelFriendRequest = async function (requestId: string): Pro
   await FriendRequest.deleteOne({ _id: requestId });
 
   const { default: SocketService } = await import('../services/socket.service');
-  SocketService.sendToUser(request.receiver.toString(), 'friend_request_status_changed', {
-    event: FriendEventType.FRIEND_REQUEST_CANCELED,
-    data: request,
-  });
+  SocketService.sendToUser(request.receiver.toString(), 'friend_request_canceled', request);
 };
 
 userSchema.methods.acceptFriendRequest = async function (requestId: string): Promise<void> {
@@ -282,10 +275,7 @@ userSchema.methods.acceptFriendRequest = async function (requestId: string): Pro
   });
 
   const { default: SocketService } = await import('../services/socket.service');
-  SocketService.sendToUser(request.sender.toString(), 'friend_request_status_changed', {
-    event: FriendEventType.FRIEND_ACCEPTED,
-    data: request,
-  });
+  SocketService.sendToUser(request.sender.toString(), 'friend_accepted', request);
 };
 
 userSchema.methods.rejectFriendRequest = async function (requestId: string): Promise<void> {
@@ -302,10 +292,7 @@ userSchema.methods.rejectFriendRequest = async function (requestId: string): Pro
   request.status = FriendRequestStatus.REJECTED;
   await request.save();
   const { default: SocketService } = await import('../services/socket.service');
-  SocketService.sendToUser(request.sender.toString(), 'friend_request_status_changed', {
-    event: FriendEventType.FRIEND_REJECTED,
-    data: request,
-  });
+  SocketService.sendToUser(request.sender.toString(), 'friend_rejected', request);
 };
 
 userSchema.methods.removeFriend = async function (friendId: string) {

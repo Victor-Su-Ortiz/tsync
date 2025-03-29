@@ -15,6 +15,7 @@ const EventSchema = new Schema<IEvent, IEventModel, IEventMethods>(
     },
     location: {
       address: String,
+      name: String,
       coordinates: {
         latitude: Number,
         longitude: Number,
