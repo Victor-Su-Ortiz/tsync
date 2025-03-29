@@ -17,7 +17,8 @@ export type Friend = {
 
 export type FriendRequest = {
   _id: string;
-  from: Friend;
+  sender: Friend;
+  receiver: Friend;
   status: FriendRequestStatus;
   createdAt: string;
 };
@@ -25,7 +26,7 @@ export type FriendRequest = {
 // Define the context structure
 type FriendContextType = {
   friends: Friend[];
-  pendingRequests: FriendRequest[];
+  receivedRequests: FriendRequest[];
   sentRequests: FriendRequest[];
   loading: boolean;
   error: string | null;
@@ -40,7 +41,7 @@ type FriendContextType = {
 // Create the context
 const FriendContext = createContext<FriendContextType>({
   friends: [],
-  pendingRequests: [],
+  receivedRequests: [],
   sentRequests: [],
   loading: false,
   error: null,
@@ -55,31 +56,31 @@ const FriendContext = createContext<FriendContextType>({
 // Create the provider component
 export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
   const [friends, setFriends] = useState<Friend[]>([]);
-  const [pendingRequests, setPendingRequests] = useState<FriendRequest[]>([]);
+  const [receivedRequests, setReceivedRequests] = useState<FriendRequest[]>([]);
   const [sentRequests, setSentRequests] = useState<FriendRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { authToken } = useAuth();
+  const { isAuthenticated } = useAuth();
   const { socket } = useSocket();
 
   // Function to fetch all friend data
   const refreshFriendData = async () => {
-    if (!authToken) return;
+    if (!isAuthenticated) return;
 
     setLoading(true);
     setError(null);
 
     try {
       // Fetch friends list
-      const friendsResponse = await api.get('/api/v1/friends');
+      const friendsResponse = await api.get('/friends');
       setFriends(friendsResponse.data.friends);
 
       // Fetch pending friend requests
-      const pendingResponse = await api.get('/api/v1/friends/requests/received');
-      setPendingRequests(pendingResponse.data.requests);
+      const pendingResponse = await api.get('/friends/requests/received');
+      setReceivedRequests(pendingResponse.data.requests);
 
       // Fetch sent friend requests
-      const sentResponse = await api.get('/api/v1/friends/requests/sent');
+      const sentResponse = await api.get('/friends/requests/sent');
       setSentRequests(sentResponse.data.requests);
     } catch (err: any) {
       console.error('Error fetching friend data:', err);
@@ -91,10 +92,10 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Load friend data on component mount or when auth state changes
   useEffect(() => {
-    if (authToken) {
+    if (isAuthenticated) {
       refreshFriendData();
     }
-  }, [authToken]);
+  }, [isAuthenticated]);
 
   // Listen for friend-related socket events
   useEffect(() => {
@@ -103,13 +104,18 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
     // Listen for new friend requests
     socket.on('friend_request', data => {
       // Add the new request to pending requests
-      setPendingRequests(prev => [data, ...prev]);
+      setReceivedRequests(prev => [data, ...prev]);
+    });
+
+    socket.on('friend_request_canceled', data => {
+      // Remove the canceled request from pending requests
+      setReceivedRequests(prev => prev.filter(req => req._id !== data._id));
     });
 
     // Listen for accepted friend requests
     socket.on('friend_accepted', data => {
       // Move the accepted request from sent to friends
-      setSentRequests(prev => prev.filter(req => req._id !== data.requestId));
+      setSentRequests(prev => prev.filter(req => req._id !== data._id));
       // Add the new friend to friends list if they're not already there
       setFriends(prev => {
         if (!prev.some(friend => friend._id === data.user._id)) {
@@ -122,13 +128,13 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
     // Listen for rejected friend requests
     socket.on('friend_rejected', data => {
       // Remove the rejected request from sent requests
-      setSentRequests(prev => prev.filter(req => req._id !== data.requestId));
+      setSentRequests(prev => prev.filter(req => req._id !== data._id));
     });
 
     // Listen for friend removed events
     socket.on('friend_removed', data => {
       // Remove friend from list
-      setFriends(prev => prev.filter(friend => friend._id !== data.friendId));
+      setFriends(prev => prev.filter(friend => friend._id !== data._id));
     });
 
     // Clean up listeners on unmount
@@ -141,12 +147,12 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
   }, [socket]);
 
   // Send a friend request
-  const sendFriendRequest = async (email: string) => {
+  const sendFriendRequest = async (userId: string) => {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await api.post('/api/v1/friends/requests', { email });
+      const response = await api.post(`/friends/requests/${userId}`);
       // Add the new request to the sent requests list
       setSentRequests(prev => [...prev, response.data.request]);
       return response.data;
@@ -165,19 +171,19 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
     setError(null);
 
     try {
-      const response = await api.post(`/api/v1/friends/requests/${requestId}/accept`);
+      const response = await api.post(`/friends/requests/${requestId}/accept`);
 
       // Find the request that was accepted
-      const acceptedRequest = pendingRequests.find(req => req._id === requestId);
+      const acceptedRequest = receivedRequests.find(req => req._id === requestId);
 
       // Remove from pending requests
-      setPendingRequests(prev => prev.filter(req => req._id !== requestId));
+      setReceivedRequests(prev => prev.filter(req => req._id !== requestId));
 
       // Add to friends list if not already there and if we found the request
       if (acceptedRequest) {
         setFriends(prev => {
-          if (!prev.some(friend => friend._id === acceptedRequest.from._id)) {
-            return [...prev, acceptedRequest.from];
+          if (!prev.some(friend => friend._id === acceptedRequest.sender._id)) {
+            return [...prev, acceptedRequest.sender];
           }
           return prev;
         });
@@ -199,9 +205,9 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
     setError(null);
 
     try {
-      const response = await api.post(`/api/v1/friends/requests/${requestId}/reject`);
+      const response = await api.post(`/friends/requests/${requestId}/reject`);
       // Remove from pending requests
-      setPendingRequests(prev => prev.filter(req => req._id !== requestId));
+      setReceivedRequests(prev => prev.filter(req => req._id !== requestId));
       return response.data;
     } catch (err: any) {
       console.error('Error rejecting friend request:', err);
@@ -218,7 +224,7 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
     setError(null);
 
     try {
-      const response = await api.delete(`/api/v1/friends/requests/${requestId}`);
+      const response = await api.delete(`/friends/requests/${requestId}`);
       // Remove from sent requests
       setSentRequests(prev => prev.filter(req => req._id !== requestId));
       return response.data;
@@ -237,7 +243,7 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
     setError(null);
 
     try {
-      const response = await api.delete(`/api/v1/friends/${friendId}`);
+      const response = await api.delete(`/friends/${friendId}`);
       // Remove from friends list
       setFriends(prev => prev.filter(friend => friend._id !== friendId));
       return response.data;
@@ -254,7 +260,7 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
     <FriendContext.Provider
       value={{
         friends,
-        pendingRequests,
+        receivedRequests,
         sentRequests,
         loading,
         error,
