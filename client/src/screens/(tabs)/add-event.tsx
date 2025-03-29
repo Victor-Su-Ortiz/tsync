@@ -28,14 +28,6 @@ type Friend = {
   email: string;
 };
 
-// type Place = {
-//   place_id: string;
-//   name: string;
-//   vicinity: string;
-//   rating?: number;
-//   photos?: { photo_reference: string }[];
-// };
-
 export default function AddEventScreen() {
   const params = useLocalSearchParams();
   const { authToken } = useAuth(); // Get the auth token from context
@@ -94,13 +86,12 @@ export default function AddEventScreen() {
     // Extract the address from vicinity or formatted_address
     const address = placesData.vicinity || placesData.formatted_address || '';
 
-    const name = placesData.name || '';
     // Extract coordinates
     const latitude = placesData.geometry?.location?.lat || null;
     const longitude = placesData.geometry?.location?.lng || null;
 
     // Filter out fields to exclude from metadata
-    const { geometry, vicinity, formatted_address, ...restData } = placesData;
+    const { geometry, vicinity, formatted_address, name, ...restData } = placesData;
 
     // Create the location object
     const location = {
