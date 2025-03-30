@@ -255,7 +255,7 @@ export class CalendarService {
       // Get event details from our database
       const event = await Event.findById(eventId)
         .populate('attendees', 'email name')
-        .populate<{ creater: PublicUser }>('creator', 'email name');
+        .populate('creator', 'email name');
 
       if (!event) {
         throw new NotFoundError('Event not found');
@@ -273,6 +273,7 @@ export class CalendarService {
         email: attendee.email,
         displayName: attendee.name,
         responseStatus: 'needsAction',
+        organizer: false,
       }));
 
       // Always add organizer as an attendee
@@ -287,26 +288,32 @@ export class CalendarService {
 
       // Create Google Calendar event
       const calendarEvent = await calendar.events.insert({
-        calendarId: 'primary',
+        calendarId: 'primary', // Uses the user's primary calendar
+        sendUpdates: 'all', // Sends email notifications to attendees
         requestBody: {
           summary: event.title,
           description: event.description,
           start: {
             dateTime: selectedTime.toISOString(),
-            timeZone: 'UTC', // You might want to use the user's timezone
+            timeZone: 'UTC', // You might want to make this configurable
           },
           end: {
             dateTime: endTime.toISOString(),
-            timeZone: 'UTC', // You might want to use the user's timezone
+            timeZone: 'UTC',
           },
           attendees,
-          // Send notifications to attendees
-          sendUpdates: 'all',
+          // Additional settings
+          guestsCanModify: false,
+          guestsCanInviteOthers: false,
+          guestsCanSeeOtherGuests: true,
+          reminders: {
+            useDefault: true,
+          },
         },
       });
 
       // Update our event with Google Calendar event ID
-      event.googleCalendarEventId = calendarEvent.data.id;
+      event.googleCalendarEventId = calendarEvent.data.id!;
       event.scheduledTime = selectedTime;
       event.endTime = endTime;
       event.status = 'scheduled';

@@ -62,6 +62,8 @@ export interface IEvent extends Document {
   // Time-related fields
   eventDates: IEventDate[]; // Support for non-consecutive dates
   timezone: string;
+  scheduledTime: Date;
+  endTime: Date;
 
   // Recurrence
   recurrence?: {
