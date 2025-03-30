@@ -1,6 +1,7 @@
 // src/services/calendar.service.ts
 import { google, calendar_v3 } from 'googleapis';
 import User from '../models/user.model';
+import { PublicUser } from '../types/user.types';
 import { NotFoundError, AuthenticationError } from '../utils/errors';
 import Event from '../models/event.model';
 import { GoogleService } from './google.services';
@@ -254,7 +255,7 @@ export class CalendarService {
       // Get event details from our database
       const event = await Event.findById(eventId)
         .populate('attendees', 'email name')
-        .populate('creator', 'email name');
+        .populate<{ creater: PublicUser }>('creator', 'email name');
 
       if (!event) {
         throw new NotFoundError('Event not found');

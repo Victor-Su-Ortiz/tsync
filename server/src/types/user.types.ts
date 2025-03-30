@@ -42,7 +42,13 @@ export interface IUserMethods {
 // Public user data type (for API responses)
 export type PublicUser = Omit<
   IUser,
-  'password' | 'verificationToken' | 'resetPasswordToken' | 'resetPasswordExpire' | 'blockedUsers'
+  | 'password'
+  | 'verificationToken'
+  | 'resetPasswordToken'
+  | 'resetPasswordExpire'
+  | 'blockedUsers'
+  | 'googleRefreshToken'
+  | 'googleId'
 >;
 
 export interface IUserModel extends Model<IUser, {}, IUserMethods> {

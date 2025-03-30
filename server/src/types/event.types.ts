@@ -1,4 +1,5 @@
 import { Document, Model, Types } from 'mongoose';
+import { PublicUser } from './user.types';
 
 // Define the possible event recurrence patterns
 export type RecurrencePattern =
@@ -56,7 +57,7 @@ export interface IEvent extends Document {
   };
 
   // Creator and ownership
-  creator: Types.ObjectId; // Reference to User model
+  creator: PublicUser; // Reference to User model
 
   // Time-related fields
   eventDates: IEventDate[]; // Support for non-consecutive dates
