@@ -253,8 +253,8 @@ export class CalendarService {
     try {
       // Get event details from our database
       const event = await Event.findById(eventId)
-        .populate('participants', 'email name')
-        .populate('organizer', 'email name');
+        .populate('attendees', 'email name')
+        .populate('creator', 'email name');
 
       if (!event) {
         throw new NotFoundError('Event not found');
@@ -278,7 +278,7 @@ export class CalendarService {
       if (!attendees.some(a => a.email === event.creator.email)) {
         attendees.push({
           email: event.creator.email,
-          displayName: event.organizer.name,
+          displayName: event.creator.name,
           responseStatus: 'accepted',
           organizer: true,
         });
