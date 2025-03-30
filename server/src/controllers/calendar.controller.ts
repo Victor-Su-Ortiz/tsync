@@ -1,6 +1,6 @@
 // src/controllers/calendar.controller.ts
 import { Request, Response, NextFunction } from 'express';
-// import CalendarService from '../services/google-calendar.service';
+import CalendarService from '../services/google-calendar.service';
 // import { AuthService } from '../services/auth.service';
 
 export class CalendarController {
@@ -64,17 +64,17 @@ export class CalendarController {
   /**
    * Create a calendar event
    */
-  // static async createEvent(req: Request, res: Response, next: NextFunction) {
-  //   try {
-  //     const userId = req.userId;
-  //     const eventData = req.body;
+  static async createEvent(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.userId;
+      const eventData = req.body;
 
-  //     const event = await CalendarService.createEvent(userId, eventData);
-  //     res.status(201).json({ event });
-  //   } catch (error) {
-  //     next(error);
-  //   }
-  // }
+      const event = await CalendarService.createEvent(userId, eventData);
+      res.status(201).json({ event });
+    } catch (error) {
+      next(error);
+    }
+  }
 
   /**
    * Find available meeting slots between users

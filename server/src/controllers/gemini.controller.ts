@@ -67,7 +67,7 @@ export class GeminiController {
       }
 
       const userId = req.userId;
-      if (event.creator !== userId) {
+      if (event.creator._id !== userId) {
         throw new ForbiddenError('Only the event organizer can schedule this event');
       }
 

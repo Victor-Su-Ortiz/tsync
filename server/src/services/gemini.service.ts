@@ -1,8 +1,8 @@
 // src/services/gemini.service.ts
 import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
-import { CalendarService } from './calendar.service';
-import Event, { IEvent } from '../models/event.model';
-import User from '../models/user.model';
+import { CalendarService } from './google-calendar.service';
+import Event from '../models/event.model';
+import { IEvent } from '../types/event.types';
 import { NotFoundError, ValidationError } from '../utils/errors';
 
 export class GeminiService {
@@ -278,7 +278,7 @@ IMPORTANT CONSTRAINTS:
         throw new NotFoundError('Event not found');
       }
 
-      if (event.organizer.toString() !== organizerId) {
+      if (event.creator._id.toString() !== organizerId) {
         throw new ValidationError('Only the organizer can schedule this event');
       }
 

@@ -2,8 +2,8 @@
 import express from 'express';
 import { CalendarController } from '../controllers/calendar.controller';
 import { protect } from '../middleware/auth.middleware';
-// import { validateRequest } from '../middleware/validation.middleware';
-// import { calendarValidation } from '../validations/calendar.validation';
+import { validateRequest } from '../middleware/validation.middleware';
+import { calendarValidation } from '../validations/calendar.validation';
 
 const router = express.Router();
 
@@ -21,11 +21,11 @@ router.get('/status', CalendarController.getCalendarStatus);
 
 // Calendar events routes
 // router.get('/events', CalendarController.listEvents);
-// router.post(
-//   '/events',
-//   validateRequest(calendarValidation.createEvent),
-//   CalendarController.createEvent
-// );
+router.post(
+  '/events',
+  validateRequest(calendarValidation.createEvent),
+  CalendarController.createEvent
+);
 
 // Meeting scheduling routes
 // router.post(
