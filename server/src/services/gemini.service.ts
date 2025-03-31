@@ -66,8 +66,8 @@ export class GeminiService {
 
       // Get event details
       const event = await Event.findById(eventId)
-        .populate('participants', 'name email _id')
-        .populate('organizer', 'name email _id');
+        .populate('attendees', 'name email _id')
+        .populate('creator', 'name email _id');
 
       if (!event) {
         throw new NotFoundError('Event not found');
