@@ -1,5 +1,6 @@
-export interface Location {
+export interface ILocation {
   address?: string;
+  name?: string;
   coordinates?: {
     latitude: number;
     longitude: number;

@@ -1,40 +1,39 @@
 // src/controllers/calendar.controller.ts
 import { Request, Response, NextFunction } from 'express';
-// import CalendarService from '../services/google-calendar.service';
-import GoogleAuthService from '../services/google-auth.service';
+import CalendarService from '../services/google-calendar.service';
 // import { AuthService } from '../services/auth.service';
 
 export class CalendarController {
   /**
    * Get Google Calendar auth URL
    */
-  static async getAuthUrl(req: Request, res: Response, next: NextFunction) {
-    try {
-      const userId = req.userId;
-      const authUrl = await GoogleAuthService.generateAuthUrl(userId!.toString());
-      res.status(200).json(authUrl);
-    } catch (error) {
-      next(error);
-    }
-  }
+  // static async getAuthUrl(req: Request, res: Response, next: NextFunction) {
+  //   try {
+  //     const userId = req.userId;
+  //     const authUrl = await GoogleAuthService.generateAuthUrl(userId!.toString());
+  //     res.status(200).json(authUrl);
+  //   } catch (error) {
+  //     next(error);
+  //   }
+  // }
 
   /**
    * Handle Google Calendar OAuth callback
    */
-  static async handleAuthCallback(req: Request, res: Response, next: NextFunction) {
-    try {
-      const { code } = req.query;
-      const userId = req.userId;
-      if (!code || typeof code !== 'string') {
-        res.status(400).json({ message: 'Authorization code is required' });
-        return;
-      }
-      const result = await GoogleAuthService.handleAuthCallback(code, userId!.toString());
-      res.status(200).json(result);
-    } catch (error) {
-      next(error);
-    }
-  }
+  // static async handleAuthCallback(req: Request, res: Response, next: NextFunction) {
+  //   try {
+  //     const { code } = req.query;
+  //     const userId = req.userId;
+  //     if (!code || typeof code !== 'string') {
+  //       res.status(400).json({ message: 'Authorization code is required' });
+  //       return;
+  //     }
+  //     const result = await GoogleAuthService.handleAuthCallback(code, userId!.toString());
+  //     res.status(200).json(result);
+  //   } catch (error) {
+  //     next(error);
+  //   }
+  // }
 
   /**
    * List user's calendar events
@@ -65,17 +64,17 @@ export class CalendarController {
   /**
    * Create a calendar event
    */
-  // static async createEvent(req: Request, res: Response, next: NextFunction) {
-  //   try {
-  //     const userId = req.userId;
-  //     const eventData = req.body;
+  static async createEvent(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.userId;
+      const eventData = req.body;
 
-  //     const event = await CalendarService.createEvent(userId, eventData);
-  //     res.status(201).json({ event });
-  //   } catch (error) {
-  //     next(error);
-  //   }
-  // }
+      const event = await CalendarService.createEvent(userId, eventData);
+      res.status(201).json({ event });
+    } catch (error) {
+      next(error);
+    }
+  }
 
   /**
    * Find available meeting slots between users

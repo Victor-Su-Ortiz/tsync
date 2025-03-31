@@ -1,15 +1,24 @@
 // Define an enum for the request status
+export enum FriendRequestStatus {
+  PENDING = 'pending',
+  ACCEPTED = 'accepted',
+  REJECTED = 'rejected',
+}
+
+export enum EventType {
+  FRIEND_REQUEST = 'FRIEND_REQUEST',
+  FRIEND_ACCEPTED = 'FRIEND_ACCEPTED',
+  MEETING_INVITE = 'MEETING_INVITE',
+  MEETING_UPDATE = 'MEETING_UPDATE',
+  SYSTEM = 'SYSTEM',
+}
+
+// Define an enum for the request status
 export enum FriendStatus {
   NONE = 'none',
   PENDING = 'pending',
   FRIENDS = 'friends',
   INCOMING_REQUEST = 'incoming_request',
-}
-
-export enum FriendRequestStatus {
-  PENDING = 'pending',
-  ACCEPTED = 'accepted',
-  REJECTED = 'rejected',
 }
 
 export enum FriendRequestEventType {

@@ -20,6 +20,7 @@ import TeaShopSelectionModal from '../../components/SelectTeaShop';
 import DateTimePickerModal, { DateTimeRange } from '../../components/DateTimePickerModal';
 import { useAuth } from '@/src/context/AuthContext'; // Import your auth context
 import { api } from '@/src/utils/api';
+import { ILocation } from '../../types/location.type';
 
 type Friend = {
   id: string;
@@ -27,20 +28,13 @@ type Friend = {
   email: string;
 };
 
-type Place = {
-  place_id: string;
-  name: string;
-  vicinity: string;
-  rating?: number;
-  photos?: { photo_reference: string }[];
-};
-
 export default function AddEventScreen() {
   const params = useLocalSearchParams();
   const { authToken } = useAuth(); // Get the auth token from context
   const sourceScreen = params.sourceScreen as string;
 
-  const [teaShopInfo, setTeaShopInfo] = useState('');
+  const [teaShopInfo, setTeaShopInfo] = useState<ILocation | null>(null);
+  // const [teaShopInfo, setTeaShopInfo] = useState('');
   const [teaShopAddress, setTeaShopAddress] = useState('');
   const [eventName, setEventName] = useState('');
   const [description, setDescription] = useState('');
@@ -58,19 +52,11 @@ export default function AddEventScreen() {
   // Track loading state during API calls
   const [isLoading, setIsLoading] = useState(false);
 
-  // Check if tea shop info was passed via URL params
-  useEffect(() => {
-    if (params.teaShopName) {
-      setTeaShopInfo(params.teaShopName as string);
-      setFormDirty(true);
-    }
-  }, [params.teaShopName]);
-
   // Update formDirty state whenever any form field changes
   useEffect(() => {
     // We need to check if ANY of the fields have values to determine if form is dirty
     const hasChanges =
-      teaShopInfo !== '' ||
+      teaShopInfo !== null ||
       teaShopAddress !== '' ||
       eventName !== '' ||
       description !== '' ||
@@ -84,9 +70,43 @@ export default function AddEventScreen() {
     setTeaShopModalVisible(true);
   };
 
-  const handleTeaShopSelection = (teaShop: Place) => {
-    setTeaShopInfo(teaShop.name);
+  const handleTeaShopSelection = (teaShop: any) => {
+    console.log('Selected tea shop:', teaShop);
+    const location = convertGooglePlaceToEventLocation(teaShop);
+    setTeaShopInfo(location);
     setTeaShopAddress(teaShop.vicinity);
+  };
+
+  /**
+   * Converts a Google Places API response into an event location model
+   * @param placesData The response from Google Places API
+   * @returns An object formatted for the event model location field
+   */
+  const convertGooglePlaceToEventLocation = (placesData: any) => {
+    // Extract the address from vicinity or formatted_address
+    const address = placesData.vicinity || placesData.formatted_address || '';
+
+    // Extract coordinates
+    const latitude = placesData.geometry?.location?.lat || null;
+    const longitude = placesData.geometry?.location?.lng || null;
+
+    // Filter out fields to exclude from metadata
+    const { geometry, vicinity, formatted_address, name, ...restData } = placesData;
+
+    // Create the location object
+    const location = {
+      address,
+      name,
+      coordinates: {
+        latitude,
+        longitude,
+      },
+      virtual: false, // Default to physical location
+      meetingLink: '', // Empty for physical locations
+      metadata: restData, // Include all other fields in metadata
+    };
+
+    return location;
   };
 
   // Navigate back to the source screen if available
@@ -125,7 +145,7 @@ export default function AddEventScreen() {
             style: 'destructive',
             onPress: () => {
               // Clear all form fields first
-              setTeaShopInfo('');
+              setTeaShopInfo(null);
               setTeaShopAddress('');
               setEventName('');
               setDescription('');
@@ -238,7 +258,7 @@ export default function AddEventScreen() {
 
   // Clear all form fields
   const resetForm = () => {
-    setTeaShopInfo('');
+    setTeaShopInfo(null);
     setTeaShopAddress('');
     setEventName('');
     setDescription('');
@@ -308,7 +328,7 @@ export default function AddEventScreen() {
               onPress={handleSelectTeaShop}
             >
               <Text style={teaShopInfo ? styles.teaShopText : styles.placeholderText}>
-                {teaShopInfo || 'Tap to select a tea shop'}
+                {teaShopInfo?.name || 'Tap to select a tea shop'}
               </Text>
               <Ionicons name="chevron-forward" size={20} color="#aaa" />
             </TouchableOpacity>
