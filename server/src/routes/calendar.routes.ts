@@ -11,12 +11,6 @@ const router = express.Router();
 router.use(protect);
 
 // Google Calendar connection routes
-router.get('/auth-url', CalendarController.getAuthUrl);
-router.get(
-  '/callback',
-  validateRequest(calendarValidation.authCallback),
-  CalendarController.handleAuthCallback
-);
 router.get('/status', CalendarController.getCalendarStatus);
 // router.delete('/disconnect', CalendarController.disconnectCalendar);
 // router.patch(
@@ -27,11 +21,11 @@ router.get('/status', CalendarController.getCalendarStatus);
 
 // Calendar events routes
 // router.get('/events', CalendarController.listEvents);
-// router.post(
-//   '/events',
-//   validateRequest(calendarValidation.createEvent),
-//   CalendarController.createEvent
-// );
+router.post(
+  '/events',
+  validateRequest(calendarValidation.createEvent),
+  CalendarController.createEvent
+);
 
 // Meeting scheduling routes
 // router.post(
