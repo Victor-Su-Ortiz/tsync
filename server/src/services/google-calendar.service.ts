@@ -1,7 +1,6 @@
 // src/services/calendar.service.ts
 import { google, calendar_v3 } from 'googleapis';
 import User from '../models/user.model';
-import { PublicUser } from '../types/user.types';
 import { NotFoundError, AuthenticationError } from '../utils/errors';
 import Event from '../models/event.model';
 import { GoogleService } from './google.services';

@@ -67,9 +67,15 @@ export class CalendarController {
   static async createEvent(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = req.userId;
-      const eventData = req.body;
+      const { eventData, selectedTime, duration } = req.body;
 
-      const event = await CalendarService.createEvent(userId, eventData);
+      const event = await CalendarService.createEvent(
+        userId!.toString(),
+        eventData,
+        selectedTime,
+        duration
+      );
+
       res.status(201).json({ event });
     } catch (error) {
       next(error);
