@@ -17,7 +17,6 @@ import axios from 'axios';
 import { GOOGLE_PLACES_API, EXPO_PUBLIC_API_URL } from '@env';
 import { router, useLocalSearchParams, usePathname } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import UserSearch from '../../components/UserSearch';
 import { useAuth } from '@/src/context/AuthContext';
 import { useSocket } from '@/src/context/SocketContext'; // Import the socket hook
 import { api } from '@/src/utils/api';
