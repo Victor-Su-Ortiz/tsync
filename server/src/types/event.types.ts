@@ -81,6 +81,9 @@ export interface IEvent extends Document {
   googleCalendarEventId?: string;
   googleCalendarId?: string;
 
+  // Ask users to automatically sync with Google Calendar
+  sync: boolean;
+
   // Status
   status: EventStatus;
 

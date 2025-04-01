@@ -63,6 +63,9 @@ export default function AddEventScreen() {
   // Track loading state during API calls
   const [isLoading, setIsLoading] = useState(false);
 
+  // State for syncing to Google Calendar
+  const [syncToGoogleCalendar, setSyncToGoogleCalendar] = useState(true);
+
   // Update formDirty state whenever any form field changes
   useEffect(() => {
     // We need to check if ANY of the fields have values to determine if form is dirty

@@ -66,6 +66,10 @@ const EventSchema = new Schema<IEvent, IEventModel, IEventMethods>(
     },
     googleCalendarEventId: String,
     googleCalendarId: String,
+    sync: {
+      type: Boolean,
+      default: false,
+    },
     status: {
       type: String,
       enum: ['scheduled', 'tentative', 'confirmed', 'cancelled'],
