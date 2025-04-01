@@ -209,6 +209,7 @@ export default function AddEventScreen() {
 
       // Location should be a string, not an object
       location: teaShopInfo,
+      duration,
 
       // These fields are specifically required according to the error message
       startTime: dateTimeRanges[0].startTime.toISOString(),
