@@ -44,7 +44,6 @@ export default function AddEventScreen() {
   const sourceScreen = params.sourceScreen as string;
 
   const [teaShopInfo, setTeaShopInfo] = useState<ILocation | null>(null);
-  // const [teaShopInfo, setTeaShopInfo] = useState('');
   const [teaShopAddress, setTeaShopAddress] = useState('');
   const [eventName, setEventName] = useState('');
   const [description, setDescription] = useState('');
@@ -177,13 +176,6 @@ export default function AddEventScreen() {
             style: 'destructive',
             onPress: () => {
               // Clear all form fields first
-              // setTeaShopInfo(null);
-              // setTeaShopAddress('');
-              // setEventName('');
-              // setDescription('');
-              // setDateTimeRanges([]);
-              // setSelectedFriends([]);
-              // setFormDirty(false);
               resetForm();
 
               // Navigate back to source screen
