@@ -29,6 +29,10 @@ const EventSchema = new Schema<IEvent, IEventModel, IEventMethods>(
       ref: 'User',
       required: [true, 'Event creator is required'],
     },
+    duration: {
+      type: Number,
+      required: [true, 'Event duration is required'],
+    },
     eventDates: [
       {
         date: {
