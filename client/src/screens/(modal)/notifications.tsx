@@ -117,11 +117,13 @@ export default function Notifications() {
 
       // Set up the user object for the profile
       const user: User = {
-        id: notification.sender.id,
+        id: notification.sender._id,
         name: notification.sender.name,
         profilePicture: notification.sender.profilePicture || '',
         friendStatus,
       };
+
+      console.log("USER FROM NOTIFICATIONS.TSX:", user);
 
       console.log('FRIEND STATUS:', friendStatus);
       // Set selected user and request ID

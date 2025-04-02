@@ -71,13 +71,14 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
     setError(null);
 
     try {
-      // Fetch friends list
+      // Fetch friend s list
       const friendsResponse = await api.get('/friends', {
         headers: {
           'Authorization': `Bearer ${authToken}`
         }
       });
       setFriends(friendsResponse.data.friends);
+      console.log("Friends:", friends);
 
       // Fetch pending friend requests
       const pendingResponse = await api.get('/friends/requests/received', {
@@ -87,6 +88,7 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
       });
 
       setReceivedRequests(pendingResponse.data.requests);
+      console.log("Received Requests:", receivedRequests);
 
       // Fetch sent friend requests
       const sentResponse = await api.get('/friends/requests/sent', {
@@ -94,6 +96,7 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
           'Authorization': `Bearer ${authToken}`
         }
       });
+      console.log("Sent requests:", sentRequests);
 
       setSentRequests(sentResponse.data.requests);
     } catch (err: any) {
@@ -242,7 +245,12 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
     setError(null);
 
     try {
-      const response = await api.delete(`/friends/requests/${requestId}`);
+      const response = await api.delete(`/friends/requests/${requestId}`, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+
       // Remove from sent requests
       setSentRequests(prev => prev.filter(req => req._id !== requestId));
       return response.data;

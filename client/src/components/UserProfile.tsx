@@ -63,15 +63,37 @@ const UserProfile = ({
   // Update local state when props change
   useEffect(() => {
     setUser(userData);
-    setCurrentStatus(userData?.friendStatus || FriendStatus.NONE);
-    setRequestId(userData?.requestId);
     console.log("USER PROFILE AND USERDATA", userData);
   }, [userData]);
 
   // Refresh friend data when component mounts
   useEffect(() => {
     refreshFriendData();
-    console.log(currentStatus);
+    console.log("=========================================");
+
+    const sent = sentRequests.find(req => req.receiver._id == userData.id);
+    if (sent === undefined) {
+      console.log("No FRQ found");
+    } else {
+      console.log("FRQ Found:", sent);
+      setRequestId(sent._id);
+      setCurrentStatus(FriendStatus.PENDING);
+      return
+    }
+
+    const received = receivedRequests.find(req => req.sender._id == userData.id);
+    if (received === undefined) {
+      console.log("No FRQ received");
+    } else {
+      console.log("FRQ received:", received);
+      setRequestId(received._id);
+      setCurrentStatus(FriendStatus.INCOMING_REQUEST);
+      return
+    }
+
+    setCurrentStatus(FriendStatus.NONE);
+    console.log("Current Status:", currentStatus);
+
   }, []);
 
   const handleSignOut = async () => {
@@ -98,11 +120,14 @@ const UserProfile = ({
     try {
       await sendFriendRequest(user.id);
       setCurrentStatus(FriendStatus.PENDING);
+
       // Find the request ID from the sent requests after refreshing
       await refreshFriendData();
       const sentRequest = sentRequests.find(req => req.receiver._id === user.id);
       if (sentRequest) {
         setRequestId(sentRequest._id);
+      } else {
+        console.log("Failed to find the sent request");
       }
       Alert.alert("Friend Request Sent", `Your friend request to ${user.name} has been sent.`);
     } catch (error: any) {
@@ -114,7 +139,12 @@ const UserProfile = ({
   };
 
   const handleCancelFriendRequest = async () => {
+    const req = sentRequests.find(req => req.receiver._id == user.id);
+    const requestId = req?._id;
+    console.log(req);
     if (!requestId) return;
+
+    console.log("attempt to cancel friend request with id:", requestId);
 
     setIsLoading(true);
 
@@ -172,6 +202,8 @@ const UserProfile = ({
       router.back();
     }
   };
+
+  // useEffect(() => { console.log("current status", currentStatus) });
 
   return (
     <View style={styles.container}>

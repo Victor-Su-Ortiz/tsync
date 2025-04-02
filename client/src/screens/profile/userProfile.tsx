@@ -1,4 +1,3 @@
-// screens/profile/userProfile.tsx
 import React from 'react';
 import { StyleSheet, SafeAreaView, ActivityIndicator, View, Text } from 'react-native';
 import { useLocalSearchParams, Stack } from 'expo-router';
@@ -27,7 +26,6 @@ export default function UserProfileScreen() {
       <UserProfile
         userData={userData}
         isCurrentUser={isCurrentUser}
-        showHeader={true}
       />
     </SafeAreaView>
   );

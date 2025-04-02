@@ -5,6 +5,7 @@ import { io, Socket } from 'socket.io-client';
 import { useAuth } from './AuthContext';
 import { Alert } from 'react-native'; // For debugging
 import { SOCKET_URL } from '@env';
+import { useFriends } from './FriendRequestContext';
 
 // Define the socket context structure
 type SocketContextType = {
@@ -29,6 +30,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [notificationCount, setNotificationCount] = useState(0);
   const { authToken, userInfo } = useAuth();
+  const { refreshFriendData } = useFriends();
 
   const incrementNotificationCount = () => setNotificationCount(prev => prev + 1);
   const resetNotificationCount = () => setNotificationCount(0);
@@ -87,6 +89,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       // Listen for generic notification events
       newSocket.on('notification', data => {
         console.log('Received notification event:', data);
+        refreshFriendData();
         incrementNotificationCount();
         Alert.alert('Notification Received', JSON.stringify(data));
       });
