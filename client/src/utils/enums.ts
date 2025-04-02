@@ -16,7 +16,7 @@ export enum EventType {
 // Define an enum for the request status
 export enum FriendStatus {
   NONE = 'none',
-  PENDING = 'pending',
+  PENDING = 'pending_sent',
   FRIENDS = 'friends',
   INCOMING_REQUEST = 'incoming_request',
 }

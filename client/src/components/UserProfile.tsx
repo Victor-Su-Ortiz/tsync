@@ -1,4 +1,3 @@
-// components/UserProfile.tsx
 import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
@@ -12,12 +11,12 @@ import {
   SafeAreaView
 } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
-import { api } from '@/src/utils/api';
 import { useAuth } from '@/src/context/AuthContext';
 import { FriendStatus } from '@/src/utils/enums';
 import { useRouter } from 'expo-router';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import images from '@/src/constants/images';
+import { useFriends } from '../context/FriendRequestContext';
 
 export type UserProfileProps = {
   userData: {
@@ -48,13 +47,32 @@ const UserProfile = ({
   const [requestId, setRequestId] = useState<string | undefined>(userData?.requestId);
 
   const { authToken, logout } = useAuth();
+  const {
+    sendFriendRequest,
+    acceptFriendRequest,
+    rejectFriendRequest,
+    cancelFriendRequest,
+    removeFriend,
+    refreshFriendData,
+    friends,
+    receivedRequests,
+    sentRequests,
+    loading
+  } = useFriends();
 
   // Update local state when props change
   useEffect(() => {
     setUser(userData);
     setCurrentStatus(userData?.friendStatus || FriendStatus.NONE);
     setRequestId(userData?.requestId);
+    console.log("USER PROFILE AND USERDATA", userData);
   }, [userData]);
+
+  // Refresh friend data when component mounts
+  useEffect(() => {
+    refreshFriendData();
+    console.log(currentStatus);
+  }, []);
 
   const handleSignOut = async () => {
     try {
@@ -73,23 +91,22 @@ const UserProfile = ({
   };
 
   const handleSendFriendRequest = async () => {
-    if (!user) return;
+    if (!user || !user.id) return;
 
     setIsLoading(true);
 
     try {
-      const userId = user.id;
-      const request = await api.post(`/friends/requests/${userId}`, {}, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
-      });
-
+      await sendFriendRequest(user.id);
       setCurrentStatus(FriendStatus.PENDING);
-      setRequestId(request.data.friendRequest._id);
+      // Find the request ID from the sent requests after refreshing
+      await refreshFriendData();
+      const sentRequest = sentRequests.find(req => req.receiver._id === user.id);
+      if (sentRequest) {
+        setRequestId(sentRequest._id);
+      }
       Alert.alert("Friend Request Sent", `Your friend request to ${user.name} has been sent.`);
     } catch (error: any) {
-      console.error("Error sending friend request:", error.response?.data || error);
+      console.error("Error sending friend request:", error);
       Alert.alert("Error", error.response?.data?.message || "Failed to send friend request");
     } finally {
       setIsLoading(false);
@@ -97,17 +114,12 @@ const UserProfile = ({
   };
 
   const handleCancelFriendRequest = async () => {
-    if (!user || !requestId) return;
+    if (!requestId) return;
 
     setIsLoading(true);
 
     try {
-      await api.delete(`/friends/requests/${requestId}`, {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-      });
-
+      await cancelFriendRequest(requestId);
       setCurrentStatus(FriendStatus.NONE);
       setRequestId(undefined);
       Alert.alert("Request Cancelled", "Friend request has been cancelled.");
@@ -120,57 +132,38 @@ const UserProfile = ({
   };
 
   const handleAcceptFriendRequest = async () => {
-    if (!user || !requestId) return;
+    if (!requestId) return;
 
     setIsLoading(true);
 
     try {
-      await api.put(`/friends/requests/${requestId}/accept`, {}, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
-      });
-
+      await acceptFriendRequest(requestId);
       setCurrentStatus(FriendStatus.FRIENDS);
       Alert.alert("Friend Request Accepted", `You are now friends with ${user.name}.`);
     } catch (error: any) {
       console.error("Error accepting friend request:", error);
-      Alert.alert("Error", error.response?.data?.message || "Failed to accept friend request");
+      Alert.alert("Error", "Failed to accept friend request");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleDeclineFriendRequest = async () => {
-    if (!user || !requestId) return;
+  const handleRejectFriendRequest = async () => {
+    if (!requestId) return;
 
     setIsLoading(true);
 
     try {
-      await api.put(`/friends/requests/${requestId}/reject`, {}, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
-      });
-
+      await rejectFriendRequest(requestId);
       setCurrentStatus(FriendStatus.NONE);
       Alert.alert("Friend Request Declined", `Friend request from ${user.name} has been declined.`);
     } catch (error: any) {
       console.error("Error declining friend request:", error);
-      Alert.alert("Error", error.response?.data?.message || "Failed to decline friend request");
+      Alert.alert("Error", "Failed to decline friend request");
     } finally {
       setIsLoading(false);
     }
   };
-
-  if (!user) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#00cc99" />
-        <Text>Loading profile...</Text>
-      </View>
-    );
-  }
 
   const handleBack = () => {
     if (onBackPress) {
@@ -227,7 +220,7 @@ const UserProfile = ({
 
                 <TouchableOpacity
                   style={styles.declineButton}
-                  onPress={handleDeclineFriendRequest}
+                  onPress={handleRejectFriendRequest}
                   disabled={isLoading}
                 >
                   {isLoading ? (
