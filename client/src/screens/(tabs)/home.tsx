@@ -210,8 +210,7 @@ export default function Home() {
       {/* Search Button */}
       <TouchableOpacity
         style={styles.searchButton}
-        onPress={() => router.push('./../search/userSearch')
-        }
+        onPress={() => router.push('./../search/userSearch')}
       >
         <Ionicons name="search" size={20} color="#fff" />
         <Text style={styles.searchButtonText}>Search nearby users</Text>

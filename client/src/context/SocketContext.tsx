@@ -20,9 +20,9 @@ type SocketContextType = {
 const SocketContext = createContext<SocketContextType>({
   socket: null,
   notificationCount: 0,
-  incrementNotificationCount: () => { },
-  resetNotificationCount: () => { },
-  updateNotifcationCount: (number: number) => { },
+  incrementNotificationCount: () => {},
+  resetNotificationCount: () => {},
+  updateNotifcationCount: (number: number) => {},
 });
 
 // Create the provider component

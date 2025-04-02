@@ -6,7 +6,7 @@ import UserProfile from '@/src/components/UserProfile';
 export default function UserProfileScreen() {
   const params = useLocalSearchParams();
   const userData = params.userData ? JSON.parse(params.userData as string) : null;
-  const isCurrentUser = params.isCurrentUser === "true";
+  const isCurrentUser = params.isCurrentUser === 'true';
 
   if (!userData) {
     return (
@@ -23,10 +23,7 @@ export default function UserProfileScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
-      <UserProfile
-        userData={userData}
-        isCurrentUser={isCurrentUser}
-      />
+      <UserProfile userData={userData} isCurrentUser={isCurrentUser} />
     </SafeAreaView>
   );
 }

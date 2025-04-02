@@ -12,18 +12,14 @@ export default function ProfileScreen() {
   const userData = {
     id: userInfo?.id || userInfo?.id || '',
     name: userInfo?.name || 'User',
-    profilePicture: userInfo?.picture || userInfo?.profilePicture || "",
+    profilePicture: userInfo?.picture || userInfo?.profilePicture || '',
     bio: userInfo?.bio || '',
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
-      <UserProfile
-        userData={userData}
-        isCurrentUser={true}
-        showHeader={false}
-      />
+      <UserProfile userData={userData} isCurrentUser={true} showHeader={false} />
     </SafeAreaView>
   );
 }

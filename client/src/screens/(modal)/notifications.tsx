@@ -123,15 +123,15 @@ export default function Notifications() {
         friendStatus,
       };
 
-      console.log("USER FROM NOTIFICATIONS.TSX:", user);
+      console.log('USER FROM NOTIFICATIONS.TSX:', user);
 
       console.log('FRIEND STATUS:', friendStatus);
       // Set selected user and request ID
       router.push({
-        pathname: "./../profile/userProfile",
+        pathname: './../profile/userProfile',
         params: {
-          userData: JSON.stringify(user)
-        }
+          userData: JSON.stringify(user),
+        },
       });
     } catch (error) {
       console.error('Error setting up user profile:', error);

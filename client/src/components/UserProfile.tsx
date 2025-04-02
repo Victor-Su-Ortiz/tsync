@@ -8,8 +8,8 @@ import {
   Alert,
   ScrollView,
   ActivityIndicator,
-  SafeAreaView
-} from "react-native";
+  SafeAreaView,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/src/context/AuthContext';
 import { FriendStatus } from '@/src/utils/enums';
@@ -36,13 +36,13 @@ const UserProfile = ({
   userData,
   isCurrentUser = false,
   showHeader = true,
-  onBackPress
+  onBackPress,
 }: UserProfileProps) => {
   const router = useRouter();
   const [user, setUser] = useState(userData);
   const [isLoading, setIsLoading] = useState(false);
   const [currentStatus, setCurrentStatus] = useState<FriendStatus>(
-    userData?.friendStatus || FriendStatus.NONE
+    userData?.friendStatus || FriendStatus.NONE,
   );
   const [requestId, setRequestId] = useState<string | undefined>(userData?.requestId);
 
@@ -57,43 +57,42 @@ const UserProfile = ({
     friends,
     receivedRequests,
     sentRequests,
-    loading
+    loading,
   } = useFriends();
 
   // Update local state when props change
   useEffect(() => {
     setUser(userData);
-    console.log("USER PROFILE AND USERDATA", userData);
+    console.log('USER PROFILE AND USERDATA', userData);
   }, [userData]);
 
   // Refresh friend data when component mounts
   useEffect(() => {
     refreshFriendData();
-    console.log("=========================================");
+    console.log('=========================================');
 
     const sent = sentRequests.find(req => req.receiver._id == userData.id);
     if (sent === undefined) {
-      console.log("No FRQ found");
+      console.log('No FRQ found');
     } else {
-      console.log("FRQ Found:", sent);
+      console.log('FRQ Found:', sent);
       setRequestId(sent._id);
       setCurrentStatus(FriendStatus.PENDING);
-      return
+      return;
     }
 
     const received = receivedRequests.find(req => req.sender._id == userData.id);
     if (received === undefined) {
-      console.log("No FRQ received");
+      console.log('No FRQ received');
     } else {
-      console.log("FRQ received:", received);
+      console.log('FRQ received:', received);
       setRequestId(received._id);
       setCurrentStatus(FriendStatus.INCOMING_REQUEST);
-      return
+      return;
     }
 
     setCurrentStatus(FriendStatus.NONE);
-    console.log("Current Status:", currentStatus);
-
+    console.log('Current Status:', currentStatus);
   }, []);
 
   const handleSignOut = async () => {
@@ -108,7 +107,7 @@ const UserProfile = ({
       router.replace('./../');
     } catch (error) {
       console.error('Error signing out:', error);
-      Alert.alert("Error", "Failed to sign out. Please try again.");
+      Alert.alert('Error', 'Failed to sign out. Please try again.');
     }
   };
 
@@ -127,12 +126,12 @@ const UserProfile = ({
       if (sentRequest) {
         setRequestId(sentRequest._id);
       } else {
-        console.log("Failed to find the sent request");
+        console.log('Failed to find the sent request');
       }
-      Alert.alert("Friend Request Sent", `Your friend request to ${user.name} has been sent.`);
+      Alert.alert('Friend Request Sent', `Your friend request to ${user.name} has been sent.`);
     } catch (error: any) {
-      console.error("Error sending friend request:", error);
-      Alert.alert("Error", error.response?.data?.message || "Failed to send friend request");
+      console.error('Error sending friend request:', error);
+      Alert.alert('Error', error.response?.data?.message || 'Failed to send friend request');
     } finally {
       setIsLoading(false);
     }
@@ -144,7 +143,7 @@ const UserProfile = ({
     console.log(req);
     if (!requestId) return;
 
-    console.log("attempt to cancel friend request with id:", requestId);
+    console.log('attempt to cancel friend request with id:', requestId);
 
     setIsLoading(true);
 
@@ -152,10 +151,10 @@ const UserProfile = ({
       await cancelFriendRequest(requestId);
       setCurrentStatus(FriendStatus.NONE);
       setRequestId(undefined);
-      Alert.alert("Request Cancelled", "Friend request has been cancelled.");
+      Alert.alert('Request Cancelled', 'Friend request has been cancelled.');
     } catch (error: any) {
-      console.error("Error cancelling request:", error);
-      Alert.alert("Error", "Failed to cancel request");
+      console.error('Error cancelling request:', error);
+      Alert.alert('Error', 'Failed to cancel request');
     } finally {
       setIsLoading(false);
     }
@@ -169,10 +168,10 @@ const UserProfile = ({
     try {
       await acceptFriendRequest(requestId);
       setCurrentStatus(FriendStatus.FRIENDS);
-      Alert.alert("Friend Request Accepted", `You are now friends with ${user.name}.`);
+      Alert.alert('Friend Request Accepted', `You are now friends with ${user.name}.`);
     } catch (error: any) {
-      console.error("Error accepting friend request:", error);
-      Alert.alert("Error", "Failed to accept friend request");
+      console.error('Error accepting friend request:', error);
+      Alert.alert('Error', 'Failed to accept friend request');
     } finally {
       setIsLoading(false);
     }
@@ -186,10 +185,10 @@ const UserProfile = ({
     try {
       await rejectFriendRequest(requestId);
       setCurrentStatus(FriendStatus.NONE);
-      Alert.alert("Friend Request Declined", `Friend request from ${user.name} has been declined.`);
+      Alert.alert('Friend Request Declined', `Friend request from ${user.name} has been declined.`);
     } catch (error: any) {
-      console.error("Error declining friend request:", error);
-      Alert.alert("Error", "Failed to decline friend request");
+      console.error('Error declining friend request:', error);
+      Alert.alert('Error', 'Failed to decline friend request');
     } finally {
       setIsLoading(false);
     }
@@ -318,10 +317,7 @@ const UserProfile = ({
 
         {/* Sign Out Button - Only show for current user */}
         {isCurrentUser && (
-          <TouchableOpacity
-            style={styles.signOutButton}
-            onPress={handleSignOut}
-          >
+          <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
             <Text style={styles.signOutText}>Sign Out</Text>
           </TouchableOpacity>
         )}
@@ -454,7 +450,7 @@ const styles = StyleSheet.create({
   signOutText: {
     color: '#666',
     fontSize: 16,
-  }
+  },
 });
 
 export default UserProfile;

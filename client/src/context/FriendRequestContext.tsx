@@ -45,12 +45,12 @@ const FriendContext = createContext<FriendContextType>({
   sentRequests: [],
   loading: false,
   error: null,
-  sendFriendRequest: async () => { },
-  acceptFriendRequest: async () => { },
-  rejectFriendRequest: async () => { },
-  cancelFriendRequest: async () => { },
-  removeFriend: async () => { },
-  refreshFriendData: async () => { },
+  sendFriendRequest: async () => {},
+  acceptFriendRequest: async () => {},
+  rejectFriendRequest: async () => {},
+  cancelFriendRequest: async () => {},
+  removeFriend: async () => {},
+  refreshFriendData: async () => {},
 });
 
 // Create the provider component
@@ -74,29 +74,29 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
       // Fetch friend s list
       const friendsResponse = await api.get('/friends', {
         headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
+          Authorization: `Bearer ${authToken}`,
+        },
       });
       setFriends(friendsResponse.data.friends);
-      console.log("Friends:", friends);
+      console.log('Friends:', friends);
 
       // Fetch pending friend requests
       const pendingResponse = await api.get('/friends/requests/received', {
         headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
+          Authorization: `Bearer ${authToken}`,
+        },
       });
 
       setReceivedRequests(pendingResponse.data.requests);
-      console.log("Received Requests:", receivedRequests);
+      console.log('Received Requests:', receivedRequests);
 
       // Fetch sent friend requests
       const sentResponse = await api.get('/friends/requests/sent', {
         headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
+          Authorization: `Bearer ${authToken}`,
+        },
       });
-      console.log("Sent requests:", sentRequests);
+      console.log('Sent requests:', sentRequests);
 
       setSentRequests(sentResponse.data.requests);
     } catch (err: any) {
@@ -169,11 +169,15 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
     setError(null);
 
     try {
-      const response = await api.post(`/friends/requests/${userId}`, {}, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
-      });
+      const response = await api.post(
+        `/friends/requests/${userId}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        },
+      );
       // Add the new request to the sent requests list
       setSentRequests(prev => [...prev, response.data.request]);
       return response.data;
@@ -247,8 +251,8 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const response = await api.delete(`/friends/requests/${requestId}`, {
         headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
+          Authorization: `Bearer ${authToken}`,
+        },
       });
 
       // Remove from sent requests

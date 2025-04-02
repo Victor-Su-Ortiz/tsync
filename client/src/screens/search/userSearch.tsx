@@ -9,8 +9,8 @@ import {
   TouchableOpacity,
   TextInput,
   KeyboardAvoidingView,
-  Platform
-} from "react-native";
+  Platform,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { debounce } from 'lodash';
 import { api } from '@/src/utils/api';
@@ -56,15 +56,12 @@ const UserSearch = () => {
 
     try {
       // Get search results
-      const searchResponse = await api.get(
-        '/users/search',
-        {
-          params: { q: query, limit: 10 },
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        }
-      );
+      const searchResponse = await api.get('/users/search', {
+        params: { q: query, limit: 10 },
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
 
       const searchedUsers = searchResponse.data.users || [];
 
@@ -74,13 +71,13 @@ const UserSearch = () => {
 
         return {
           ...user,
-          id: userId
+          id: userId,
         };
       });
 
       setUsers(updatedUsers);
     } catch (error: any) {
-      console.error("Error searching for users:", error);
+      console.error('Error searching for users:', error);
       // Just show empty results if there's an error
       setUsers([]);
     } finally {
@@ -121,13 +118,13 @@ const UserSearch = () => {
   }, []);
 
   const handleUserPress = (user: User) => {
-    console.log("Selected user:", user);
+    console.log('Selected user:', user);
 
     router.push({
-      pathname: "./../profile/userProfile",
+      pathname: './../profile/userProfile',
       params: {
-        userData: JSON.stringify(user)
-      }
+        userData: JSON.stringify(user),
+      },
     });
   };
 
@@ -149,10 +146,7 @@ const UserSearch = () => {
       <View style={styles.container}>
         {/* Header with back button and search input */}
         <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={handleBack}
-          >
+          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
             <Ionicons name="arrow-back" size={24} color="#333" />
           </TouchableOpacity>
 
@@ -181,14 +175,11 @@ const UserSearch = () => {
           users.length > 0 ? (
             <FlatList
               data={users}
-              keyExtractor={(item) => item.id}
+              keyExtractor={item => item.id}
               renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={styles.userItem}
-                  onPress={() => handleUserPress(item)}
-                >
+                <TouchableOpacity style={styles.userItem} onPress={() => handleUserPress(item)}>
                   <Image
-                    source={{ uri: item.profilePicture || "https://via.placeholder.com/150" }}
+                    source={{ uri: item.profilePicture || 'https://via.placeholder.com/150' }}
                     style={styles.userAvatar}
                   />
                   <View style={styles.userInfo}>

@@ -1,59 +1,68 @@
 import React, { useState } from 'react';
-import { Text, TextInput, TouchableOpacity, Alert, StyleSheet, Keyboard, Button, View } from 'react-native';
-import { api } from "../utils/api"; // Import the API instance
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  StyleSheet,
+  Keyboard,
+  Button,
+  View,
+} from 'react-native';
+import { api } from '../utils/api'; // Import the API instance
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import '../../global.css';
-import { ArrowLeft, User } from "lucide-react-native";
+import { ArrowLeft, User } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 
 // User data
 const users = [
   {
-    name: "Emma Johnson",
-    email: "emma.johnson@example.com",
-    password: "Password123!",
-    role: "user",
-    profilePicture: "https://randomuser.me/api/portraits/women/1.jpg",
+    name: 'Emma Johnson',
+    email: 'emma.johnson@example.com',
+    password: 'Password123!',
+    role: 'user',
+    profilePicture: 'https://randomuser.me/api/portraits/women/1.jpg',
     isEmailVerified: true,
-    lastLogin: new Date("2024-02-12"),
+    lastLogin: new Date('2024-02-12'),
   },
   {
-    name: "Michael Smith",
-    email: "michael.smith@example.com",
-    password: "Password456!",
-    role: "user",
-    profilePicture: "https://randomuser.me/api/portraits/men/1.jpg",
+    name: 'Michael Smith',
+    email: 'michael.smith@example.com',
+    password: 'Password456!',
+    role: 'user',
+    profilePicture: 'https://randomuser.me/api/portraits/men/1.jpg',
     isEmailVerified: true,
-    lastLogin: new Date("2024-02-15"),
+    lastLogin: new Date('2024-02-15'),
   },
   {
-    name: "Sophia Williams",
-    email: "sophia.williams@example.com",
-    password: "Password789!",
-    role: "user",
-    profilePicture: "https://randomuser.me/api/portraits/women/2.jpg",
+    name: 'Sophia Williams',
+    email: 'sophia.williams@example.com',
+    password: 'Password789!',
+    role: 'user',
+    profilePicture: 'https://randomuser.me/api/portraits/women/2.jpg',
     isEmailVerified: true,
-    lastLogin: new Date("2024-02-18"),
+    lastLogin: new Date('2024-02-18'),
   },
   {
-    name: "James Brown",
-    email: "james.brown@example.com",
-    password: "PasswordABC!",
-    role: "user",
-    profilePicture: "https://randomuser.me/api/portraits/men/2.jpg",
+    name: 'James Brown',
+    email: 'james.brown@example.com',
+    password: 'PasswordABC!',
+    role: 'user',
+    profilePicture: 'https://randomuser.me/api/portraits/men/2.jpg',
     isEmailVerified: true,
-    lastLogin: new Date("2024-02-20"),
+    lastLogin: new Date('2024-02-20'),
   },
   {
-    name: "Olivia Davis",
-    email: "olivia.davis@example.com",
-    password: "PasswordXYZ!",
-    role: "user",
-    profilePicture: "https://randomuser.me/api/portraits/women/3.jpg",
+    name: 'Olivia Davis',
+    email: 'olivia.davis@example.com',
+    password: 'PasswordXYZ!',
+    role: 'user',
+    profilePicture: 'https://randomuser.me/api/portraits/women/3.jpg',
     isEmailVerified: true,
-    lastLogin: new Date("2024-02-22"),
+    lastLogin: new Date('2024-02-22'),
   },
 ];
 
@@ -72,11 +81,11 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const response = await api.post("/auth/resetPassword", { email, password });
+      const response = await api.post('/auth/resetPassword', { email, password });
       const { token } = response.data;
     } catch (error: any) {
-      console.error("Login error:", error);
-      Alert.alert("Login Failed", error.response?.data?.message || "Something went wrong.");
+      console.error('Login error:', error);
+      Alert.alert('Login Failed', error.response?.data?.message || 'Something went wrong.');
     } finally {
       setLoading(false);
     }
@@ -89,17 +98,17 @@ const Login = () => {
     }
     setLoading(true);
     try {
-      const response = await api.post("/auth/login", { email, password });
+      const response = await api.post('/auth/login', { email, password });
       const { user, token } = response.data;
 
       console.log(user);
       setAuthToken(token);
       setUserInfo(user);
-      Alert.alert("Success", "Login successful!");
+      Alert.alert('Success', 'Login successful!');
       router.push('./(tabs)/home');
     } catch (error: any) {
-      console.error("Login error:", error);
-      Alert.alert("Login Failed", error.response?.data?.message || "Something went wrong.");
+      console.error('Login error:', error);
+      Alert.alert('Login Failed', error.response?.data?.message || 'Something went wrong.');
     } finally {
       setLoading(false);
     }
@@ -109,9 +118,9 @@ const Login = () => {
   const handleUserSelection = async (selectedUser: any) => {
     setLoading(true);
     try {
-      const response = await api.post("/auth/login", {
+      const response = await api.post('/auth/login', {
         email: selectedUser.email,
-        password: selectedUser.password
+        password: selectedUser.password,
       });
 
       const { user, token } = response.data;
@@ -119,11 +128,11 @@ const Login = () => {
       console.log(user);
       setAuthToken(token);
       setUserInfo(user);
-      Alert.alert("Success", `Logged in as ${selectedUser.name}`);
+      Alert.alert('Success', `Logged in as ${selectedUser.name}`);
       router.push('./(tabs)/home');
     } catch (error: any) {
-      console.error("Login error:", error);
-      Alert.alert("Login Failed", error.response?.data?.message || "Something went wrong.");
+      console.error('Login error:', error);
+      Alert.alert('Login Failed', error.response?.data?.message || 'Something went wrong.');
     } finally {
       setLoading(false);
     }
@@ -134,25 +143,23 @@ const Login = () => {
     // Create buttons for each user
     const buttons = users.map(user => ({
       text: user.name,
-      onPress: () => handleUserSelection(user)
+      onPress: () => handleUserSelection(user),
     }));
 
     // Show alert with user options
-    Alert.alert(
-      'Select a User',
-      'Choose a user to sign in as:',
-      buttons,
-      { cancelable: true }
-    );
+    Alert.alert('Select a User', 'Choose a user to sign in as:', buttons, { cancelable: true });
   };
 
   return (
-    <SafeAreaView className='flex-1 justify-center px-5 bg-gray-100'>
-      <TouchableOpacity onPress={() => router.back()} className="absolute top-14 left-5 p-2 bg-white shadow-md shadow-zinc-300 rounded-full">
+    <SafeAreaView className="flex-1 justify-center px-5 bg-gray-100">
+      <TouchableOpacity
+        onPress={() => router.back()}
+        className="absolute top-14 left-5 p-2 bg-white shadow-md shadow-zinc-300 rounded-full"
+      >
         <ArrowLeft size={24} />
       </TouchableOpacity>
 
-      <Text className='pb-5 text-2xl font-bold text-center'>Sign In 🧋</Text>
+      <Text className="pb-5 text-2xl font-bold text-center">Sign In 🧋</Text>
 
       <TextInput
         style={styles.input}
@@ -170,12 +177,8 @@ const Login = () => {
         secureTextEntry
       />
 
-      <TouchableOpacity
-        style={styles.button}
-        onPress={handleLogin}
-        disabled={loading}
-      >
-        <Text style={styles.buttonText}>{loading ? "Logging in..." : "Login"}</Text>
+      <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
+        <Text style={styles.buttonText}>{loading ? 'Logging in...' : 'Login'}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
