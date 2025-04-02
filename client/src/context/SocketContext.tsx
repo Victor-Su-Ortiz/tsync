@@ -19,9 +19,9 @@ type SocketContextType = {
 const SocketContext = createContext<SocketContextType>({
   socket: null,
   notificationCount: 0,
-  incrementNotificationCount: () => {},
-  resetNotificationCount: () => {},
-  updateNotifcationCount: (number: number) => {},
+  incrementNotificationCount: () => { },
+  resetNotificationCount: () => { },
+  updateNotifcationCount: (number: number) => { },
 });
 
 // Create the provider component
@@ -91,12 +91,12 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         Alert.alert('Notification Received', JSON.stringify(data));
       });
 
-      // Listen for friend request specific events
-      newSocket.on('friend_request', data => {
-        console.log('Received friend request event:', data);
-        incrementNotificationCount();
-        Alert.alert('Friend Request', `Request from: ${data?.from?.name || 'Someone'}`);
-      });
+      // // Listen for friend request specific events
+      // newSocket.on('friend_request', data => {
+      //   console.log('Received friend request event:', data);
+      //   incrementNotificationCount();
+      //   Alert.alert('Friend Request', `Request from: ${data?.from?.name || 'Someone'}`);
+      // });
 
       // Listen for the user-specific channel
       // This is how the server will likely emit events for a specific user
