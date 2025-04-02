@@ -182,11 +182,11 @@ export default function Home() {
     getUserLocation();
   }, []);
 
-  useEffect(() => {
-    if (location) {
-      getNearbyStores(location.latitude, location.longitude);
-    }
-  }, [location]);
+  // useEffect(() => {
+  //   if (location) {
+  //     getNearbyStores(location.latitude, location.longitude);
+  //   }
+  // }, [location]);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: 'white', padding: 16 }}>
