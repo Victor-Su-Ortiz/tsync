@@ -11,6 +11,7 @@ import {
   SafeAreaView,
   Alert,
   ActivityIndicator,
+  Switch,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -492,6 +493,25 @@ export default function AddEventScreen() {
               setSelectedFriends={setSelectedFriends}
             />
 
+            {/* Google Calendar Sync Toggle */}
+            {selectedFriends.length > 0 && (
+              <View style={styles.syncContainer}>
+                <View style={styles.syncTextContainer}>
+                  <Text style={styles.syncLabel}>Sync to everyone's Google Calendar</Text>
+                  <Text style={styles.syncDescription}>
+                    Request to automatically add this event to all attendees' Google Calendars
+                  </Text>
+                </View>
+                <Switch
+                  trackColor={{ false: '#e0e0e0', true: '#baf0e1' }}
+                  thumbColor={syncToGoogleCalendar ? '#00cc99' : '#f4f3f4'}
+                  ios_backgroundColor="#e0e0e0"
+                  onValueChange={() => setSyncToGoogleCalendar(!syncToGoogleCalendar)}
+                  value={syncToGoogleCalendar}
+                />
+              </View>
+            )}
+
             <TouchableOpacity
               style={styles.addButton}
               onPress={handleAddEvent}
@@ -681,5 +701,31 @@ const styles = StyleSheet.create({
   selectedDurationOptionText: {
     color: '#00cc99',
     fontWeight: '500',
+  },
+  // Google Calendar sync styles
+  syncContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 25,
+    marginBottom: 5,
+    paddingVertical: 10,
+    paddingHorizontal: 5,
+    borderRadius: 8,
+    backgroundColor: '#f8f8f8',
+  },
+  syncTextContainer: {
+    flex: 1,
+    marginRight: 10,
+  },
+  syncLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#333',
+  },
+  syncDescription: {
+    fontSize: 13,
+    color: '#666',
+    marginTop: 3,
   },
 });
