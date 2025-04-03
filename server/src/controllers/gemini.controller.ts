@@ -28,7 +28,7 @@ export class GeminiController {
 
       // Check authorization (only organizer or participants can access)
       const userId = req.userId;
-      const isOrganizer = event.creator === userId;
+      const isOrganizer = event.creator._id === userId;
       const isParticipant = event.attendees.some(p => p.userId === userId);
 
       if (!isOrganizer && !isParticipant) {
