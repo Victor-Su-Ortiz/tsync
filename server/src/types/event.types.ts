@@ -16,8 +16,9 @@ export type EventStatus = 'scheduled' | 'tentative' | 'confirmed' | 'cancelled';
 
 // Define event date type to handle non-consecutive dates
 export interface IEventDate {
-  date: Date;
-  isAllDay: boolean;
+  startDate: Date;
+  endDate: Date;
+  isAllDay?: boolean;
   startTime?: Date;
   endTime?: Date;
 }

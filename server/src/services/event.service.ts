@@ -16,6 +16,7 @@ class EventService {
       if (!user) {
         throw new AppError('User not found', 404);
       }
+      console.log('eventData', eventData);
 
       // Create the event
       const event = new Event({

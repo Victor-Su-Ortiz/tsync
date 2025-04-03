@@ -35,9 +35,13 @@ const EventSchema = new Schema<IEvent, IEventModel, IEventMethods>(
     },
     eventDates: [
       {
-        date: {
+        startDate: {
           type: Date,
-          required: [true, 'Event date is required'],
+          required: [true, 'Event start date is required'],
+        },
+        endDate: {
+          type: Date,
+          required: [true, 'Event end date is required'],
         },
         isAllDay: {
           type: Boolean,
