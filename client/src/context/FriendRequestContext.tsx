@@ -1,11 +1,11 @@
-// src/context/FriendContext.tsx
+// src/context/FriendRequestContext.tsx
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { api } from '../utils/api';
 import { useAuth } from './AuthContext';
 import { useSocket } from './SocketContext';
 import { EXPO_PUBLIC_API_URL } from '@env';
-import { FriendRequestStatus } from '../utils/enums';
+import { FriendRequestStatus, FriendStatus } from '../utils/enums';
 
 // Define types for friend data
 export type Friend = {
@@ -30,6 +30,11 @@ type FriendContextType = {
   sentRequests: FriendRequest[];
   loading: boolean;
   error: string | null;
+  getFriendStatus: (userId: string) => {
+    status: FriendStatus;
+    requestId?: string;
+  };
+
   sendFriendRequest: (email: string) => Promise<void>;
   acceptFriendRequest: (requestId: string) => Promise<void>;
   rejectFriendRequest: (requestId: string) => Promise<void>;
@@ -38,6 +43,7 @@ type FriendContextType = {
   refreshFriendData: () => Promise<void>;
 };
 
+
 // Create the context
 const FriendContext = createContext<FriendContextType>({
   friends: [],
@@ -45,12 +51,13 @@ const FriendContext = createContext<FriendContextType>({
   sentRequests: [],
   loading: false,
   error: null,
-  sendFriendRequest: async () => {},
-  acceptFriendRequest: async () => {},
-  rejectFriendRequest: async () => {},
-  cancelFriendRequest: async () => {},
-  removeFriend: async () => {},
-  refreshFriendData: async () => {},
+  sendFriendRequest: async () => { },
+  acceptFriendRequest: async () => { },
+  rejectFriendRequest: async () => { },
+  cancelFriendRequest: async () => { },
+  removeFriend: async () => { },
+  refreshFriendData: async () => { },
+  getFriendStatus: () => ({ status: FriendStatus.NONE }),
 });
 
 // Create the provider component
@@ -106,6 +113,49 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(false);
     }
   };
+
+  const getFriendStatus = (userId: string): { status: FriendStatus; requestId?: string } => {
+    // Safety check for userId
+    if (!userId) {
+      return { status: FriendStatus.NONE };
+    }
+
+    // Check if the user is already a friend
+    // Look for both _id and id properties to handle all cases
+    const friend = friends.find(f => f && (f._id === userId || (f as any).id === userId));
+    if (friend) {
+      return { status: FriendStatus.FRIENDS };
+    }
+
+    // Check if there's a pending sent request - handle both id and _id
+    const sent = sentRequests.find(req =>
+      req &&
+      req.receiver &&
+      typeof req.receiver === 'object' &&
+      (('_id' in req.receiver && req.receiver._id === userId) ||
+        ('id' in req.receiver && (req.receiver as any).id === userId))
+    );
+    if (sent) {
+      return { status: FriendStatus.PENDING, requestId: sent._id };
+    }
+
+    // Check if there's an incoming request - handle both id and _id
+    const received = receivedRequests.find(req =>
+      req &&
+      req.sender &&
+      typeof req.sender === 'object' &&
+      (('_id' in req.sender && req.sender._id === userId) ||
+        ('id' in req.sender && (req.sender as any).id === userId))
+    );
+    if (received) {
+      return { status: FriendStatus.INCOMING_REQUEST, requestId: received._id };
+    }
+
+    // If none of the above, no relationship exists
+    return { status: FriendStatus.NONE };
+  };
+
+
 
   // Load friend data on component mount or when auth state changes
   useEffect(() => {
@@ -196,23 +246,36 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
     setError(null);
 
     try {
-      const response = await api.post(`/friends/requests/${requestId}/accept`);
+      const response = await api.put(`/friends/requests/${requestId}/accept`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        },
+      );
 
       // Find the request that was accepted
       const acceptedRequest = receivedRequests.find(req => req._id === requestId);
 
-      // Remove from pending requests
+      if (!acceptedRequest) {
+        console.warn('Could not find the accepted request in state');
+        // Force a complete data refresh instead
+        await refreshFriendData();
+        return response.data;
+      }
+
+      // Remove from pending requests immediately
       setReceivedRequests(prev => prev.filter(req => req._id !== requestId));
 
-      // Add to friends list if not already there and if we found the request
-      if (acceptedRequest) {
-        setFriends(prev => {
-          if (!prev.some(friend => friend._id === acceptedRequest.sender._id)) {
-            return [...prev, acceptedRequest.sender];
-          }
-          return prev;
-        });
-      }
+      // Add to friends list if not already there
+      const senderId = acceptedRequest.sender._id;
+      setFriends(prev => {
+        if (!prev.some(friend => friend._id === senderId)) {
+          return [...prev, acceptedRequest.sender];
+        }
+        return prev;
+      });
 
       return response.data;
     } catch (err: any) {
@@ -224,13 +287,21 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+
   // Reject a friend request
   const rejectFriendRequest = async (requestId: string) => {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await api.post(`/friends/requests/${requestId}/reject`);
+      const response = await api.put(`/friends/requests/${requestId}/reject`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        },
+      );
       // Remove from pending requests
       setReceivedRequests(prev => prev.filter(req => req._id !== requestId));
       return response.data;
@@ -300,6 +371,7 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
         cancelFriendRequest,
         removeFriend,
         refreshFriendData,
+        getFriendStatus,
       }}
     >
       {children}

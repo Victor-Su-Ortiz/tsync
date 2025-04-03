@@ -23,7 +23,6 @@ export type UserProfileProps = {
     id: string;
     name: string;
     profilePicture?: string;
-    bio?: string;
     friendStatus?: FriendStatus;
     requestId?: string;
   };
@@ -38,13 +37,6 @@ const UserProfile = ({
   showHeader = true,
   onBackPress,
 }: UserProfileProps) => {
-  const router = useRouter();
-  const [user, setUser] = useState(userData);
-  const [isLoading, setIsLoading] = useState(false);
-  const [currentStatus, setCurrentStatus] = useState<FriendStatus>(
-    userData?.friendStatus || FriendStatus.NONE,
-  );
-  const [requestId, setRequestId] = useState<string | undefined>(userData?.requestId);
 
   const { authToken, logout } = useAuth();
   const {
@@ -58,42 +50,13 @@ const UserProfile = ({
     receivedRequests,
     sentRequests,
     loading,
+    getFriendStatus
   } = useFriends();
 
-  // Update local state when props change
-  useEffect(() => {
-    setUser(userData);
-    console.log('USER PROFILE AND USERDATA', userData);
-  }, [userData]);
-
-  // Refresh friend data when component mounts
-  useEffect(() => {
-    refreshFriendData();
-    console.log('=========================================');
-
-    const sent = sentRequests.find(req => req.receiver._id == userData.id);
-    if (sent === undefined) {
-      console.log('No FRQ found');
-    } else {
-      console.log('FRQ Found:', sent);
-      setRequestId(sent._id);
-      setCurrentStatus(FriendStatus.PENDING);
-      return;
-    }
-
-    const received = receivedRequests.find(req => req.sender._id == userData.id);
-    if (received === undefined) {
-      console.log('No FRQ received');
-    } else {
-      console.log('FRQ received:', received);
-      setRequestId(received._id);
-      setCurrentStatus(FriendStatus.INCOMING_REQUEST);
-      return;
-    }
-
-    setCurrentStatus(FriendStatus.NONE);
-    console.log('Current Status:', currentStatus);
-  }, []);
+  const router = useRouter();
+  const [user, setUser] = useState(userData);
+  const [isLoading, setIsLoading] = useState(false);
+  const { status: currentStatus, requestId } = getFriendStatus(user.id);
 
   const handleSignOut = async () => {
     try {
@@ -118,16 +81,8 @@ const UserProfile = ({
 
     try {
       await sendFriendRequest(user.id);
-      setCurrentStatus(FriendStatus.PENDING);
-
-      // Find the request ID from the sent requests after refreshing
-      await refreshFriendData();
-      const sentRequest = sentRequests.find(req => req.receiver._id === user.id);
-      if (sentRequest) {
-        setRequestId(sentRequest._id);
-      } else {
-        console.log('Failed to find the sent request');
-      }
+      // No need to manually set status as it will be updated in the effect hook
+      await refreshFriendData(); // Refresh data to get the new request
       Alert.alert('Friend Request Sent', `Your friend request to ${user.name} has been sent.`);
     } catch (error: any) {
       console.error('Error sending friend request:', error);
@@ -138,19 +93,41 @@ const UserProfile = ({
   };
 
   const handleCancelFriendRequest = async () => {
-    const req = sentRequests.find(req => req.receiver._id == user.id);
-    const requestId = req?._id;
-    console.log(req);
-    if (!requestId) return;
+    // Safety check: make sure sentRequests is defined and not empty
+    if (!sentRequests || sentRequests.length === 0) {
+      console.error('No sent requests available');
+      return;
+    }
 
-    console.log('attempt to cancel friend request with id:', requestId);
+    // Find the request safely with null checks
+    const req = sentRequests.find(req => req && req.receiver && req.receiver._id === user.id);
 
+    // Safety check: make sure the request exists
+    if (!req || !req._id) {
+      console.error('No valid request found to cancel');
+
+      // Refresh data to ensure we have the latest
+      await refreshFriendData();
+
+      // Try to find the request again after refreshing
+      const refreshedReq = sentRequests.find(req => req && req.receiver && req.receiver._id === user.id);
+
+      if (!refreshedReq || !refreshedReq._id) {
+        Alert.alert('Error', 'Could not find the friend request to cancel. Please try again.');
+        return;
+      }
+    }
+
+    const reqId = req?._id;
+    console.log('attempt to cancel friend request with id:', reqId);
+
+    if (reqId == undefined) { return }
     setIsLoading(true);
 
     try {
-      await cancelFriendRequest(requestId);
-      setCurrentStatus(FriendStatus.NONE);
-      setRequestId(undefined);
+      await cancelFriendRequest(reqId);
+      // Refresh data to update the UI properly
+      await refreshFriendData();
       Alert.alert('Request Cancelled', 'Friend request has been cancelled.');
     } catch (error: any) {
       console.error('Error cancelling request:', error);
@@ -161,13 +138,18 @@ const UserProfile = ({
   };
 
   const handleAcceptFriendRequest = async () => {
-    if (!requestId) return;
+    if (!requestId) {
+      console.error('No request ID found to accept');
+      return;
+    }
 
     setIsLoading(true);
 
     try {
       await acceptFriendRequest(requestId);
-      setCurrentStatus(FriendStatus.FRIENDS);
+      // Immediately force a refresh of the friend data
+      await refreshFriendData();
+
       Alert.alert('Friend Request Accepted', `You are now friends with ${user.name}.`);
     } catch (error: any) {
       console.error('Error accepting friend request:', error);
@@ -177,18 +159,22 @@ const UserProfile = ({
     }
   };
 
+
   const handleRejectFriendRequest = async () => {
-    if (!requestId) return;
+    if (!requestId) {
+      console.error('No request ID found to accept');
+      return;
+    }
 
     setIsLoading(true);
 
     try {
       await rejectFriendRequest(requestId);
-      setCurrentStatus(FriendStatus.NONE);
-      Alert.alert('Friend Request Declined', `Friend request from ${user.name} has been declined.`);
+      await refreshFriendData(); // This will update the context and recompute status
+      Alert.alert('Friend Request Declined', `You declined your friend request from ${user.name}.`);
     } catch (error: any) {
       console.error('Error declining friend request:', error);
-      Alert.alert('Error', 'Failed to decline friend request');
+      Alert.alert('Error', 'Failed to declining friend request');
     } finally {
       setIsLoading(false);
     }
@@ -202,7 +188,21 @@ const UserProfile = ({
     }
   };
 
-  // useEffect(() => { console.log("current status", currentStatus) });
+  // For debugging
+  useEffect(() => {
+    console.log('Current status in render:', currentStatus);
+  }, [currentStatus]);
+
+  useEffect(() => {
+    // Force component to update when friend status changes
+    // This effect runs whenever the friends, receivedRequests, or sentRequests arrays change
+    const { status: latestStatus, requestId: latestRequestId } = getFriendStatus(user.id);
+
+    // Only force update if there was an actual change in status
+    if (latestStatus !== currentStatus) {
+      console.log('Friend status changed:', currentStatus, '->', latestStatus);
+    }
+  }, [friends, receivedRequests, sentRequests]);
 
   return (
     <View style={styles.container}>
@@ -302,18 +302,6 @@ const UserProfile = ({
             )}
           </View>
         )}
-
-        {/* Profile Information */}
-        <View style={styles.infoContainer}>
-          <View style={styles.bioContainer}>
-            {user.bio && (
-              <>
-                <Text style={styles.bioLabel}>About</Text>
-                <Text style={styles.bioText}>{user.bio}</Text>
-              </>
-            )}
-          </View>
-        </View>
 
         {/* Sign Out Button - Only show for current user */}
         {isCurrentUser && (
@@ -420,23 +408,6 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontSize: 16,
     fontWeight: '500',
-  },
-  infoContainer: {
-    paddingHorizontal: 24,
-    marginBottom: 24,
-  },
-  bioContainer: {
-    marginTop: 8,
-  },
-  bioLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  bioText: {
-    fontSize: 16,
-    lineHeight: 24,
-    color: '#333',
   },
   signOutButton: {
     marginHorizontal: 24,
