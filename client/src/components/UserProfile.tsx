@@ -128,7 +128,6 @@ const UserProfile = ({
       await cancelFriendRequest(reqId);
       // Refresh data to update the UI properly
       await refreshFriendData();
-      Alert.alert('Request Cancelled', 'Friend request has been cancelled.');
     } catch (error: any) {
       console.error('Error cancelling request:', error);
       Alert.alert('Error', 'Failed to cancel request');
@@ -190,6 +189,8 @@ const UserProfile = ({
 
   // For debugging
   useEffect(() => {
+    console.log("Received", receivedRequests);
+    console.log("Sent", sentRequests);
     console.log('Current status in render:', currentStatus);
   }, [currentStatus]);
 
@@ -198,6 +199,8 @@ const UserProfile = ({
     // This effect runs whenever the friends, receivedRequests, or sentRequests arrays change
     const { status: latestStatus, requestId: latestRequestId } = getFriendStatus(user.id);
 
+    console.log("friend status changes")
+    console.log(latestStatus);
     // Only force update if there was an actual change in status
     if (latestStatus !== currentStatus) {
       console.log('Friend status changed:', currentStatus, '->', latestStatus);

@@ -15,12 +15,12 @@ const Stack = createNativeStackNavigator();
 export default function App() {
   return (
     <AuthProvider>
-      <FriendProvider>
-        <SocketProvider>
+      <SocketProvider>
+        <FriendProvider>
           <ExpoRoot context={require.context('./screens')} />
           {/* <InfiniteScrollCalendar /> */}
-        </SocketProvider>
-      </FriendProvider>
+        </FriendProvider>
+      </SocketProvider>
     </AuthProvider>
   );
 }

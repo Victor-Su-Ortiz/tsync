@@ -52,7 +52,7 @@ export default function Home() {
   const [shops, setShops] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchModalVisible, setSearchModalVisible] = useState(false);
-  const { notificationCount, updateNotifcationCount } = useSocket();
+  const { notificationCount, updateNotificationCount } = useSocket();
   const pathname = usePathname();
   const prevPathRef = useRef(pathname);
   const { authToken } = useAuth();
@@ -103,7 +103,7 @@ export default function Home() {
         const unreadCount = response.data.pagination.unreadCount;
         console.log('Unread notifications count:', unreadCount);
 
-        updateNotifcationCount(unreadCount);
+        updateNotificationCount(unreadCount);
         setNotifications(response.data.notifications);
       }
     } catch (error) {
