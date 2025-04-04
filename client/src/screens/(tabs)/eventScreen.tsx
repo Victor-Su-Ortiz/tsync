@@ -16,6 +16,8 @@ import { useAuth } from '../../context/AuthContext';
 import { format } from 'date-fns';
 import { api } from '../../utils/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { ILocation } from '@/src/types/location.type';
+import { router } from 'expo-router';
 
 // Types for our events
 interface Event {
@@ -24,7 +26,7 @@ interface Event {
   description: string;
   startTime: string;
   endTime: string;
-  location?: string;
+  location?: ILocation;
   isCreator: boolean;
   attendees: {
     userId: string;
@@ -93,8 +95,10 @@ const EventsScreen = () => {
   };
 
   const renderEventItem = ({ item }: { item: Event }) => {
-    const startTime = new Date(item.startTime);
-    const endTime = new Date(item.endTime);
+    // const startTime = new Date(item.startTime);
+    // const endTime = new Date(item.endTime);
+    const startTime = new Date();
+    const endTime = new Date();
 
     const formattedDate = format(startTime, 'EEE, MMM d, yyyy');
     const formattedStartTime = format(startTime, 'h:mm a');
@@ -132,7 +136,7 @@ const EventsScreen = () => {
         {item.location && (
           <View style={styles.locationContainer}>
             <Ionicons name="location-outline" size={16} color="#666" />
-            <Text style={styles.locationText}>{item.location}</Text>
+            <Text style={styles.locationText}>{item.location.name}</Text>
           </View>
         )}
 

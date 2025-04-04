@@ -82,7 +82,7 @@ export default function TabsLayout() {
         options={{
           title: 'eventScreen',
           tabBarIcon: ({ focused }) => (
-            <Ionicons name="calendar" size={24} color={focused ? '#00cc99' : '#748c94'} />
+            <Ionicons name="time-outline" size={24} color={focused ? '#00cc99' : '#748c94'} />
           ),
         }}
       />

@@ -215,13 +215,7 @@ export default function AddEventScreen() {
       location: teaShopInfo,
       duration,
 
-      // These fields are specifically required according to the error message
-      startTime: dateTimeRanges[0].startTime.toISOString(),
-      endTime: dateTimeRanges[0].endTime.toISOString(),
-
-      // Use ISO strings for dates
-      startDate: dateTimeRanges[0].startDate.toISOString(),
-      endDate: dateTimeRanges[0].endDate.toISOString(),
+      eventDates: dateTimeRanges,
 
       // Include other fields that might be required
       attendees: selectedFriends.map(friend => ({
