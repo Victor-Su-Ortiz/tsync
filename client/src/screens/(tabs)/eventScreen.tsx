@@ -10,14 +10,13 @@ import {
   RefreshControl,
   Alert,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { format } from 'date-fns';
 import { api } from '../../utils/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ILocation } from '@/src/types/location.type';
-import { router } from 'expo-router';
+import { ExternalPathString, RelativePathString, router } from 'expo-router';
 
 // Types for our events
 interface Event {
@@ -44,7 +43,6 @@ const EventsScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<'all' | 'created' | 'invited'>('all');
   const { authToken } = useAuth();
-  const navigation = useNavigation();
 
   // Fetch events from your API
   const fetchEvents = async () => {
@@ -90,13 +88,19 @@ const EventsScreen = () => {
   };
 
   const navigateToEventDetails = (eventId: string) => {
-    // @ts-ignore - Type navigation will be specific to your app
-    navigation.navigate('EventDetails', { eventId });
+    // Use Expo Router to navigate
+    router.push({
+      pathname: '/(tabs)/event-details/[id]' as ExternalPathString,
+      params: { id: eventId },
+    });
   };
 
-  const renderEventItem = ({ item }: { item: Event }) => {
+  const renderEventItem = ({ item }: { item: any }) => {
     // const startTime = new Date(item.startTime);
     // const endTime = new Date(item.endTime);
+    const eventDate = item.eventDates;
+    const startTimes = eventDate.map((date: any) => new Date(date.startDate));
+    const endTimes = eventDate.map((date: any) => new Date(date.endDate));
     const startTime = new Date();
     const endTime = new Date();
 
@@ -158,8 +162,7 @@ const EventsScreen = () => {
 
       <TouchableOpacity
         style={styles.createButton}
-        // @ts-ignore - Type navigation will be specific to your app
-        onPress={() => navigation.navigate('CreateEvent')}
+        onPress={() => router.push('/(tabs)/add-event' as RelativePathString)}
       >
         <Text style={styles.createButtonText}>Create a new event</Text>
       </TouchableOpacity>
@@ -215,8 +218,7 @@ const EventsScreen = () => {
 
       <TouchableOpacity
         style={styles.floatingButton}
-        // @ts-ignore - Type navigation will be specific to your app
-        onPress={() => navigation.navigate('CreateEvent')}
+        onPress={() => router.push('/(tabs)/add-event' as RelativePathString)}
       >
         <Ionicons name="add" size={24} color="white" />
       </TouchableOpacity>
