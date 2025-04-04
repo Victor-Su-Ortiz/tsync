@@ -109,12 +109,6 @@ export class SocketService {
   public sendToUser(userId: string, event: string, data: any): void {
     if (!this.io) return;
 
-    console.log(`[Socket] Emitting ${event} to user ${userId}`, data);
-
-    // Log all active connections for debugging
-    const activeConnections = this.io.sockets.adapter.rooms.size;
-    console.log(`[Socket] Active connections: ${activeConnections}`);
-
     this.io.to(`user:${userId}`).emit(event, data);
   }
 
