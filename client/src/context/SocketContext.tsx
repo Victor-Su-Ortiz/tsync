@@ -18,9 +18,9 @@ type SocketContextType = {
 const SocketContext = createContext<SocketContextType>({
   socket: null,
   notificationCount: 0,
-  incrementNotificationCount: () => { },
-  resetNotificationCount: () => { },
-  updateNotificationCount: (number: number) => { },
+  incrementNotificationCount: () => {},
+  resetNotificationCount: () => {},
+  updateNotificationCount: (number: number) => {},
 });
 
 // Create the provider component
@@ -65,7 +65,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         console.log('✅ Socket connected successfully with ID:', newSocket.id);
       });
 
-      newSocket.on('disconnect', (reason) => {
+      newSocket.on('disconnect', reason => {
         console.log('❌ Socket disconnected:', reason);
       });
 
@@ -79,23 +79,23 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       });
 
       // Listen for specific friend-related events
-      newSocket.on('friend_request', (data) => {
+      newSocket.on('friend_request', data => {
         console.log('📩 Received friend request:', data);
         incrementNotificationCount();
       });
 
-      newSocket.on('friend_request_canceled', (data) => {
+      newSocket.on('friend_request_canceled', data => {
         console.log('🗑️ Friend request canceled:', data);
       });
 
-      newSocket.on('friend_accepted', (data) => {
+      newSocket.on('friend_accepted', data => {
         console.log('✅ Friend request accepted:', data);
         incrementNotificationCount();
       });
 
-      newSocket.on('friend_rejected', (data) => {
+      newSocket.on('friend_rejected', data => {
         console.log('❌ Friend request rejected:', data);
-      })
+      });
 
       // Test ping-pong for connection health check
       const pingInterval = setInterval(() => {
@@ -104,7 +104,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         }
       }, 30000);
 
-      newSocket.on('pong', (data) => {
+      newSocket.on('pong', data => {
         console.log('🏓 Pong received:', data);
       });
 

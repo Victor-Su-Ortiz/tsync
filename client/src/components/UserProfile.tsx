@@ -37,7 +37,6 @@ const UserProfile = ({
   showHeader = true,
   onBackPress,
 }: UserProfileProps) => {
-
   const { authToken, logout } = useAuth();
   const {
     sendFriendRequest,
@@ -50,7 +49,7 @@ const UserProfile = ({
     receivedRequests,
     sentRequests,
     loading,
-    getFriendStatus
+    getFriendStatus,
   } = useFriends();
 
   const router = useRouter();
@@ -110,7 +109,9 @@ const UserProfile = ({
       await refreshFriendData();
 
       // Try to find the request again after refreshing
-      const refreshedReq = sentRequests.find(req => req && req.receiver && req.receiver._id === user.id);
+      const refreshedReq = sentRequests.find(
+        req => req && req.receiver && req.receiver._id === user.id,
+      );
 
       if (!refreshedReq || !refreshedReq._id) {
         Alert.alert('Error', 'Could not find the friend request to cancel. Please try again.');
@@ -121,7 +122,9 @@ const UserProfile = ({
     const reqId = req?._id;
     console.log('attempt to cancel friend request with id:', reqId);
 
-    if (reqId == undefined) { return }
+    if (reqId == undefined) {
+      return;
+    }
     setIsLoading(true);
 
     try {
@@ -158,7 +161,6 @@ const UserProfile = ({
     }
   };
 
-
   const handleRejectFriendRequest = async () => {
     if (!requestId) {
       console.error('No request ID found to accept');
@@ -189,8 +191,8 @@ const UserProfile = ({
 
   // For debugging
   useEffect(() => {
-    console.log("Received", receivedRequests);
-    console.log("Sent", sentRequests);
+    console.log('Received', receivedRequests);
+    console.log('Sent', sentRequests);
     console.log('Current status in render:', currentStatus);
   }, [currentStatus]);
 
@@ -199,7 +201,7 @@ const UserProfile = ({
     // This effect runs whenever the friends, receivedRequests, or sentRequests arrays change
     const { status: latestStatus, requestId: latestRequestId } = getFriendStatus(user.id);
 
-    console.log("friend status changes")
+    console.log('friend status changes');
     console.log(latestStatus);
     // Only force update if there was an actual change in status
     if (latestStatus !== currentStatus) {

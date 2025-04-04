@@ -18,7 +18,7 @@ export enum FriendStatus {
   NONE = 'none',
   PENDING = 'pending_sent',
   FRIENDS = 'friends',
-  INCOMING_REQUEST = 'pending_received'
+  INCOMING_REQUEST = 'pending_received',
 }
 
 export enum FriendRequestEventType {
