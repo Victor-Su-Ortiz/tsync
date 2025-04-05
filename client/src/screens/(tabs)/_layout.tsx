@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { Children, useEffect, useState } from 'react';
 import { Tabs, router, usePathname } from 'expo-router';
 import { View, TouchableOpacity, StyleSheet, GestureResponderEvent, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,9 +13,11 @@ export default function TabsLayout() {
 
   // Track the current screen for returning to it after add-event
   const [currentScreen, setCurrentScreen] = useState('/home');
+  console.log('Current screen:', currentScreen);
 
   // Update the current screen when the pathname changes
   useEffect(() => {
+    console.log('Current pathname:', pathname);
     // Only update for main tab screens, not for the add-event screen
     if (pathname && !pathname.includes('add-event')) {
       setCurrentScreen(pathname);
