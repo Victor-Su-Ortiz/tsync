@@ -151,6 +151,20 @@ const EventDetails = () => {
     Alert.alert('Coming Soon', 'Calendar integration will be available soon!');
   };
 
+  const handleCancelEvent = async () => {
+    try {
+      const res = await api.delete(`/events/${id}`, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+      router.back();
+    } catch (error) {
+      console.error('Error canceling event:', error);
+      Alert.alert('Error', 'Failed to cancel the event. Please try again.');
+    }
+  };
+
   const handleUpdateStatus = (status: 'accepted' | 'declined' | 'tentative') => {
     // In a real implementation, you would call your API to update the attendance status
     Alert.alert('Status Updated', `You have ${status} this event.`);
@@ -467,7 +481,10 @@ const EventDetails = () => {
           )}
 
           {isCreator && event.status !== 'cancelled' && (
-            <TouchableOpacity style={[styles.button, { backgroundColor: '#ff6b6b' }]}>
+            <TouchableOpacity
+              style={[styles.button, { backgroundColor: '#ff6b6b' }]}
+              onPress={handleCancelEvent}
+            >
               <Ionicons name="close-circle" size={20} color="#fff" />
               <Text style={styles.buttonText}>Cancel Event</Text>
             </TouchableOpacity>
