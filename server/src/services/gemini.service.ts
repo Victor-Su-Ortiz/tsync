@@ -130,9 +130,20 @@ export class GeminiService {
       'Friday',
       'Saturday',
     ];
+    // Parse preferred days from the event dates
     const preferredDays =
-      event.eventDates?.map(day => daysOfWeek[day.startDate]).join(', ') ||
-      'Monday, Tuesday, Wednesday, Thursday, Friday';
+      event.eventDates
+        ?.map(dateRange => {
+          // Convert startDate string to Date object if it's not already
+          const startDate = new Date(dateRange.startDate);
+
+          // Get the day of week as an integer (0-6, where 0 is Sunday)
+          const dayIndex = startDate.getDay();
+
+          // Return the day name from our array
+          return daysOfWeek[dayIndex];
+        })
+        .join(', ') || 'Monday, Tuesday, Wednesday, Thursday, Friday';
 
     // Create the prompt
     return `
