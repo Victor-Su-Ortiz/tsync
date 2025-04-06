@@ -4,7 +4,6 @@ import { CalendarService } from './google-calendar.service';
 import Event from '../models/event.model';
 import { IEvent } from '../types/event.types';
 import { NotFoundError, ValidationError } from '../utils/errors';
-import { format } from 'path';
 
 export class GeminiService {
   private static generativeAI: GoogleGenerativeAI;
@@ -297,7 +296,8 @@ IMPORTANT CONSTRAINTS:
       }
 
       // Get suggested meeting times
-      const { suggestedTimes } = await this.suggestMeetingTimes(eventId);
+      const response = await this.suggestMeetingTimes(eventId);
+      const suggestedTimes = response.suggestedTimes.suggestedTimes;
 
       // If no times were suggested, return an error
       if (!suggestedTimes.length) {
