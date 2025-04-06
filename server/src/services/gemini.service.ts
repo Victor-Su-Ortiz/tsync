@@ -74,11 +74,13 @@ export class GeminiService {
       }
 
       // Get free/busy information for all participants
-      const freeBusyPromises = event.attendees.map((participant: any) =>
-        CalendarService.getUserFreeBusy(
-          participant._id.toString(),
-          event.proposedDateRange.start,
-          event.proposedDateRange.end
+      const freeBusyPromises = event.attendees.flatMap((participant: any) =>
+        event.eventDates.map((eventDate: any) =>
+          CalendarService.getUserFreeBusy(
+            participant._id.toString(),
+            eventDate.startDate,
+            eventDate.endDate
+          )
         )
       );
 
@@ -115,7 +117,7 @@ export class GeminiService {
   private static createSchedulingPrompt(event: IEvent, calendarData: any[]): string {
     // Format preferred time ranges
     const preferredTimeRanges =
-      event.preferredTimeRanges?.map(range => `${range.start} to ${range.end}`).join(', ') ||
+      event.eventDates?.map(range => `${range.startTime} to ${range.endTime}`).join(', ') ||
       '9:00 to 17:00';
 
     // Format preferred days
@@ -129,7 +131,7 @@ export class GeminiService {
       'Saturday',
     ];
     const preferredDays =
-      event.preferredDays?.map(day => daysOfWeek[day]).join(', ') ||
+      event.eventDates?.map(day => daysOfWeek[day.startDate]).join(', ') ||
       'Monday, Tuesday, Wednesday, Thursday, Friday';
 
     // Create the prompt

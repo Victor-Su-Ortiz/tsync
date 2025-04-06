@@ -21,6 +21,7 @@ import userRoutes from './routes/user.routes';
 import notificationRoutes from './routes/notification.routes';
 import eventRoutes from './routes/event.routes';
 import calendarRoutes from './routes/calendar.routes';
+import GeminiRoutes from './routes/gemini.routes';
 
 // Middleware
 import { errorHandler } from './middleware/error.middleware';
@@ -105,6 +106,7 @@ class App {
     this.app.use('/api/v1/notifications', notificationRoutes);
     this.app.use('/api/v1/events', eventRoutes);
     this.app.use('/api/v1/calendar', calendarRoutes);
+    this.app.use('/api/v1/gemini', GeminiRoutes);
 
     // Handle undefined routes
     this.app.all('*', (req: Request, _: Response, next: NextFunction) => {
