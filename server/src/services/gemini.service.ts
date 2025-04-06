@@ -4,6 +4,7 @@ import { CalendarService } from './google-calendar.service';
 import Event from '../models/event.model';
 import { IEvent } from '../types/event.types';
 import { NotFoundError, ValidationError } from '../utils/errors';
+import { format } from 'path';
 
 export class GeminiService {
   private static generativeAI: GoogleGenerativeAI;
@@ -153,7 +154,7 @@ EVENT DETAILS:
 - Title: ${event.title}
 - Description: ${event.description || 'N/A'}
 - Duration: ${event.duration} minutes
-- Date Range: ${event.proposedDateRange.start.toISOString().split('T')[0]} to ${event.proposedDateRange.end.toISOString().split('T')[0]}
+- Date Range: ${this.formatDateRanges(event)}
 - Preferred Time Ranges: ${preferredTimeRanges}
 - Preferred Days: ${preferredDays}
 - Number of Participants: ${calendarData.length}
@@ -328,6 +329,29 @@ IMPORTANT CONSTRAINTS:
       console.error('Error scheduling with Gemini:', error);
       throw error;
     }
+  }
+  // Format multiple date ranges
+  private static formatDateRanges(event: IEvent) {
+    // Check if we have eventDates array
+    if (event.eventDates && event.eventDates.length > 0) {
+      // Map each date range to a formatted string
+      const dateRanges = event.eventDates.map(dateRange => {
+        const startDate = new Date(dateRange.startDate);
+        const endDate = new Date(dateRange.endDate);
+
+        // Format to YYYY-MM-DD
+        const formattedStart = startDate.toISOString().split('T')[0];
+        const formattedEnd = endDate.toISOString().split('T')[0];
+
+        return `${formattedStart} to ${formattedEnd}`;
+      });
+
+      // Join with line breaks if multiple ranges
+      return dateRanges.map(range => `- Date Range: ${range}`).join('\n');
+    }
+
+    // Return empty string if no date ranges found
+    return 'No date ranges specified';
   }
 }
 
