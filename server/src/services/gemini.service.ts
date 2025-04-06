@@ -98,12 +98,12 @@ export class GeminiService {
       const text = response.text();
 
       // Parse Gemini's response to extract suggested meeting times
-      const suggestedTimes = this.parseSuggestedTimes(text, event);
+      const suggestion = this.parseSuggestedTimes(text, event);
 
       return {
         success: true,
-        suggestedTimes,
-        reasoningText: text,
+        suggestedTimes: suggestion.suggestedTimes,
+        reasoningText: suggestion.reasoning,
       };
     } catch (error) {
       console.error('Error suggesting meeting times with Gemini:', error);
@@ -296,8 +296,7 @@ IMPORTANT CONSTRAINTS:
       }
 
       // Get suggested meeting times
-      const response = await this.suggestMeetingTimes(eventId);
-      const suggestedTimes = response.suggestedTimes.suggestedTimes;
+      const { suggestedTimes } = await this.suggestMeetingTimes(eventId);
 
       // If no times were suggested, return an error
       if (!suggestedTimes.length) {
