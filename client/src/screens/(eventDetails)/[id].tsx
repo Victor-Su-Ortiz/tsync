@@ -100,7 +100,6 @@ const EventDetails = () => {
           },
         });
 
-        console.log('Fetched event details:', response.data.event);
         setEvent(response.data.event);
       } catch (error) {
         console.error('Error fetching event details:', error);
@@ -146,9 +145,20 @@ const EventDetails = () => {
     }
   };
 
-  const handleAddToCalendar = () => {
+  const handleAddToCalendar = async () => {
     // In a real implementation, you would integrate with the calendar API
-    Alert.alert('Coming Soon', 'Calendar integration will be available soon!');
+    // Alert.alert('Coming Soon', 'Calendar integration will be available soon!');
+    try {
+      const response = await api.get(`/gemini/events/${id}/suggestions`, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+      console.log('AI suggestions:', response);
+    } catch (error) {
+      console.error('Error fetching suggestions:', error);
+      Alert.alert('Error', 'Failed to fetch suggestions. Please try again.');
+    }
   };
 
   const handleCancelEvent = async () => {
@@ -450,7 +460,7 @@ const EventDetails = () => {
           >
             <Ionicons name="calendar" size={20} color="#fff" />
             <Text style={styles.buttonText}>
-              {event.sync ? 'Synced to Calendar' : 'Add to Calendar'}
+              {event.sync ? 'Synced to Calendar' : 'Sync to Calendar'}
             </Text>
           </TouchableOpacity>
 

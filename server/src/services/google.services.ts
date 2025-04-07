@@ -10,7 +10,7 @@ export class GoogleService {
   private oAuth2Client: OAuth2Client;
 
   private constructor() {
-    this.oAuth2Client = new OAuth2Client(
+    this.oAuth2Client = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET,
       process.env.GOOGLE_REDIRECT_URI

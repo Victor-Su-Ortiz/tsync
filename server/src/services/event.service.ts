@@ -69,7 +69,7 @@ class EventService {
       // Check if user has permission to view this event
       if (
         event.visibility === 'private' &&
-        event.creator.toString() !== userId &&
+        event.creator._id.toString() !== userId &&
         !event.attendees.some(attendee => attendee.userId.toString() === userId)
       ) {
         throw new AppError('You do not have permission to view this event', 403);

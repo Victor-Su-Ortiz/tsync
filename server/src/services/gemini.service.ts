@@ -77,7 +77,7 @@ export class GeminiService {
       const freeBusyPromises = event.attendees.flatMap((participant: any) =>
         event.eventDates.map((eventDate: any) =>
           CalendarService.getUserFreeBusy(
-            participant._id.toString(),
+            participant.userId.toString(),
             eventDate.startDate,
             eventDate.endDate
           )
