@@ -6,11 +6,8 @@ import { google, calendar_v3 } from 'googleapis';
  * Centralized service for Google API interactions
  */
 export class GoogleService {
-  private static instance: GoogleService;
-  private oAuth2Client: OAuth2Client;
-
-  private constructor() {
-    this.oAuth2Client = new google.auth.OAuth2(
+  static createOauth2Client() {
+    return new OAuth2Client(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET,
       process.env.GOOGLE_REDIRECT_URI
@@ -18,28 +15,11 @@ export class GoogleService {
   }
 
   /**
-   * Get singleton instance
-   */
-  public static getInstance(): GoogleService {
-    if (!GoogleService.instance) {
-      GoogleService.instance = new GoogleService();
-    }
-    return GoogleService.instance;
-  }
-
-  /**
-   * Get OAuth2Client instance
-   */
-  public getOAuth2Client(): OAuth2Client {
-    return this.oAuth2Client;
-  }
-
-  /**
    * Verify Google ID token
    */
-  public async verifyIdToken(idToken: string): Promise<TokenPayload | null> {
+  public static async verifyIdToken(idToken: string): Promise<TokenPayload | null> {
     try {
-      const ticket = await this.oAuth2Client.verifyIdToken({
+      const ticket = await this.createOauth2Client().verifyIdToken({
         idToken,
         audience: process.env.GOOGLE_CLIENT_ID,
       });
@@ -54,23 +34,23 @@ export class GoogleService {
   /**
    * Create OAuth client with user credentials
    */
-  public setOauthCredentials(tokens: {
-    access_token?: string;
-    refresh_token?: string;
-    expiry_date?: number;
-  }): void {
-    // const userClient = new OAuth2Client(
-    //   process.env.GOOGLE_CLIENT_ID,
-    //   process.env.GOOGLE_CLIENT_SECRET,
-    //   process.env.GOOGLE_REDIRECT_URI
-    // );
+  // public setOauthCredentials(tokens: {
+  //   access_token?: string;
+  //   refresh_token?: string;
+  //   expiry_date?: number;
+  // }): void {
+  //   // const userClient = new OAuth2Client(
+  //   //   process.env.GOOGLE_CLIENT_ID,
+  //   //   process.env.GOOGLE_CLIENT_SECRET,
+  //   //   process.env.GOOGLE_REDIRECT_URI
+  //   // );
 
-    this.oAuth2Client.setCredentials({
-      access_token: tokens.access_token,
-      refresh_token: tokens.refresh_token,
-      expiry_date: tokens.expiry_date,
-    });
-  }
+  //   this.oAuth2Client.setCredentials({
+  //     access_token: tokens.access_token,
+  //     refresh_token: tokens.refresh_token,
+  //     expiry_date: tokens.expiry_date,
+  //   });
+  // }
 
   /**
    * Get Google Calendar API client for a specific user
@@ -82,13 +62,13 @@ export class GoogleService {
   /**
    * Generate OAuth URL for requesting user consent
    */
-  public generateAuthUrl(scopes: string[]): string {
-    return this.oAuth2Client.generateAuthUrl({
-      access_type: 'offline',
-      prompt: 'consent',
-      scope: scopes,
-    });
-  }
+  // public generateAuthUrl(scopes: string[]): string {
+  //   return this.oAuth2Client.generateAuthUrl({
+  //     access_type: 'offline',
+  //     prompt: 'consent',
+  //     scope: scopes,
+  //   });
+  // }
 
   /**
    * Exchange authorization code for tokens
@@ -111,19 +91,19 @@ export class GoogleService {
   /**
    * Refresh access token using refresh token
    */
-  public async refreshAccessToken(refreshToken: string): Promise<string | null> {
-    try {
-      this.oAuth2Client.setCredentials({
-        refresh_token: refreshToken,
-      });
+  // public async refreshAccessToken(refreshToken: string): Promise<string | null> {
+  //   try {
+  //     this.oAuth2Client.setCredentials({
+  //       refresh_token: refreshToken,
+  //     });
 
-      const { credentials } = await this.oAuth2Client.refreshAccessToken();
-      return credentials.access_token || null;
-    } catch (error) {
-      console.error('Error refreshing access token:', error);
-      throw new Error('Failed to refresh access token');
-    }
-  }
+  //     const { credentials } = await this.oAuth2Client.refreshAccessToken();
+  //     return credentials.access_token || null;
+  //   } catch (error) {
+  //     console.error('Error refreshing access token:', error);
+  //     throw new Error('Failed to refresh access token');
+  //   }
+  // }
 }
 
-export default GoogleService.getInstance();
+// export default GoogleService.getInstance();

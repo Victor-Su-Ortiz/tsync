@@ -5,8 +5,9 @@ import crypto from 'crypto';
 import { google } from 'googleapis';
 import { sendEmail } from '../utils/email';
 import { AuthenticationError, ValidationError, NotFoundError } from '../utils/errors';
-import GoogleAuthService from './google-auth.service';
+// import GoogleAuthService from './google-auth.service';
 import { GoogleService } from './google.services';
+import { OAuth2Client } from 'google-auth-library';
 
 // Types
 export interface RegisterUserInput {
@@ -32,15 +33,13 @@ export interface AuthResponse {
 }
 
 export class AuthService {
-  private static readonly googleClient = GoogleService.getInstance().getOAuth2Client();
-
   /**
    * Generate a profile picture for payload
    */
-  private static async setProfilePicture(payload: any) {
+  private static async setProfilePicture(payload: any, googleClient: OAuth2Client) {
     const userId = payload.sub;
     // Use the access token to get profile info including picture
-    const people = google.people({ version: 'v1', auth: this.googleClient });
+    const people = google.people({ version: 'v1', auth: googleClient });
     const profile = await people.people.get({
       resourceName: `people/${userId}`,
       personFields: 'photos',
@@ -156,36 +155,45 @@ export class AuthService {
    */
   public static async googleAuth(
     idToken: string,
-    accessToken: string,
+    _accessToken: string,
     code: string
   ): Promise<AuthResponse> {
     try {
       // Store tokens.refresh_token securely
-      const ticket = await this.googleClient.verifyIdToken({
+      const oauth2Client = GoogleService.createOauth2Client();
+      const ticket = await oauth2Client.verifyIdToken({
         idToken,
         audience: process.env.GOOGLE_CLIENT_ID,
       });
 
       const payload = ticket.getPayload();
+      // const payload = await GoogleService.verifyIdToken(idToken);
 
       if (!payload || !payload.email) {
         throw new AuthenticationError('Invalid Google token');
       }
+      // const oauth2Client = new google.auth.OAuth2(
+      //   process.env.GOOGLE_CLIENT_ID,
+      //   process.env.GOOGLE_CLIENT_SECRET,
+      //   process.env.GOOGLE_REDIRECT_URI
+      // );
+      const googleTokens = (await oauth2Client.getToken(code)).tokens;
+      console.log('testTokens', googleTokens);
 
       // Set the token on your existing client
 
-      const googleTokens = await GoogleAuthService.generateTokens(code);
+      // const googleTokens = await GoogleAuthService.generateTokens(code);
       if (!googleTokens.refresh_token) {
         throw new AuthenticationError('Failed to get refresh token');
       }
 
-      this.googleClient.setCredentials({
-        access_token: accessToken,
-        refresh_token: googleTokens.refresh_token,
-      });
+      // this.googleClient.setCredentials({
+      //   access_token: accessToken,
+      //   refresh_token: googleTokens.refresh_token,
+      // });
 
       if (!payload.picture) {
-        await this.setProfilePicture(payload);
+        await this.setProfilePicture(payload, oauth2Client);
       }
 
       // Find or create user
