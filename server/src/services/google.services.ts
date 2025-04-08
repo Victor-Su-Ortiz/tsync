@@ -32,6 +32,20 @@ export class GoogleService {
   }
 
   /**
+   * Generate a profile picture for payload
+   */
+  public static async setProfilePicture(payload: any, googleClient: OAuth2Client) {
+    const userId = payload.sub;
+    // Use the access token to get profile info including picture
+    const people = google.people({ version: 'v1', auth: googleClient });
+    const profile = await people.people.get({
+      resourceName: `people/${userId}`,
+      personFields: 'photos',
+    });
+    payload.picture = profile.data.photos?.[0].url ?? undefined;
+  }
+
+  /**
    * Create OAuth client with user credentials
    */
   // public setOauthCredentials(tokens: {

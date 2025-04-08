@@ -1,13 +1,10 @@
 import User from '../models/user.model';
 import jwt, { Secret, SignOptions } from 'jsonwebtoken';
 import crypto from 'crypto';
-// import { OAuth2Client } from 'google-auth-library';
-import { google } from 'googleapis';
 import { sendEmail } from '../utils/email';
 import { AuthenticationError, ValidationError, NotFoundError } from '../utils/errors';
 // import GoogleAuthService from './google-auth.service';
 import { GoogleService } from './google.services';
-import { OAuth2Client } from 'google-auth-library';
 
 // Types
 export interface RegisterUserInput {
@@ -33,20 +30,6 @@ export interface AuthResponse {
 }
 
 export class AuthService {
-  /**
-   * Generate a profile picture for payload
-   */
-  private static async setProfilePicture(payload: any, googleClient: OAuth2Client) {
-    const userId = payload.sub;
-    // Use the access token to get profile info including picture
-    const people = google.people({ version: 'v1', auth: googleClient });
-    const profile = await people.people.get({
-      resourceName: `people/${userId}`,
-      personFields: 'photos',
-    });
-    payload.picture = profile.data.photos?.[0].url ?? undefined;
-  }
-
   /**
    * Generate JWT Token
    */
@@ -155,7 +138,7 @@ export class AuthService {
    */
   public static async googleAuth(
     idToken: string,
-    _accessToken: string,
+    accessToken: string,
     code: string
   ): Promise<AuthResponse> {
     try {
@@ -173,17 +156,18 @@ export class AuthService {
       }
 
       const googleTokens = (await oauth2Client.getToken(code)).tokens;
-      console.log('testTokens', googleTokens);
-
-      // Set the token on your existing client
 
       // const googleTokens = await GoogleAuthService.generateTokens(code);
       if (!googleTokens.refresh_token) {
         throw new AuthenticationError('Failed to get refresh token');
       }
+      oauth2Client.setCredentials({
+        access_token: accessToken,
+        refresh_token: googleTokens.refresh_token,
+      });
 
       if (!payload.picture) {
-        await this.setProfilePicture(payload, oauth2Client);
+        await GoogleService.setProfilePicture(payload, oauth2Client);
       }
 
       // Find or create user
