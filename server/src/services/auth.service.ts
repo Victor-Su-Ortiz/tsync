@@ -167,16 +167,11 @@ export class AuthService {
       });
 
       const payload = ticket.getPayload();
-      // const payload = await GoogleService.verifyIdToken(idToken);
 
       if (!payload || !payload.email) {
         throw new AuthenticationError('Invalid Google token');
       }
-      // const oauth2Client = new google.auth.OAuth2(
-      //   process.env.GOOGLE_CLIENT_ID,
-      //   process.env.GOOGLE_CLIENT_SECRET,
-      //   process.env.GOOGLE_REDIRECT_URI
-      // );
+
       const googleTokens = (await oauth2Client.getToken(code)).tokens;
       console.log('testTokens', googleTokens);
 
@@ -186,11 +181,6 @@ export class AuthService {
       if (!googleTokens.refresh_token) {
         throw new AuthenticationError('Failed to get refresh token');
       }
-
-      // this.googleClient.setCredentials({
-      //   access_token: accessToken,
-      //   refresh_token: googleTokens.refresh_token,
-      // });
 
       if (!payload.picture) {
         await this.setProfilePicture(payload, oauth2Client);
