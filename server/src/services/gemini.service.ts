@@ -74,18 +74,22 @@ export class GeminiService {
       }
 
       // Get free/busy information for all participants
-      const freeBusyPromises = event.attendees.flatMap((participant: any) =>
-        event.eventDates.map((eventDate: any) => {
-          console.log('start date', eventDate.startDate, 'end date', eventDate.endDate);
-          CalendarService.getUserFreeBusy(
-            participant.userId.toString(),
-            eventDate.startTime,
-            eventDate.endTime
-          );
+      const freeBusyPromises = event.attendees.flatMap(participant =>
+        event.eventDates.map(async eventDate => {
+          if (eventDate && eventDate.startTime && eventDate.endTime) {
+            return await CalendarService.getUserFreeBusy(
+              participant.userId.toString(),
+              eventDate.startTime,
+              eventDate.endTime
+            );
+          } else {
+            throw new Error('Invalid event date');
+          }
         })
       );
 
       const freeBusyResults = await Promise.all(freeBusyPromises);
+      console.log('Free/Busy results:', freeBusyResults);
 
       // Format the calendar data for the Gemini prompt
       const formattedCalendarData = this.formatCalendarData(freeBusyResults, event.attendees);

@@ -72,6 +72,7 @@ export class CalendarService {
           items: [{ id: 'primary' }],
         },
       });
+      console.log('Free/Busy response:', response.data);
 
       return response.data;
     } catch (error: any) {
