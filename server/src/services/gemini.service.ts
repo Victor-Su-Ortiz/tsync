@@ -75,13 +75,14 @@ export class GeminiService {
 
       // Get free/busy information for all participants
       const freeBusyPromises = event.attendees.flatMap((participant: any) =>
-        event.eventDates.map((eventDate: any) =>
+        event.eventDates.map((eventDate: any) => {
+          console.log('start date', eventDate.startDate, 'end date', eventDate.endDate);
           CalendarService.getUserFreeBusy(
             participant.userId.toString(),
-            eventDate.startDate,
-            eventDate.endDate
-          )
-        )
+            eventDate.startTime,
+            eventDate.endTime
+          );
+        })
       );
 
       const freeBusyResults = await Promise.all(freeBusyPromises);
