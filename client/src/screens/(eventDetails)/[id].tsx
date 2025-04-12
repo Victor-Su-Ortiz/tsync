@@ -154,7 +154,7 @@ const EventDetails = () => {
           Authorization: `Bearer ${authToken}`,
         },
       });
-      console.log('AI suggestions:', response);
+      console.log('AI suggestions:', response.data);
     } catch (error) {
       console.error('Error fetching suggestions:', error);
       Alert.alert('Error', 'Failed to fetch suggestions. Please try again.');
