@@ -274,9 +274,19 @@ userSchema.methods.acceptFriendRequest = async function (requestId: string): Pro
     onModel: 'FriendRequest',
   });
 
+  // Get the user data to include in the socket emission
+  const userData = this.getPublicProfile();
+
+  // Create a response object with both the request and user data
+  const responseData = {
+    ...request.toObject(),
+    user: userData  // Include the accepting user's data
+  };
+
   const { default: SocketService } = await import('../services/socket.service');
-  SocketService.sendToUser(request.sender.toString(), 'friend_accepted', request);
+  SocketService.sendToUser(request.sender.toString(), 'friend_accepted', responseData);
 };
+
 
 userSchema.methods.rejectFriendRequest = async function (requestId: string): Promise<void> {
   const request = await FriendRequest.findOne({
