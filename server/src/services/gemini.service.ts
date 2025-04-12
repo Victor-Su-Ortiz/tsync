@@ -20,6 +20,7 @@ export class GeminiService {
       }
 
       this.generativeAI = new GoogleGenerativeAI(apiKey);
+      // List available models
       this.geminiModel = this.generativeAI.getGenerativeModel({ model: 'gemini-pro' });
     }
 
@@ -96,7 +97,6 @@ export class GeminiService {
 
       // Create prompt for Gemini
       const prompt = this.createSchedulingPrompt(event, formattedCalendarData);
-
       // Call Gemini AI
       const result = await geminiModel.generateContent(prompt);
       const response = result.response;
