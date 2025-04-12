@@ -12,15 +12,54 @@ export const eventValidation = {
     description: Joi.string().allow('').max(1000).messages({
       'string.max': 'Description cannot exceed 1000 characters',
     }),
-    startTime: Joi.date().iso().required().messages({
-      'date.base': 'Start time must be a valid date',
-      'any.required': 'Start time is required',
-    }),
-    endTime: Joi.date().iso().greater(Joi.ref('startTime')).required().messages({
-      'date.base': 'End time must be a valid date',
-      'date.greater': 'End time must be after start time',
-      'any.required': 'End time is required',
-    }),
+    eventDates: Joi.array()
+      .items(
+        Joi.object({
+          startDate: Joi.date().iso().required().messages({
+            'date.base': 'Start date must be a valid date',
+            'any.required': 'Start date is required',
+          }),
+          endDate: Joi.date().iso().required().messages({
+            'date.base': 'End date must be a valid date',
+            'any.required': 'End date is required',
+          }),
+          isAllDay: Joi.boolean().default(false),
+          startTime: Joi.date()
+            .iso()
+            .when('isAllDay', {
+              is: false,
+              then: Joi.required(),
+              otherwise: Joi.optional().allow(null),
+            })
+            .messages({
+              'date.base': 'Start time must be a valid time',
+              'any.required': 'Start time is required',
+            }),
+          endTime: Joi.date()
+            .iso()
+            .when('isAllDay', {
+              is: false,
+              then: Joi.required(),
+              otherwise: Joi.optional().allow(null),
+            })
+            .greater(Joi.ref('startTime'))
+            .messages({
+              'date.base': 'End time must be a valid time',
+              'date.greater': 'End time must be after start time',
+              'any.required': 'End time is required',
+            }),
+        })
+      )
+      .default([]),
+    // startTime: Joi.date().iso().required().messages({
+    //   'date.base': 'Start time must be a valid date',
+    //   'any.required': 'Start time is required',
+    // }),
+    // endTime: Joi.date().iso().greater(Joi.ref('startTime')).required().messages({
+    //   'date.base': 'End time must be a valid date',
+    //   'date.greater': 'End time must be after start time',
+    //   'any.required': 'End time is required',
+    // }),
     // <Fix>
     location: Joi.object({
       address: Joi.string().required(),

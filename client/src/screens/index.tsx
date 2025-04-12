@@ -55,15 +55,6 @@ export default function Index() {
       // Send the ID token to your backend
       await sendTokenToBackend(tokens.idToken, tokens.accessToken, userInfo.data.serverAuthCode);
       // Update context with user info and access token for UI display and fetching events
-      // Store Google user info in context for profile display
-      const formattedUserInfo: UserInfo = {
-        id: userInfo.data?.user.id,
-        name: userInfo.data?.user.name,
-        email: userInfo.data?.user.email,
-        picture: userInfo.data?.user.photo, // Photo URL from Google
-        bio: "Let's meet!", // Default bio
-      };
-      setUserInfo(formattedUserInfo);
     } catch (error: any) {
       console.error('Google Sign-In Error:', error);
 
@@ -89,6 +80,16 @@ export default function Index() {
       const res = await api.post('/auth/google', { idToken, accessToken, serverAuthCode });
 
       const { user, token: authToken } = res.data;
+      console.log('User:', user);
+      // Store Google user info in context for profile display
+      const formattedUserInfo: UserInfo = {
+        id: user._id,
+        name: user.fullName,
+        email: user.email,
+        picture: user.profilePicture, // Photo URL from Google
+        bio: "Let's meet!", // Default bio
+      };
+      setUserInfo(formattedUserInfo);
 
       if (!user || !authToken) {
         throw new Error('Invalid response from server');

@@ -11,6 +11,7 @@ import {
   SafeAreaView,
   Alert,
   ActivityIndicator,
+  Switch,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -28,19 +29,30 @@ type Friend = {
   email: string;
 };
 
+// Duration options in minutes with their display labels
+const durationOptions = [
+  { value: 30, label: '30 minutes' },
+  { value: 60, label: '1 hour' },
+  { value: 90, label: '1.5 hours' },
+  { value: 120, label: '2 hours' },
+  { value: 180, label: '3 hours' },
+  { value: 240, label: '4 hours' },
+];
+
 export default function AddEventScreen() {
   const params = useLocalSearchParams();
   const { authToken } = useAuth(); // Get the auth token from context
   const sourceScreen = params.sourceScreen as string;
 
   const [teaShopInfo, setTeaShopInfo] = useState<ILocation | null>(null);
-  // const [teaShopInfo, setTeaShopInfo] = useState('');
   const [teaShopAddress, setTeaShopAddress] = useState('');
   const [eventName, setEventName] = useState('');
   const [description, setDescription] = useState('');
 
   // Replace single date/time with array of date/time ranges
   const [dateTimeRanges, setDateTimeRanges] = useState<DateTimeRange[]>([]);
+  const [duration, setDuration] = useState(60);
+  const [showDurationOptions, setShowDurationOptions] = useState(false);
 
   const [selectedFriends, setSelectedFriends] = useState([]);
   const [teaShopModalVisible, setTeaShopModalVisible] = useState(false);
@@ -52,6 +64,9 @@ export default function AddEventScreen() {
   // Track loading state during API calls
   const [isLoading, setIsLoading] = useState(false);
 
+  // State for syncing to Google Calendar
+  const [syncToGoogleCalendar, setSyncToGoogleCalendar] = useState(true);
+
   // Update formDirty state whenever any form field changes
   useEffect(() => {
     // We need to check if ANY of the fields have values to determine if form is dirty
@@ -61,10 +76,19 @@ export default function AddEventScreen() {
       eventName !== '' ||
       description !== '' ||
       dateTimeRanges.length > 0 ||
-      selectedFriends.length > 0;
+      selectedFriends.length > 0 ||
+      duration !== 60;
 
     setFormDirty(hasChanges);
-  }, [teaShopInfo, teaShopAddress, eventName, description, dateTimeRanges, selectedFriends]);
+  }, [
+    teaShopInfo,
+    teaShopAddress,
+    eventName,
+    description,
+    dateTimeRanges,
+    selectedFriends,
+    duration,
+  ]);
 
   const handleSelectTeaShop = () => {
     setTeaShopModalVisible(true);
@@ -75,6 +99,17 @@ export default function AddEventScreen() {
     const location = convertGooglePlaceToEventLocation(teaShop);
     setTeaShopInfo(location);
     setTeaShopAddress(teaShop.vicinity);
+  };
+
+  // Handle duration selection
+  const handleDurationSelect = (selectedDuration: number) => {
+    setDuration(selectedDuration);
+    setShowDurationOptions(false);
+  };
+
+  // Toggle duration options visibility
+  const toggleDurationOptions = () => {
+    setShowDurationOptions(!showDurationOptions);
   };
 
   /**
@@ -145,13 +180,7 @@ export default function AddEventScreen() {
             style: 'destructive',
             onPress: () => {
               // Clear all form fields first
-              setTeaShopInfo(null);
-              setTeaShopAddress('');
-              setEventName('');
-              setDescription('');
-              setDateTimeRanges([]);
-              setSelectedFriends([]);
-              setFormDirty(false);
+              resetForm();
 
               // Navigate back to source screen
               navigateBack();
@@ -184,14 +213,9 @@ export default function AddEventScreen() {
 
       // Location should be a string, not an object
       location: teaShopInfo,
+      duration,
 
-      // These fields are specifically required according to the error message
-      startTime: dateTimeRanges[0].startTime.toISOString(),
-      endTime: dateTimeRanges[0].endTime.toISOString(),
-
-      // Use ISO strings for dates
-      startDate: dateTimeRanges[0].startDate.toISOString(),
-      endDate: dateTimeRanges[0].endDate.toISOString(),
+      eventDates: dateTimeRanges,
 
       // Include other fields that might be required
       attendees: selectedFriends.map(friend => ({
@@ -263,10 +287,16 @@ export default function AddEventScreen() {
     setEventName('');
     setDescription('');
     setDateTimeRanges([]);
+    setDuration(60);
     setSelectedFriends([]);
     setFormDirty(false);
   };
 
+  // Get current duration display label
+  const getDurationLabel = () => {
+    const option = durationOptions.find(opt => opt.value === duration);
+    return option ? option.label : `${duration} minutes`;
+  };
   const formatDateTimeRangeSummary = () => {
     if (dateTimeRanges.length === 0) {
       return 'Tap to add dates and times';
@@ -354,6 +384,46 @@ export default function AddEventScreen() {
               textAlignVertical="top"
             />
 
+            <Text style={styles.label}>Duration</Text>
+            <TouchableOpacity
+              style={[styles.input, styles.durationButton]}
+              onPress={toggleDurationOptions}
+            >
+              <Text style={styles.durationText}>{getDurationLabel()}</Text>
+              <Ionicons
+                name={showDurationOptions ? 'chevron-up' : 'chevron-down'}
+                size={20}
+                color="#aaa"
+              />
+            </TouchableOpacity>
+
+            {showDurationOptions && (
+              <View style={styles.durationOptions}>
+                {durationOptions.map(option => (
+                  <TouchableOpacity
+                    key={option.value}
+                    style={[
+                      styles.durationOption,
+                      duration === option.value && styles.selectedDurationOption,
+                    ]}
+                    onPress={() => handleDurationSelect(option.value)}
+                  >
+                    <Text
+                      style={[
+                        styles.durationOptionText,
+                        duration === option.value && styles.selectedDurationOptionText,
+                      ]}
+                    >
+                      {option.label}
+                    </Text>
+                    {duration === option.value && (
+                      <Ionicons name="checkmark" size={18} color="#00cc99" />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+
             <Text style={styles.label}>Date & Time</Text>
             <TouchableOpacity
               style={[
@@ -416,6 +486,25 @@ export default function AddEventScreen() {
               selectedFriends={selectedFriends}
               setSelectedFriends={setSelectedFriends}
             />
+
+            {/* Google Calendar Sync Toggle */}
+            {selectedFriends.length > 0 && (
+              <View style={styles.syncContainer}>
+                <View style={styles.syncTextContainer}>
+                  <Text style={styles.syncLabel}>Sync to everyone's Google Calendar</Text>
+                  <Text style={styles.syncDescription}>
+                    Request to automatically add this event to all attendees' Google Calendars
+                  </Text>
+                </View>
+                <Switch
+                  trackColor={{ false: '#e0e0e0', true: '#baf0e1' }}
+                  thumbColor={syncToGoogleCalendar ? '#00cc99' : '#f4f3f4'}
+                  ios_backgroundColor="#e0e0e0"
+                  onValueChange={() => setSyncToGoogleCalendar(!syncToGoogleCalendar)}
+                  value={syncToGoogleCalendar}
+                />
+              </View>
+            )}
 
             <TouchableOpacity
               style={styles.addButton}
@@ -569,5 +658,68 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  // Duration specific styles
+  durationButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  durationText: {
+    fontSize: 16,
+    color: '#000',
+  },
+  durationOptions: {
+    marginTop: 5,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    backgroundColor: '#fff',
+    overflow: 'hidden',
+  },
+  durationOption: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  selectedDurationOption: {
+    backgroundColor: '#f0fff8',
+  },
+  durationOptionText: {
+    fontSize: 16,
+    color: '#444',
+  },
+  selectedDurationOptionText: {
+    color: '#00cc99',
+    fontWeight: '500',
+  },
+  // Google Calendar sync styles
+  syncContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 25,
+    marginBottom: 5,
+    paddingVertical: 10,
+    paddingHorizontal: 5,
+    borderRadius: 8,
+    backgroundColor: '#f8f8f8',
+  },
+  syncTextContainer: {
+    flex: 1,
+    marginRight: 10,
+  },
+  syncLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#333',
+  },
+  syncDescription: {
+    fontSize: 13,
+    color: '#666',
+    marginTop: 3,
   },
 });
