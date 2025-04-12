@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { format, parseISO, isToday, isPast } from 'date-fns';
 import { api } from '../../utils/api';
+import { set } from 'lodash';
 
 // Types based on the schema
 interface Location {
@@ -88,6 +89,7 @@ const EventDetails = () => {
   const { authToken, userInfo } = useAuth();
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
+  const [syncingCalendar, setSyncingCalendar] = useState(false);
 
   // Fetch event details
   useEffect(() => {
@@ -148,6 +150,7 @@ const EventDetails = () => {
   const handleAddToCalendar = async () => {
     // In a real implementation, you would integrate with the calendar API
     // Alert.alert('Coming Soon', 'Calendar integration will be available soon!');
+    setSyncingCalendar(true);
     try {
       const response = await api.get(`/gemini/events/${id}/suggestions`, {
         headers: {
@@ -155,9 +158,11 @@ const EventDetails = () => {
         },
       });
       console.log('AI suggestions:', response.data);
+      setSyncingCalendar(false);
     } catch (error) {
       console.error('Error fetching suggestions:', error);
       Alert.alert('Error', 'Failed to fetch suggestions. Please try again.');
+      setSyncingCalendar(false);
     }
   };
 
@@ -457,11 +462,21 @@ const EventDetails = () => {
           <TouchableOpacity
             style={[styles.button, event.sync ? styles.syncedButton : null]}
             onPress={handleAddToCalendar}
+            disabled={syncingCalendar}
           >
-            <Ionicons name="calendar" size={20} color="#fff" />
-            <Text style={styles.buttonText}>
-              {event.sync ? 'Synced to Calendar' : 'Sync to Calendar'}
-            </Text>
+            {syncingCalendar ? (
+              <View style={styles.syncLoadingContainer}>
+                <ActivityIndicator size="small" color="#fff" />
+                <Text style={styles.buttonText}>Syncing...</Text>
+              </View>
+            ) : (
+              <>
+                <Ionicons name="calendar" size={20} color="#fff" />
+                <Text style={styles.buttonText}>
+                  {event.sync ? 'Synced to Calendar' : 'Sync to Calendar'}
+                </Text>
+              </>
+            )}
           </TouchableOpacity>
 
           {event.status !== 'cancelled' && !isCreator && (
@@ -830,6 +845,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#666',
     marginTop: 100,
+  },
+  syncLoadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
 });
 
