@@ -21,7 +21,9 @@ export class GeminiService {
 
       this.generativeAI = new GoogleGenerativeAI(apiKey);
       // List available models
-      this.geminiModel = this.generativeAI.getGenerativeModel({ model: 'gemini-pro' });
+      this.geminiModel = this.generativeAI.getGenerativeModel({
+        model: 'gemini-2.5-pro-exp-03-25',
+      });
     }
 
     return this.geminiModel;
@@ -90,7 +92,6 @@ export class GeminiService {
       );
 
       const freeBusyResults = await Promise.all(freeBusyPromises);
-      console.log('Free/Busy results:', freeBusyResults);
 
       // Format the calendar data for the Gemini prompt
       const formattedCalendarData = this.formatCalendarData(freeBusyResults, event.attendees);
