@@ -51,12 +51,12 @@ const FriendContext = createContext<FriendContextType>({
   sentRequests: [],
   loading: false,
   error: null,
-  sendFriendRequest: async () => {},
-  acceptFriendRequest: async () => {},
-  rejectFriendRequest: async () => {},
-  cancelFriendRequest: async () => {},
-  removeFriend: async () => {},
-  refreshFriendData: async () => {},
+  sendFriendRequest: async () => { },
+  acceptFriendRequest: async () => { },
+  rejectFriendRequest: async () => { },
+  cancelFriendRequest: async () => { },
+  removeFriend: async () => { },
+  refreshFriendData: async () => { },
   getFriendStatus: () => ({ status: FriendStatus.NONE }),
 });
 
@@ -100,12 +100,22 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
         },
       });
 
-      // Update all state at once after fetching everything
+      // Set friends from the response
       setFriends(friendsResponse.data.friends);
-      setReceivedRequests(pendingResponse.data.requests);
-      setSentRequests(sentResponse.data.requests);
 
-      console.log('Updated friend data');
+      // Filter out rejected requests from received requests
+      const pendingRequests = pendingResponse.data.requests.filter(
+        (req: FriendRequest) => req.status !== FriendRequestStatus.REJECTED
+      );
+      setReceivedRequests(pendingRequests);
+
+      // Filter out rejected requests from sent requests
+      const activeSentRequests = sentResponse.data.requests.filter(
+        (req: FriendRequest) => req.status !== FriendRequestStatus.REJECTED
+      );
+      setSentRequests(activeSentRequests);
+
+      console.log('Updated friend data - filtered out rejected requests');
     } catch (err: any) {
       console.error('Error fetching friend data:', err);
       setError(err.response?.data?.message || 'Failed to fetch friend data');
@@ -383,7 +393,7 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
 
       console.log('Friend request rejected successfully');
 
-      // Remove from pending requests immediately
+      // Remove from pending requests immediately and permanently
       setReceivedRequests(prev => {
         const filtered = prev.filter(req => req._id !== requestId);
         console.log(`Removed request ${requestId}, new count: ${filtered.length}`);
@@ -397,9 +407,6 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
           `Friend request from ${userName} has been declined.`,
         );
       }
-
-      // Manually trigger a refresh to ensure everything is in sync
-      setTimeout(() => refreshFriendData(), 300);
 
       return response.data;
     } catch (err: any) {
@@ -442,9 +449,6 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
       // Show success message
       Alert.alert('Request Cancelled', 'Friend request has been cancelled.');
 
-      // Manually trigger a refresh to ensure everything is in sync
-      setTimeout(() => refreshFriendData(), 300);
-
       return response.data;
     } catch (err: any) {
       console.error('Error canceling friend request:', err);
@@ -479,9 +483,6 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
 
       // Show success message
       Alert.alert('Friend Removed', 'Friend has been removed from your friends list.');
-
-      // Manually trigger a refresh to ensure everything is in sync
-      setTimeout(() => refreshFriendData(), 300);
 
       return response.data;
     } catch (err: any) {
