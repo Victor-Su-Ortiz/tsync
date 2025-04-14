@@ -37,10 +37,11 @@ export class GeminiController {
 
       // Get AI suggestions
       const suggestions = await GeminiService.suggestMeetingTimes(eventId);
+      console.log('suggestions', suggestions);
 
       res.status(200).json({
         success: true,
-        data: suggestions,
+        ...suggestions,
       });
     } catch (error) {
       next(error);

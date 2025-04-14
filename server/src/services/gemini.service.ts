@@ -105,10 +105,8 @@ export class GeminiService {
 
       // Parse Gemini's response to extract suggested meeting times
       const suggestion = this.parseSuggestedTimes(text, event);
-      console.log('suggestion', suggestion);
 
       return {
-        success: true,
         suggestedTimes: suggestion.suggestedTimes,
         reasoningText: suggestion.reasoning,
       };

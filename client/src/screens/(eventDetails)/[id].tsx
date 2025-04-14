@@ -157,7 +157,7 @@ const EventDetails = () => {
           Authorization: `Bearer ${authToken}`,
         },
       });
-      console.log('AI suggestions:', response.data.data.suggestedTimes);
+      console.log('AI suggestions:', response.data);
       setSyncingCalendar(false);
     } catch (error) {
       console.error('Error fetching suggestions:', error);
