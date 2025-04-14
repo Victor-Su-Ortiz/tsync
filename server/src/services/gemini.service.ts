@@ -105,6 +105,7 @@ export class GeminiService {
 
       // Parse Gemini's response to extract suggested meeting times
       const suggestion = this.parseSuggestedTimes(text, event);
+      console.log('suggestion', suggestion);
 
       return {
         success: true,
@@ -238,7 +239,6 @@ IMPORTANT CONSTRAINTS:
         };
       });
 
-      // Return validated suggested times and reasoning
       return {
         suggestedTimes: validatedTimes,
         reasoning: parsedData.reasoning || 'Based on participant availability and preferences',
