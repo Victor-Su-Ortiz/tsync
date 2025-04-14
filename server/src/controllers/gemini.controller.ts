@@ -37,7 +37,6 @@ export class GeminiController {
 
       // Get AI suggestions
       const suggestions = await GeminiService.suggestMeetingTimes(eventId);
-      console.log('suggestions', suggestions);
 
       res.status(200).json({
         success: true,
@@ -74,13 +73,14 @@ export class GeminiController {
 
       // Schedule with Gemini
       const result = await GeminiService.scheduleWithGemini(eventId, userId!.toString());
+      console.log('result', result);
 
       // If successful, notify participants
       if (result.success) {
         // Fetch full event details with participants
         const updatedEvent = await Event.findById(eventId)
-          .populate('participants', '_id name email')
-          .populate('organizer', '_id name email');
+          .populate('attendees', '_id name email')
+          .populate('creator', '_id name email');
 
         // Notify participants about the scheduled event
         updatedEvent?.attendees.forEach((participant: any) => {
