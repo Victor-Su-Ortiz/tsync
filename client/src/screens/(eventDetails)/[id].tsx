@@ -162,6 +162,7 @@ const EventDetails = () => {
         },
       );
       const suggestedTimes = response.data.suggestedTimes;
+      router.back();
       setSyncingCalendar(false);
     } catch (error) {
       console.error('Error fetching suggestions:', error);
