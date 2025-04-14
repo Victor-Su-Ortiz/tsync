@@ -29,11 +29,19 @@ const EventSchema = new Schema<IEvent, IEventModel, IEventMethods>(
       ref: 'User',
       required: [true, 'Event creator is required'],
     },
+    duration: {
+      type: Number,
+      required: [true, 'Event duration is required'],
+    },
     eventDates: [
       {
-        date: {
+        startDate: {
           type: Date,
-          required: [true, 'Event date is required'],
+          required: [true, 'Event start date is required'],
+        },
+        endDate: {
+          type: Date,
+          required: [true, 'Event end date is required'],
         },
         isAllDay: {
           type: Boolean,
@@ -62,6 +70,10 @@ const EventSchema = new Schema<IEvent, IEventModel, IEventMethods>(
     },
     googleCalendarEventId: String,
     googleCalendarId: String,
+    sync: {
+      type: Boolean,
+      default: false,
+    },
     status: {
       type: String,
       enum: ['scheduled', 'tentative', 'confirmed', 'cancelled'],

@@ -20,7 +20,10 @@ export class GeminiService {
       }
 
       this.generativeAI = new GoogleGenerativeAI(apiKey);
-      this.geminiModel = this.generativeAI.getGenerativeModel({ model: 'gemini-pro' });
+      // List available models
+      this.geminiModel = this.generativeAI.getGenerativeModel({
+        model: 'gemini-2.5-pro-exp-03-25',
+      });
     }
 
     return this.geminiModel;
@@ -74,12 +77,18 @@ export class GeminiService {
       }
 
       // Get free/busy information for all participants
-      const freeBusyPromises = event.attendees.map((participant: any) =>
-        CalendarService.getUserFreeBusy(
-          participant._id.toString(),
-          event.proposedDateRange.start,
-          event.proposedDateRange.end
-        )
+      const freeBusyPromises = event.attendees.flatMap(participant =>
+        event.eventDates.map(async eventDate => {
+          if (eventDate && eventDate.startTime && eventDate.endTime) {
+            return await CalendarService.getUserFreeBusy(
+              participant.userId.toString(),
+              eventDate.startTime,
+              eventDate.endTime
+            );
+          } else {
+            throw new Error('Invalid event date');
+          }
+        })
       );
 
       const freeBusyResults = await Promise.all(freeBusyPromises);
@@ -89,19 +98,18 @@ export class GeminiService {
 
       // Create prompt for Gemini
       const prompt = this.createSchedulingPrompt(event, formattedCalendarData);
-
       // Call Gemini AI
       const result = await geminiModel.generateContent(prompt);
       const response = result.response;
       const text = response.text();
 
       // Parse Gemini's response to extract suggested meeting times
-      const suggestedTimes = this.parseSuggestedTimes(text, event);
+      const suggestion = this.parseSuggestedTimes(text, event);
 
       return {
         success: true,
-        suggestedTimes,
-        reasoningText: text,
+        suggestedTimes: suggestion.suggestedTimes,
+        reasoningText: suggestion.reasoning,
       };
     } catch (error) {
       console.error('Error suggesting meeting times with Gemini:', error);
@@ -115,7 +123,7 @@ export class GeminiService {
   private static createSchedulingPrompt(event: IEvent, calendarData: any[]): string {
     // Format preferred time ranges
     const preferredTimeRanges =
-      event.preferredTimeRanges?.map(range => `${range.start} to ${range.end}`).join(', ') ||
+      event.eventDates?.map(range => `${range.startTime} to ${range.endTime}`).join(', ') ||
       '9:00 to 17:00';
 
     // Format preferred days
@@ -128,9 +136,20 @@ export class GeminiService {
       'Friday',
       'Saturday',
     ];
+    // Parse preferred days from the event dates
     const preferredDays =
-      event.preferredDays?.map(day => daysOfWeek[day]).join(', ') ||
-      'Monday, Tuesday, Wednesday, Thursday, Friday';
+      event.eventDates
+        ?.map(dateRange => {
+          // Convert startDate string to Date object if it's not already
+          const startDate = new Date(dateRange.startDate);
+
+          // Get the day of week as an integer (0-6, where 0 is Sunday)
+          const dayIndex = startDate.getDay();
+
+          // Return the day name from our array
+          return daysOfWeek[dayIndex];
+        })
+        .join(', ') || 'Monday, Tuesday, Wednesday, Thursday, Friday';
 
     // Create the prompt
     return `
@@ -140,7 +159,7 @@ EVENT DETAILS:
 - Title: ${event.title}
 - Description: ${event.description || 'N/A'}
 - Duration: ${event.duration} minutes
-- Date Range: ${event.proposedDateRange.start.toISOString().split('T')[0]} to ${event.proposedDateRange.end.toISOString().split('T')[0]}
+- Date Range: ${this.formatDateRanges(event)}
 - Preferred Time Ranges: ${preferredTimeRanges}
 - Preferred Days: ${preferredDays}
 - Number of Participants: ${calendarData.length}
@@ -315,6 +334,29 @@ IMPORTANT CONSTRAINTS:
       console.error('Error scheduling with Gemini:', error);
       throw error;
     }
+  }
+  // Format multiple date ranges
+  private static formatDateRanges(event: IEvent) {
+    // Check if we have eventDates array
+    if (event.eventDates && event.eventDates.length > 0) {
+      // Map each date range to a formatted string
+      const dateRanges = event.eventDates.map(dateRange => {
+        const startDate = new Date(dateRange.startDate);
+        const endDate = new Date(dateRange.endDate);
+
+        // Format to YYYY-MM-DD
+        const formattedStart = startDate.toISOString().split('T')[0];
+        const formattedEnd = endDate.toISOString().split('T')[0];
+
+        return `${formattedStart} to ${formattedEnd}`;
+      });
+
+      // Join with line breaks if multiple ranges
+      return dateRanges.map(range => `- Date Range: ${range}`).join('\n');
+    }
+
+    // Return empty string if no date ranges found
+    return 'No date ranges specified';
   }
 }
 

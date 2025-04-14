@@ -16,8 +16,9 @@ export type EventStatus = 'scheduled' | 'tentative' | 'confirmed' | 'cancelled';
 
 // Define event date type to handle non-consecutive dates
 export interface IEventDate {
-  date: Date;
-  isAllDay: boolean;
+  startDate: Date;
+  endDate: Date;
+  isAllDay?: boolean;
   startTime?: Date;
   endTime?: Date;
 }
@@ -62,6 +63,7 @@ export interface IEvent extends Document {
   // Time-related fields
   eventDates: IEventDate[]; // Support for non-consecutive dates
   timezone: string;
+  duration: number; // Duration in minutes
   scheduledTime: Date;
   endTime: Date;
 
@@ -79,6 +81,9 @@ export interface IEvent extends Document {
   // Integration with Google Calendar
   googleCalendarEventId?: string;
   googleCalendarId?: string;
+
+  // Ask users to automatically sync with Google Calendar
+  sync: boolean;
 
   // Status
   status: EventStatus;
