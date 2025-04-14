@@ -73,7 +73,6 @@ export class GeminiController {
 
       // Schedule with Gemini
       const result = await GeminiService.scheduleWithGemini(eventId, userId!.toString());
-      console.log('result', result);
 
       // If successful, notify participants
       if (result.success) {
@@ -84,10 +83,10 @@ export class GeminiController {
 
         // Notify participants about the scheduled event
         updatedEvent?.attendees.forEach((participant: any) => {
-          if (participant._id.toString() !== userId) {
+          if (participant.userId.toString() !== userId) {
             // Send socket notification if user is online
-            if (socketService.isUserOnline(participant._id.toString())) {
-              socketService.sendToUser(participant._id.toString(), 'event_scheduled', {
+            if (socketService.isUserOnline(participant.userId.toString())) {
+              socketService.sendToUser(participant.userId.toString(), 'event_scheduled', {
                 eventId: event._id,
                 title: event.title,
                 scheduledTime: result.selectedTime,

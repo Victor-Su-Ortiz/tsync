@@ -81,7 +81,9 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       newSocket.on('connect_error', err => {
         console.error('Socket connection error:', err);
         console.error('Error details:', JSON.stringify(err));
-        Alert.alert('Socket Error', `Connection error: ${err.message}`);
+        if (err.message !== 'websocket error') {
+          Alert.alert('Socket Error', `Connection error: ${err.message}`);
+        }
       });
 
       // Listen for generic notification events
