@@ -1,10 +1,9 @@
 import User from '../models/user.model';
 import jwt, { Secret, SignOptions } from 'jsonwebtoken';
 import crypto from 'crypto';
-import { google } from 'googleapis';
 import { sendEmail } from '../utils/email';
 import { AuthenticationError, ValidationError, NotFoundError } from '../utils/errors';
-import GoogleAuthService from './google-auth.service';
+// import GoogleAuthService from './google-auth.service';
 import { GoogleService } from './google.services';
 
 // Types
@@ -31,34 +30,6 @@ export interface AuthResponse {
 }
 
 export class AuthService {
-  private static readonly googleClient = GoogleService.getInstance().getOAuth2Client();
-
-  /**
-   * Generate a profile picture for payload
-   */
-  private static async setProfilePicture(payload: any, accessToken: string) {
-    const userId = payload.sub;
-    // Create a new OAuth2 client with the access token specifically for this request
-    const oauth2Client = new google.auth.OAuth2(
-      process.env.GOOGLE_CLIENT_ID,
-      process.env.GOOGLE_CLIENT_SECRET
-    );
-    oauth2Client.setCredentials({ access_token: accessToken });
-
-    // Use the access token to get profile info including picture
-    const people = google.people({ version: 'v1', auth: oauth2Client });
-    try {
-      const profile = await people.people.get({
-        resourceName: `people/${userId}`,
-        personFields: 'photos',
-      });
-      payload.picture = profile.data.photos?.[0].url ?? undefined;
-    } catch (error) {
-      console.error('Error fetching profile picture:', error);
-      // Continue without picture if there's an error
-    }
-  }
-
   /**
    * Generate JWT Token
    */
@@ -161,8 +132,9 @@ export class AuthService {
     code: string
   ): Promise<AuthResponse> {
     try {
-      // Step 1: Verify the ID token to ensure it's valid
-      const ticket = await this.googleClient.verifyIdToken({
+      // Store tokens.refresh_token securely
+      const oauth2Client = GoogleService.createOauth2Client();
+      const ticket = await oauth2Client.verifyIdToken({
         idToken,
         audience: process.env.GOOGLE_CLIENT_ID,
       });
@@ -173,45 +145,21 @@ export class AuthService {
         throw new AuthenticationError('Invalid Google token');
       }
 
-      // Step 2: Exchange the authorization code for tokens
-      // This needs to happen BEFORE using the tokens
-      let googleTokens;
-      try {
-        googleTokens = await GoogleAuthService.generateTokens(code);
+      const googleTokens = (await oauth2Client.getToken(code)).tokens;
 
-        // Log the tokens for debugging (remove in production)
-        console.log('Google Tokens:', {
-          access_token: googleTokens.access_token ? 'Present' : 'Missing',
-          refresh_token: googleTokens.refresh_token ? 'Present' : 'Missing',
-          expires_in: googleTokens.expires_in
-        });
-
-        // Ensure we have refresh token - for first-time auth only
-        if (!googleTokens.refresh_token) {
-          console.warn('No refresh token received from Google. User may need to revoke access and re-authorize.');
-          // Continue anyway - user might have previously authorized the app
-        }
-      } catch (tokenError) {
-        console.error('Error exchanging code for tokens:', tokenError);
-        throw new AuthenticationError('Failed to exchange authorization code');
+      // const googleTokens = await GoogleAuthService.generateTokens(code);
+      if (!googleTokens.refresh_token) {
+        throw new AuthenticationError('Failed to get refresh token');
       }
-
-      // Step 3: Set the credentials on the client
-      const oauth2Client = new google.auth.OAuth2(
-        process.env.GOOGLE_CLIENT_ID,
-        process.env.GOOGLE_CLIENT_SECRET,
-        process.env.GOOGLE_REDIRECT_URI
-      );
-
       oauth2Client.setCredentials({
-        access_token: googleTokens.access_token || accessToken,
+        access_token: accessToken,
         refresh_token: googleTokens.refresh_token,
         expiry_date: googleTokens.expires_in ? Date.now() + googleTokens.expires_in * 1000 : undefined
       });
 
       // Step 4: Fetch profile picture if not present in ID token
       if (!payload.picture) {
-        await this.setProfilePicture(payload, googleTokens.access_token || accessToken);
+        await GoogleService.setProfilePicture(payload, oauth2Client);
       }
 
       // Step 5: Find or create user

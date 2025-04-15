@@ -20,9 +20,7 @@ export class EventController {
       const event = await eventService.createEvent(req.body, userId.toString());
       res.status(201).json({
         status: 'success',
-        data: {
-          event,
-        },
+        event,
       });
     } catch (error) {
       next(error);
@@ -47,9 +45,7 @@ export class EventController {
       const event = await eventService.getEventById(req.params.id, userId.toString());
       res.status(200).json({
         status: 'success',
-        data: {
-          event,
-        },
+        event,
       });
     } catch (error) {
       next(error);
@@ -75,9 +71,7 @@ export class EventController {
 
       res.status(200).json({
         status: 'success',
-        data: {
-          event,
-        },
+        event,
       });
     } catch (error) {
       next(error);
@@ -128,9 +122,7 @@ export class EventController {
       res.status(200).json({
         status: 'success',
         results: events.length,
-        data: {
-          events,
-        },
+        events,
       });
     } catch (error) {
       next(error);
@@ -161,9 +153,7 @@ export class EventController {
       );
       res.status(200).json({
         status: 'success',
-        data: {
-          event,
-        },
+        event,
       });
     } catch (error) {
       next(error);
@@ -195,9 +185,7 @@ export class EventController {
 
       res.status(200).json({
         status: 'success',
-        data: {
-          event,
-        },
+        event,
       });
     } catch (error) {
       next(error);
@@ -226,9 +214,7 @@ export class EventController {
       res.status(200).json({
         status: 'success',
         results: events.length,
-        data: {
-          events,
-        },
+        events,
       });
     } catch (error) {
       next(error);

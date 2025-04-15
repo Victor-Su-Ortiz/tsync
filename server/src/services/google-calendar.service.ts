@@ -3,7 +3,7 @@ import { google, calendar_v3 } from 'googleapis';
 import User from '../models/user.model';
 import { NotFoundError, AuthenticationError } from '../utils/errors';
 import Event from '../models/event.model';
-import { GoogleService } from './google.services';
+// import { GoogleService } from './google.services';
 
 export class CalendarService {
   /**
@@ -23,7 +23,7 @@ export class CalendarService {
   //   return oauth2Client;
   // }
 
-  private static readonly googleClient = GoogleService.getInstance().getOAuth2Client();
+  // private static readonly googleClient = GoogleService.getInstance().getOAuth2Client();
 
   /**
    * Get calendar client for a user
@@ -39,7 +39,17 @@ export class CalendarService {
       throw new AuthenticationError('User has not connected Google Calendar');
     }
 
-    const oauth2Client = this.googleClient;
+    // const oauth2Client = this.googleClient;
+    // Create a new OAuth client with your credentials instead of reusing a static one
+    const oauth2Client = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      process.env.GOOGLE_REDIRECT_URI
+    );
+    // // Set the refresh token on the OAuth client
+    oauth2Client.setCredentials({
+      refresh_token: user.googleRefreshToken,
+    });
     return google.calendar({ version: 'v3', auth: oauth2Client });
   }
 
