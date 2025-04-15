@@ -1,5 +1,12 @@
-import { Document, Model, Types } from 'mongoose';
+import mongoose, { Document, Model, Types } from 'mongoose';
 import { IFriendRequest } from './friendRequest.types';
+
+export interface IPreference extends mongoose.Types.Subdocument {
+  _id: Types.ObjectId;
+  text: string;
+  createdAt: Date;
+  isActive: boolean;
+}
 
 // Interface to define the User document structure
 export interface IUser extends Document {
@@ -21,7 +28,7 @@ export interface IUser extends Document {
   lastLogin?: Date;
   createdAt: Date;
   updatedAt: Date;
-
+  preferences: IPreference[];
   // Friend-related fields
   friends: Types.ObjectId[];
   // List of blocked users
@@ -37,6 +44,13 @@ export interface IUserMethods {
   removeFriend(friendId: string): Promise<void>;
   getPendingFriendRequests(): Promise<(IFriendRequest & Document)[]>;
   cancelFriendRequest(requestId: string): Promise<void>;
+
+  // Preference Methods
+  addPreference(preferenceText: string): Promise<IUser & Document>;
+  updatePreference(preferenceId: string, newText: string): Promise<IUser & Document>;
+  removePreference(preferenceId: string): Promise<IUser & Document>;
+  togglePreferenceStatus(preferenceId: string): Promise<IUser & Document>;
+  getActivePreferences(): string[];
 }
 
 // Public user data type (for API responses)
