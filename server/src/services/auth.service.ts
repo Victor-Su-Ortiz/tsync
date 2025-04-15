@@ -154,7 +154,6 @@ export class AuthService {
       oauth2Client.setCredentials({
         access_token: accessToken,
         refresh_token: googleTokens.refresh_token,
-        expiry_date: googleTokens.expires_in ? Date.now() + googleTokens.expires_in * 1000 : undefined
       });
 
       // Step 4: Fetch profile picture if not present in ID token
@@ -208,7 +207,6 @@ export class AuthService {
       throw new AuthenticationError('Google authentication failed');
     }
   }
-
 
   /**
    * Verify Email
