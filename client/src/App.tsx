@@ -8,6 +8,7 @@ import { AuthProvider } from './context/AuthContext';
 import InfiniteScrollCalendar from './screens/(tabs)/events';
 import { SocketProvider } from './context/SocketContext';
 import { Socket } from 'socket.io-client';
+import { FriendProvider } from './context/FriendRequestContext';
 
 const Stack = createNativeStackNavigator();
 
@@ -15,8 +16,10 @@ export default function App() {
   return (
     <AuthProvider>
       <SocketProvider>
-        <ExpoRoot context={require.context('./screens')} />
-        {/* <InfiniteScrollCalendar /> */}
+        <FriendProvider>
+          <ExpoRoot context={require.context('./screens')} />
+          {/* <InfiniteScrollCalendar /> */}
+        </FriendProvider>
       </SocketProvider>
     </AuthProvider>
   );

@@ -17,7 +17,6 @@ import axios from 'axios';
 import { GOOGLE_PLACES_API, EXPO_PUBLIC_API_URL } from '@env';
 import { router, useLocalSearchParams, usePathname } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import UserSearch from '../../components/UserSearch';
 import { useAuth } from '@/src/context/AuthContext';
 import { useSocket } from '@/src/context/SocketContext'; // Import the socket hook
 import { api } from '@/src/utils/api';
@@ -53,7 +52,7 @@ export default function Home() {
   const [shops, setShops] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchModalVisible, setSearchModalVisible] = useState(false);
-  const { notificationCount, updateNotifcationCount } = useSocket();
+  const { notificationCount, updateNotificationCount } = useSocket();
   const pathname = usePathname();
   const prevPathRef = useRef(pathname);
   const { authToken } = useAuth();
@@ -104,7 +103,7 @@ export default function Home() {
         const unreadCount = response.data.pagination.unreadCount;
         console.log('Unread notifications count:', unreadCount);
 
-        updateNotifcationCount(unreadCount);
+        updateNotificationCount(unreadCount);
         setNotifications(response.data.notifications);
       }
     } catch (error) {
@@ -183,11 +182,11 @@ export default function Home() {
     getUserLocation();
   }, []);
 
-  useEffect(() => {
-    if (location) {
-      getNearbyStores(location.latitude, location.longitude);
-    }
-  }, [location]);
+  // useEffect(() => {
+  //   if (location) {
+  //     getNearbyStores(location.latitude, location.longitude);
+  //   }
+  // }, [location]);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: 'white', padding: 16 }}>
@@ -209,17 +208,20 @@ export default function Home() {
       </View>
 
       {/* Search Button */}
-      <TouchableOpacity style={styles.searchButton} onPress={() => setSearchModalVisible(true)}>
+      <TouchableOpacity
+        style={styles.searchButton}
+        onPress={() => router.push('./../search/userSearch')}
+      >
         <Ionicons name="search" size={20} color="#fff" />
         <Text style={styles.searchButtonText}>Search nearby users</Text>
       </TouchableOpacity>
 
-      {/* User Search Modal Component */}
+      {/* User Search Modal Component
       <UserSearch
         visible={searchModalVisible}
         onClose={() => setSearchModalVisible(false)}
         accessToken={authToken}
-      />
+      /> */}
 
       {loading ? (
         <View style={{ flex: 1, justifyContent: 'center' }}>

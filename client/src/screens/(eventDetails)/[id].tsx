@@ -152,12 +152,17 @@ const EventDetails = () => {
     // Alert.alert('Coming Soon', 'Calendar integration will be available soon!');
     setSyncingCalendar(true);
     try {
-      const response = await api.get(`/gemini/events/${id}/suggestions`, {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
+      const response = await api.post(
+        `/gemini/events/${id}/auto-schedule`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
         },
-      });
-      console.log('AI suggestions:', response.data);
+      );
+      const suggestedTimes = response.data.suggestedTimes;
+      router.back();
       setSyncingCalendar(false);
     } catch (error) {
       console.error('Error fetching suggestions:', error);
