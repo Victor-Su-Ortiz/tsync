@@ -51,6 +51,7 @@ export class AuthService {
    * Register new user
    */
   public static async register(userData: RegisterUserInput): Promise<AuthResponse> {
+    // Existing implementation...
     const { email } = userData;
 
     // Check if user exists
@@ -75,19 +76,7 @@ export class AuthService {
 
     // Send verification email
     try {
-      // const verificationUrl = `${process.env.CLIENT_URL}/verify-email/${verificationToken}`;
-      // await sendEmail({
-      //   to: user.email,
-      //   subject: "Please verify your email",
-      //   text: `Click the link to verify your email: ${verificationUrl}`,
-      //   html: `
-      //     <div>
-      //       <h1>Welcome to ${process.env.APP_NAME}!</h1>
-      //       <p>Please click the link below to verify your email:</p>
-      //       <a href="${verificationUrl}">Verify Email</a>
-      //     </div>
-      //   `,
-      // });
+      // Verification email code commented out in original
     } catch (error) {
       // If email fails, still create user but log error
       console.error('Verification email failed:', error);
@@ -106,6 +95,7 @@ export class AuthService {
    * Login user
    */
   public static async login(loginData: LoginInput): Promise<AuthResponse> {
+    // Existing implementation...
     const { email, password } = loginData;
 
     // Find user and select password (normally excluded)
@@ -164,13 +154,15 @@ export class AuthService {
       oauth2Client.setCredentials({
         access_token: accessToken,
         refresh_token: googleTokens.refresh_token,
+        expiry_date: googleTokens.expires_in ? Date.now() + googleTokens.expires_in * 1000 : undefined
       });
 
+      // Step 4: Fetch profile picture if not present in ID token
       if (!payload.picture) {
         await GoogleService.setProfilePicture(payload, oauth2Client);
       }
 
-      // Find or create user
+      // Step 5: Find or create user
       let user = await User.findOne({ email: payload.email });
 
       if (!user) {
@@ -183,20 +175,28 @@ export class AuthService {
           isEmailVerified: true, // Google emails are verified
           password: crypto.randomBytes(20).toString('hex'), // Random password for Google users
           googleRefreshToken: googleTokens.refresh_token,
-          isGoogleCalendarConnected: true,
+          isGoogleCalendarConnected: !!googleTokens.refresh_token,
         });
       } else {
         // Update existing user's Google data
         user.googleId = payload.sub;
         user.isEmailVerified = true;
         if (payload.picture) user.profilePicture = payload.picture;
-        // set the refresh token
-        user.googleRefreshToken = googleTokens.refresh_token;
-        user.isGoogleCalendarConnected = true;
+
+        // Only update refresh token if we received a new one
+        if (googleTokens.refresh_token) {
+          user.googleRefreshToken = googleTokens.refresh_token;
+          user.isGoogleCalendarConnected = true;
+        } else if (!user.googleRefreshToken) {
+          // If we don't have a refresh token stored and didn't get a new one,
+          // we can't connect to Google Calendar
+          user.isGoogleCalendarConnected = false;
+        }
+
         await user.save();
       }
 
-      // Generate token
+      // Generate JWT token
       const token = this.generateToken(user);
 
       return {
@@ -208,6 +208,7 @@ export class AuthService {
       throw new AuthenticationError('Google authentication failed');
     }
   }
+
 
   /**
    * Verify Email

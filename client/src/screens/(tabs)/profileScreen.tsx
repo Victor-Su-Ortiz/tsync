@@ -1,75 +1,25 @@
-import React, { useEffect } from 'react';
-import { View, Text, Image, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
-import { Stack, router } from 'expo-router';
-import images from '../../constants/images';
-import { useAuth } from '../../context/AuthContext';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
-import { RelativePathString } from 'expo-router';
+// screens/(tabs)/profileScreen.tsx
+import React from 'react';
+import { StyleSheet, SafeAreaView, View } from 'react-native';
+import { Stack } from 'expo-router';
 import UserProfile from '@/src/components/UserProfile';
+import { useAuth } from '@/src/context/AuthContext';
 
 export default function ProfileScreen() {
-  const { userInfo, logout } = useAuth();
+  const { userInfo } = useAuth();
 
-  // Default stats if not available from the API
-  const stats = {
-    friends: 42,
-    eventsAttended: 10,
-    eventsHosted: 10,
-  };
-
-  useEffect(() => console.log(userInfo));
-
-  // <to fix>
-  const handleSignOut = async () => {
-    try {
-      // Sign out from Google
-      await GoogleSignin.signOut();
-
-      // Clear local auth state
-      await logout();
-
-      // Navigate to login screen
-      router.replace('/' as RelativePathString);
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
+  // Format user data for the UserProfile component
+  const userData = {
+    id: userInfo?.id || userInfo?.id || '',
+    name: userInfo?.name || 'User',
+    profilePicture: userInfo?.picture || userInfo?.profilePicture || '',
+    bio: userInfo?.bio || '',
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
-
-      <View style={styles.avatarContainer}>
-        <Image
-          source={
-            userInfo?.picture || userInfo?.profilePicture
-              ? { uri: userInfo?.picture || userInfo?.profilePicture }
-              : images.defaultpfp
-          }
-          style={styles.avatar}
-        />
-      </View>
-
-      <Text style={styles.nameText}>{userInfo?.name || 'User'}</Text>
-
-      <View style={styles.statsContainer}>
-        <View style={styles.statItem}>
-          <Text style={styles.statNumber}>{stats.friends}</Text>
-          <Text style={styles.statLabel}>Friends</Text>
-        </View>
-        <View style={styles.statItem}>
-          <Text style={styles.statNumber}>{stats.eventsAttended}</Text>
-          <Text style={styles.statLabel}>Attended</Text>
-        </View>
-        <View style={styles.statItem}>
-          <Text style={styles.statNumber}>{stats.eventsHosted}</Text>
-          <Text style={styles.statLabel}>Hosted</Text>
-        </View>
-      </View>
-
-      <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-        <Text style={styles.signOutText}>Sign Out</Text>
-      </TouchableOpacity>
+      <UserProfile userData={userData} isCurrentUser={true} showHeader={false} />
     </SafeAreaView>
   );
 }
@@ -77,15 +27,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    paddingHorizontal: 20,
-    paddingTop: 20,
-  },
-  nameText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginVertical: 10,
+    backgroundColor: 'white',
   },
   avatarContainer: {
     alignItems: 'center',

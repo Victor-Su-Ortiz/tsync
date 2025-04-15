@@ -16,7 +16,7 @@ import { useSocket } from '@/src/context/SocketContext'; // Import the socket ho
 import { api } from '@/src/utils/api';
 import UserProfile from '@/src/components/UserProfile';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { User } from '@/src/components/UserProfile';
+import { User } from '../search/userSearch';
 import { FriendRequestStatus, FriendStatus, NotificationType } from '@/src/utils/enums';
 import { Notification } from '../(tabs)/home';
 import FriendsDropdown from '@/src/components/FriendsDropdown';
@@ -117,17 +117,22 @@ export default function Notifications() {
 
       // Set up the user object for the profile
       const user: User = {
-        id: notification.sender.id,
+        id: notification.sender._id,
         name: notification.sender.name,
         profilePicture: notification.sender.profilePicture || '',
         friendStatus,
       };
 
+      console.log('USER FROM NOTIFICATIONS.TSX:', user);
+
       console.log('FRIEND STATUS:', friendStatus);
       // Set selected user and request ID
-      setSelectedUser(user);
-      setSelectedRequestId(notification.relatedId?._id);
-      setUserProfileVisible(true);
+      router.push({
+        pathname: './../profile/userProfile',
+        params: {
+          userData: JSON.stringify(user),
+        },
+      });
     } catch (error) {
       console.error('Error setting up user profile:', error);
       Alert.alert('Error', 'Failed to open user profile. Please try again.');
@@ -230,22 +235,6 @@ export default function Notifications() {
               <Text style={styles.emptyStateText}>No notifications yet</Text>
             </View>
           }
-        />
-      )}
-
-      {/* User Profile Modal */}
-      {selectedUser && (
-        <UserProfile
-          visible={userProfileVisible}
-          onClose={() => {
-            setUserProfileVisible(false);
-            setSelectedUser(null);
-            setSelectedRequestId(undefined);
-          }}
-          user={selectedUser}
-          onFriendStatusChange={handleFriendStatusChange}
-          requestId={selectedRequestId}
-          requestStatus={selectedUser.friendStatus}
         />
       )}
     </SafeAreaView>
