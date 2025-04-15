@@ -40,7 +40,7 @@ export class GeminiController {
 
       res.status(200).json({
         success: true,
-        data: suggestions,
+        ...suggestions,
       });
     } catch (error) {
       next(error);
@@ -67,7 +67,7 @@ export class GeminiController {
       }
 
       const userId = req.userId;
-      if (event.creator._id !== userId) {
+      if (!event.creator._id.equals(userId)) {
         throw new ForbiddenError('Only the event organizer can schedule this event');
       }
 
@@ -78,15 +78,15 @@ export class GeminiController {
       if (result.success) {
         // Fetch full event details with participants
         const updatedEvent = await Event.findById(eventId)
-          .populate('participants', '_id name email')
-          .populate('organizer', '_id name email');
+          .populate('attendees', '_id name email')
+          .populate('creator', '_id name email');
 
         // Notify participants about the scheduled event
         updatedEvent?.attendees.forEach((participant: any) => {
-          if (participant._id.toString() !== userId) {
+          if (participant.userId.toString() !== userId) {
             // Send socket notification if user is online
-            if (socketService.isUserOnline(participant._id.toString())) {
-              socketService.sendToUser(participant._id.toString(), 'event_scheduled', {
+            if (socketService.isUserOnline(participant.userId.toString())) {
+              socketService.sendToUser(participant.userId.toString(), 'event_scheduled', {
                 eventId: event._id,
                 title: event.title,
                 scheduledTime: result.selectedTime,

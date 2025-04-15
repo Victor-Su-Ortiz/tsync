@@ -35,10 +35,10 @@ export class GeminiService {
   private static formatCalendarData(freeBusyData: any[], participants: any[]) {
     const formattedData: any[] = [];
 
-    freeBusyData.forEach((data, index) => {
-      const participant = participants[index];
+    freeBusyData.forEach(data => {
+      // const participant = participants[index];
+      const participant = participants.find(p => p.userId.equals(data.userId));
       const busySlots: { start: string; end: string }[] = [];
-
       // Extract busy slots from the free/busy response
       if (data.calendars && data.calendars.primary && data.calendars.primary.busy) {
         data.calendars.primary.busy.forEach((slot: any) => {
@@ -50,7 +50,7 @@ export class GeminiService {
       }
 
       formattedData.push({
-        participantId: participant._id.toString(),
+        participantId: participant.userId.toString(),
         name: participant.name,
         busySlots,
       });
@@ -107,7 +107,6 @@ export class GeminiService {
       const suggestion = this.parseSuggestedTimes(text, event);
 
       return {
-        success: true,
         suggestedTimes: suggestion.suggestedTimes,
         reasoningText: suggestion.reasoning,
       };
@@ -238,7 +237,6 @@ IMPORTANT CONSTRAINTS:
         };
       });
 
-      // Return validated suggested times and reasoning
       return {
         suggestedTimes: validatedTimes,
         reasoning: parsedData.reasoning || 'Based on participant availability and preferences',

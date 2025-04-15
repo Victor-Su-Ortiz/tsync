@@ -70,7 +70,11 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       });
 
       newSocket.on('connect_error', err => {
-        console.error('⚠️ Socket connection error:', err.message);
+        console.error('Socket connection error:', err);
+        console.error('Error details:', JSON.stringify(err));
+        if (err.message !== 'websocket error') {
+          Alert.alert('Socket Error', `Connection error: ${err.message}`);
+        }
       });
 
       // Debug listener for ALL events

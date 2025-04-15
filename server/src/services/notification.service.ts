@@ -68,8 +68,6 @@ export class NotificationService {
       query['read'] = false;
     }
 
-    console.log('UNREAD QUERY', unreadOnly, query);
-
     const notifications = await Notification.find(query)
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -78,7 +76,6 @@ export class NotificationService {
       .populate('relatedId')
       .lean();
 
-    console.log('NOTIFCATIONS', notifications);
     const total = await Notification.countDocuments(query);
     const unreadCount = await Notification.countDocuments({
       recipient: new Types.ObjectId(userId),

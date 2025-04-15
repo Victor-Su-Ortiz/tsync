@@ -73,7 +73,7 @@ export class CalendarService {
         },
       });
 
-      return response.data;
+      return { userId, ...response.data };
     } catch (error: any) {
       if (error.response?.status === 401) {
         throw new AuthenticationError('Google Calendar authorization expired');
