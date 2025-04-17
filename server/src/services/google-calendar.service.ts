@@ -312,6 +312,7 @@ export class CalendarService {
           },
           attendees,
           // Additional settings
+          location: event.location,
           guestsCanModify: false,
           guestsCanInviteOthers: false,
           guestsCanSeeOtherGuests: true,
