@@ -302,6 +302,7 @@ export class CalendarService {
         requestBody: {
           summary: event.title,
           description: event.description,
+          location: event.location?.address,
           start: {
             dateTime: selectedTime.toISOString(),
             timeZone: 'UTC', // You might want to make this configurable
@@ -312,7 +313,7 @@ export class CalendarService {
           },
           attendees,
           // Additional settings
-          location: event.location,
+
           guestsCanModify: false,
           guestsCanInviteOthers: false,
           guestsCanSeeOtherGuests: true,
