@@ -7,6 +7,27 @@ import FriendRequest from './friendRequest.model'; // Import the FriendRequest m
 import { FriendRequestStatus, EventType } from '../utils/enums';
 import Notification from './notification.model';
 
+const preferenceSchema = new Schema({
+  // The preference text content
+  text: {
+    type: String,
+    required: true,
+    trim: true,
+    maxlength: [200, 'Preference cannot be more than 200 characters']
+  },
+  // When this preference was created
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  // Whether this preference is active or not
+  isActive: {
+    type: Boolean,
+    default: true
+  }
+}, { _id: true });
+
+
 const userSchema = new Schema<IUser, IUserModel, IUserMethods>(
   {
     name: {
@@ -86,7 +107,6 @@ const userSchema = new Schema<IUser, IUserModel, IUserMethods>(
         ref: 'User',
       },
     ],
-
     blockedUsers: [
       {
         type: Schema.Types.ObjectId,
@@ -94,6 +114,8 @@ const userSchema = new Schema<IUser, IUserModel, IUserMethods>(
         sparse: true,
       },
     ],
+    // Add the simple preferences array
+    preferences: [preferenceSchema]
   },
   {
     timestamps: true, // Automatically manage createdAt and updatedAt
