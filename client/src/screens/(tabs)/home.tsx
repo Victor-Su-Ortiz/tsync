@@ -206,7 +206,6 @@ export default function Home() {
           )}
         </TouchableOpacity>
       </View>
-
       {/* Search Button */}
       <TouchableOpacity
         style={styles.searchButton}
@@ -215,13 +214,6 @@ export default function Home() {
         <Ionicons name="search" size={20} color="#fff" />
         <Text style={styles.searchButtonText}>Search nearby users</Text>
       </TouchableOpacity>
-
-      {/* User Search Modal Component
-      <UserSearch
-        visible={searchModalVisible}
-        onClose={() => setSearchModalVisible(false)}
-        accessToken={authToken}
-      /> */}
 
       {loading ? (
         <View style={{ flex: 1, justifyContent: 'center' }}>

@@ -87,6 +87,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         console.log('📩 Received friend request:', data);
         incrementNotificationCount();
       });
+      newSocket.on('notification', data => {
+        console.log('🔔 Received notification:', data);
+        incrementNotificationCount();
+      });
 
       newSocket.on('friend_request_canceled', data => {
         console.log('🗑️ Friend request canceled:', data);
