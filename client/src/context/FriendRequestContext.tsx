@@ -51,12 +51,12 @@ const FriendContext = createContext<FriendContextType>({
   sentRequests: [],
   loading: false,
   error: null,
-  sendFriendRequest: async () => { },
-  acceptFriendRequest: async () => { },
-  rejectFriendRequest: async () => { },
-  cancelFriendRequest: async () => { },
-  removeFriend: async () => { },
-  refreshFriendData: async () => { },
+  sendFriendRequest: async () => {},
+  acceptFriendRequest: async () => {},
+  rejectFriendRequest: async () => {},
+  cancelFriendRequest: async () => {},
+  removeFriend: async () => {},
+  refreshFriendData: async () => {},
   getFriendStatus: () => ({ status: FriendStatus.NONE }),
 });
 
@@ -100,18 +100,22 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
         },
       });
 
+      console.log('sent response', sentResponse.data);
+      console.log('pending response', pendingResponse.data);
+      console.log('friends response', friendsResponse.data);
+
       // Set friends from the response
       setFriends(friendsResponse.data.friends);
 
       // Filter out rejected requests from received requests
       const pendingRequests = pendingResponse.data.requests.filter(
-        (req: FriendRequest) => req.status !== FriendRequestStatus.REJECTED
+        (req: FriendRequest) => req.status !== FriendRequestStatus.REJECTED,
       );
       setReceivedRequests(pendingRequests);
 
       // Filter out rejected requests from sent requests
       const activeSentRequests = sentResponse.data.requests.filter(
-        (req: FriendRequest) => req.status !== FriendRequestStatus.REJECTED
+        (req: FriendRequest) => req.status !== FriendRequestStatus.REJECTED,
       );
       setSentRequests(activeSentRequests);
 
@@ -356,7 +360,7 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       // Manually trigger a refresh to ensure everything is in sync
-      setTimeout(() => refreshFriendData(), 300);
+      // setTimeout(() => refreshFriendData(), 300);
 
       return response.data;
     } catch (err: any) {

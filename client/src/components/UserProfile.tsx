@@ -56,6 +56,7 @@ const UserProfile = ({
   const [user, setUser] = useState(userData);
   const [isLoading, setIsLoading] = useState(false);
   const { status: currentStatus, requestId } = getFriendStatus(user.id);
+  console.log('Current status:', currentStatus);
 
   const handleSignOut = async () => {
     try {
@@ -150,7 +151,7 @@ const UserProfile = ({
     try {
       await acceptFriendRequest(requestId);
       // Immediately force a refresh of the friend data
-      await refreshFriendData();
+      // await refreshFriendData();
 
       Alert.alert('Friend Request Accepted', `You are now friends with ${user.name}.`);
     } catch (error: any) {
