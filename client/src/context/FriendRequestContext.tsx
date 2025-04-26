@@ -290,9 +290,6 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
       // Add the new request to the sent requests list
       setSentRequests(prev => [...prev, response.data.request]);
 
-      // Manually trigger a refresh to ensure everything is in sync
-      setTimeout(() => refreshFriendData(), 300);
-
       // Show success message if userName is provided
       if (userName) {
         Alert.alert('Friend Request Sent', `Your friend request to ${userName} has been sent.`);
@@ -358,9 +355,6 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
       if (userName) {
         Alert.alert('Friend Request Accepted', `You are now friends with ${userName}.`);
       }
-
-      // Manually trigger a refresh to ensure everything is in sync
-      // setTimeout(() => refreshFriendData(), 300);
 
       return response.data;
     } catch (err: any) {
