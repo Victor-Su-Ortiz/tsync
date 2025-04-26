@@ -106,8 +106,6 @@ export default function Notifications() {
       // Mark notification as read
       markAsRead(notification._id);
 
-      console.log('RELATED ID:', notification.relatedId);
-
       let friendStatus = FriendStatus.NONE;
       if (notification.relatedId?.status === FriendRequestStatus.PENDING) {
         friendStatus = FriendStatus.INCOMING_REQUEST;
@@ -123,9 +121,6 @@ export default function Notifications() {
         friendStatus,
       };
 
-      console.log('USER FROM NOTIFICATIONS.TSX:', user);
-
-      console.log('FRIEND STATUS:', friendStatus);
       // Set selected user and request ID
       router.push({
         pathname: './../profile/userProfile',
