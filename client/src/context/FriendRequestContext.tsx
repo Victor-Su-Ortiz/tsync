@@ -26,7 +26,7 @@ export type FriendRequest = {
 
 // Define the context structure
 type FriendContextType = {
-  friends: Friend[];
+  friends: string[];
   receivedRequests: FriendRequest[];
   sentRequests: FriendRequest[];
   loading: boolean;
@@ -62,7 +62,7 @@ const FriendContext = createContext<FriendContextType>({
 
 // Create the provider component
 export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
-  const [friends, setFriends] = useState<Friend[]>([]);
+  const [friends, setFriends] = useState<string[]>([]);
   const [receivedRequests, setReceivedRequests] = useState<FriendRequest[]>([]);
   const [sentRequests, setSentRequests] = useState<FriendRequest[]>([]);
   const [loading, setLoading] = useState(false);
@@ -138,7 +138,7 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
       // Check if the user is already a friend
       const friend = friends.find(f => {
         if (!f) return false;
-        return f._id === userId;
+        return f === userId;
       });
 
       if (friend) {
@@ -229,7 +229,7 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
 
       // Add to friends list if not already there
       setFriends(prev => {
-        if (!prev.some(friend => friend._id === data.user._id)) {
+        if (!prev.some(friend => friend === data.user._id)) {
           console.log('Adding new friend:', data.user.name);
           return [...prev, data.user];
         }
@@ -244,7 +244,7 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
 
     const handleFriendRemoved = (data: any) => {
       console.log('Socket: Friend removed', data);
-      setFriends(prev => prev.filter(friend => friend._id !== data._id));
+      setFriends(prev => prev.filter(friend => friend !== data._id));
     };
 
     // Register event listeners
@@ -342,8 +342,8 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
         // Add to friends list if not already there
         const senderId = acceptedRequest.sender._id;
         setFriends(prev => {
-          if (!prev.some(friend => friend._id === senderId)) {
-            return [...prev, acceptedRequest.sender];
+          if (!prev.some(friend => friend === senderId)) {
+            return [...prev, acceptedRequest.sender._id];
           }
           return prev;
         });
@@ -475,7 +475,7 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
       console.log('Friend removed successfully');
 
       // Remove from friends list immediately
-      setFriends(prev => prev.filter(friend => friend._id !== friendId));
+      setFriends(prev => prev.filter(friend => friend !== friendId));
 
       // Show success message
       Alert.alert('Friend Removed', 'Friend has been removed from your friends list.');
