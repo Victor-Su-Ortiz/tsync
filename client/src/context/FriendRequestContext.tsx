@@ -73,8 +73,6 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
   // Use useCallback for refreshFriendData to maintain the same reference
   const refreshFriendData = useCallback(async () => {
     if (!isAuthenticated || !authToken) return;
-
-    console.log('=== Refreshing Friend Data ===');
     setLoading(true);
     setError(null);
 
@@ -105,7 +103,8 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
       console.log('friends response', friendsResponse.data);
 
       // Set friends from the response
-      setFriends(friendsResponse.data.friends);
+      const friendIds = friendsResponse.data.friends.map((friend: Friend) => friend._id);
+      setFriends(friendIds);
 
       // Filter out rejected requests from received requests
       const pendingRequests = pendingResponse.data.requests.filter(
@@ -130,6 +129,7 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
 
   const getFriendStatus = useCallback(
     (userId: string): { status: FriendStatus; requestId?: string } => {
+      console.log('=== Getting Friend Status ===');
       // Safety check for userId
       if (!userId) {
         return { status: FriendStatus.NONE };
@@ -327,8 +327,6 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
           },
         },
       );
-
-      console.log('Friend request accepted successfully');
 
       // Find the request that was accepted
       const acceptedRequest = receivedRequests.find(req => req._id === requestId);

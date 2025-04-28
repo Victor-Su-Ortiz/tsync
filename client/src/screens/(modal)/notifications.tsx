@@ -126,6 +126,34 @@ export default function Notifications() {
     }
   };
 
+  const showEvent = async (notification: any) => {
+    if (!notification.eventId) return;
+
+    try {
+      // Mark notification as read
+      markAsRead(notification._id);
+
+      // Set up the event object for the profile
+      const event = {
+        id: notification.eventId._id,
+        title: notification.eventId.title,
+        date: notification.eventId.date,
+        location: notification.eventId.location,
+      };
+
+      // Set selected event
+      router.push({
+        pathname: './../events/eventDetails',
+        params: {
+          eventData: JSON.stringify(event),
+        },
+      });
+    } catch (error) {
+      console.error('Error setting up event details:', error);
+      Alert.alert('Error', 'Failed to open event details. Please try again.');
+    }
+  };
+
   const handleNotificationPress = async (notification: Notification) => {
     // Mark the notification as read
     markAsRead(notification._id);
