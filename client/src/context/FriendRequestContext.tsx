@@ -134,6 +134,7 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
       if (!userId) {
         return { status: FriendStatus.NONE };
       }
+      console.log('current friends', friends);
 
       // Check if the user is already a friend
       const friend = friends.find(f => {
@@ -149,14 +150,8 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
       const received = receivedRequests.find(req => {
         if (!req) return false;
 
-        // Case 1: When sender is a populated object
-        if (req.sender && typeof req.sender === 'object' && '_id' in req.sender) {
+        if (req.sender && typeof req.sender === 'object') {
           return req.sender._id === userId;
-        }
-
-        // Case 2: When sender is a string ID
-        if (req.sender && typeof req.sender === 'string') {
-          return req.sender === userId;
         }
 
         return false;
@@ -170,14 +165,8 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
       const sent = sentRequests.find(req => {
         if (!req) return false;
 
-        // Case 1: When receiver is a populated object
-        if (req.receiver && typeof req.receiver === 'object' && '_id' in req.receiver) {
+        if (req.receiver && typeof req.receiver === 'object') {
           return req.receiver._id === userId;
-        }
-
-        // Case 2: When receiver is a string ID
-        if (req.receiver && typeof req.receiver === 'string') {
-          return req.receiver === userId;
         }
 
         return false;
@@ -341,6 +330,7 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
 
         // Add to friends list if not already there
         const senderId = acceptedRequest.sender._id;
+        console.log('current accepted', acceptedRequest);
         setFriends(prev => {
           if (!prev.some(friendId => friendId === senderId)) {
             return [...prev, acceptedRequest.sender._id];
