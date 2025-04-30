@@ -162,6 +162,7 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       // Check for sent requests (where the specified user is the receiver)
+      console.log('current sent requests in friend status', sentRequests);
       const sent = sentRequests.find(req => {
         if (!req) return false;
 
@@ -277,7 +278,7 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
       console.log('Friend request sent successfully:', response.data);
 
       // Add the new request to the sent requests list
-      setSentRequests(prev => [...prev, response.data.request]);
+      setSentRequests(prev => [...prev, response.data.friendRequest]);
 
       // Show success message if userName is provided
       if (userName) {
@@ -423,7 +424,7 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
         },
       });
 
-      console.log('Friend request canceled successfully');
+      console.log('Friend request canceled successfully:', requestId);
 
       // Remove from sent requests immediately
       setSentRequests(prev => {
