@@ -82,7 +82,6 @@ const UserProfile = ({
     try {
       await sendFriendRequest(user.id);
       // No need to manually set status as it will be updated in the effect hook
-      // await refreshFriendData(); // Refresh data to get the new request
       Alert.alert('Friend Request Sent', `Your friend request to ${user.name} has been sent.`);
     } catch (error: any) {
       console.error('Error sending friend request:', error);
@@ -106,9 +105,6 @@ const UserProfile = ({
     if (!req || !req._id) {
       console.error('No valid request found to cancel');
 
-      // Refresh data to ensure we have the latest
-      // await refreshFriendData();
-
       // Try to find the request again after refreshing
       const refreshedReq = sentRequests.find(
         req => req && req.receiver && req.receiver._id === user.id,
@@ -130,8 +126,6 @@ const UserProfile = ({
 
     try {
       await cancelFriendRequest(reqId);
-      // Refresh data to update the UI properly
-      // await refreshFriendData();
     } catch (error: any) {
       console.error('Error cancelling request:', error);
       Alert.alert('Error', 'Failed to cancel request');
@@ -150,8 +144,6 @@ const UserProfile = ({
 
     try {
       await acceptFriendRequest(requestId);
-      // Immediately force a refresh of the friend data
-      // await refreshFriendData();
 
       Alert.alert('Friend Request Accepted', `You are now friends with ${user.name}.`);
     } catch (error: any) {
@@ -172,7 +164,6 @@ const UserProfile = ({
 
     try {
       await rejectFriendRequest(requestId);
-      // await refreshFriendData(); // This will update the context and recompute status
       Alert.alert('Friend Request Declined', `You declined your friend request from ${user.name}.`);
     } catch (error: any) {
       console.error('Error declining friend request:', error);
