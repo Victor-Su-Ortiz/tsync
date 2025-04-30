@@ -14,23 +14,15 @@ import { router } from 'expo-router';
 import { useAuth } from '@/src/context/AuthContext';
 import { useSocket } from '@/src/context/SocketContext'; // Import the socket hook
 import { api } from '@/src/utils/api';
-import UserProfile from '@/src/components/UserProfile';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { User } from '../search/userSearch';
 import { FriendRequestStatus, FriendStatus, NotificationType } from '@/src/utils/enums';
 import { Notification } from '../(tabs)/home';
-import FriendsDropdown from '@/src/components/FriendsDropdown';
-import { set } from 'lodash';
 
 export default function Notifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
   const { authToken } = useAuth(); // Get auth token from context
   const { resetNotificationCount } = useSocket(); // Get reset function from socket context
-  // State for User Profile modal
-  const [userProfileVisible, setUserProfileVisible] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [selectedRequestId, setSelectedRequestId] = useState<string | undefined>(undefined);
 
   // Fetch friend requests when component mounts and reset notification count
   useEffect(() => {
@@ -54,7 +46,7 @@ export default function Notifications() {
       });
 
       let notifications = response.data.notifications;
-      console.log('current notifications: ', notifications);
+
       notifications.forEach((notification: any) => ({
         ...notification,
         timestamp: formatTimestamp(notification.updatedAt),
@@ -106,8 +98,6 @@ export default function Notifications() {
       // Mark notification as read
       markAsRead(notification._id);
 
-      console.log('RELATED ID:', notification.relatedId);
-
       let friendStatus = FriendStatus.NONE;
       if (notification.relatedId?.status === FriendRequestStatus.PENDING) {
         friendStatus = FriendStatus.INCOMING_REQUEST;
@@ -123,9 +113,6 @@ export default function Notifications() {
         friendStatus,
       };
 
-      console.log('USER FROM NOTIFICATIONS.TSX:', user);
-
-      console.log('FRIEND STATUS:', friendStatus);
       // Set selected user and request ID
       router.push({
         pathname: './../profile/userProfile',
@@ -136,6 +123,34 @@ export default function Notifications() {
     } catch (error) {
       console.error('Error setting up user profile:', error);
       Alert.alert('Error', 'Failed to open user profile. Please try again.');
+    }
+  };
+
+  const showEvent = async (notification: any) => {
+    if (!notification.eventId) return;
+
+    try {
+      // Mark notification as read
+      markAsRead(notification._id);
+
+      // Set up the event object for the profile
+      const event = {
+        id: notification.eventId._id,
+        title: notification.eventId.title,
+        date: notification.eventId.date,
+        location: notification.eventId.location,
+      };
+
+      // Set selected event
+      router.push({
+        pathname: './../events/eventDetails',
+        params: {
+          eventData: JSON.stringify(event),
+        },
+      });
+    } catch (error) {
+      console.error('Error setting up event details:', error);
+      Alert.alert('Error', 'Failed to open event details. Please try again.');
     }
   };
 

@@ -26,7 +26,7 @@ export type FriendRequest = {
 
 // Define the context structure
 type FriendContextType = {
-  friends: Friend[];
+  friends: string[];
   receivedRequests: FriendRequest[];
   sentRequests: FriendRequest[];
   loading: boolean;
@@ -51,18 +51,18 @@ const FriendContext = createContext<FriendContextType>({
   sentRequests: [],
   loading: false,
   error: null,
-  sendFriendRequest: async () => { },
-  acceptFriendRequest: async () => { },
-  rejectFriendRequest: async () => { },
-  cancelFriendRequest: async () => { },
-  removeFriend: async () => { },
-  refreshFriendData: async () => { },
+  sendFriendRequest: async () => {},
+  acceptFriendRequest: async () => {},
+  rejectFriendRequest: async () => {},
+  cancelFriendRequest: async () => {},
+  removeFriend: async () => {},
+  refreshFriendData: async () => {},
   getFriendStatus: () => ({ status: FriendStatus.NONE }),
 });
 
 // Create the provider component
 export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
-  const [friends, setFriends] = useState<Friend[]>([]);
+  const [friends, setFriends] = useState<string[]>([]);
   const [receivedRequests, setReceivedRequests] = useState<FriendRequest[]>([]);
   const [sentRequests, setSentRequests] = useState<FriendRequest[]>([]);
   const [loading, setLoading] = useState(false);
@@ -73,8 +73,6 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
   // Use useCallback for refreshFriendData to maintain the same reference
   const refreshFriendData = useCallback(async () => {
     if (!isAuthenticated || !authToken) return;
-
-    console.log('=== Refreshing Friend Data ===');
     setLoading(true);
     setError(null);
 
@@ -100,18 +98,23 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
         },
       });
 
+      console.log('sent response', sentResponse.data);
+      console.log('pending response', pendingResponse.data);
+      console.log('friends response', friendsResponse.data);
+
       // Set friends from the response
-      setFriends(friendsResponse.data.friends);
+      const friendIds = friendsResponse.data.friends.map((friend: Friend) => friend._id);
+      setFriends(friendIds);
 
       // Filter out rejected requests from received requests
       const pendingRequests = pendingResponse.data.requests.filter(
-        (req: FriendRequest) => req.status !== FriendRequestStatus.REJECTED
+        (req: FriendRequest) => req.status !== FriendRequestStatus.REJECTED,
       );
       setReceivedRequests(pendingRequests);
 
       // Filter out rejected requests from sent requests
       const activeSentRequests = sentResponse.data.requests.filter(
-        (req: FriendRequest) => req.status !== FriendRequestStatus.REJECTED
+        (req: FriendRequest) => req.status !== FriendRequestStatus.REJECTED,
       );
       setSentRequests(activeSentRequests);
 
@@ -126,15 +129,17 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
 
   const getFriendStatus = useCallback(
     (userId: string): { status: FriendStatus; requestId?: string } => {
+      console.log('=== Getting Friend Status ===');
       // Safety check for userId
       if (!userId) {
         return { status: FriendStatus.NONE };
       }
+      console.log('current friends', friends);
 
       // Check if the user is already a friend
       const friend = friends.find(f => {
         if (!f) return false;
-        return f._id === userId;
+        return f === userId;
       });
 
       if (friend) {
@@ -145,14 +150,8 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
       const received = receivedRequests.find(req => {
         if (!req) return false;
 
-        // Case 1: When sender is a populated object
-        if (req.sender && typeof req.sender === 'object' && '_id' in req.sender) {
+        if (req.sender && typeof req.sender === 'object') {
           return req.sender._id === userId;
-        }
-
-        // Case 2: When sender is a string ID
-        if (req.sender && typeof req.sender === 'string') {
-          return req.sender === userId;
         }
 
         return false;
@@ -163,17 +162,12 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       // Check for sent requests (where the specified user is the receiver)
+      console.log('current sent requests in friend status', sentRequests);
       const sent = sentRequests.find(req => {
         if (!req) return false;
 
-        // Case 1: When receiver is a populated object
-        if (req.receiver && typeof req.receiver === 'object' && '_id' in req.receiver) {
+        if (req.receiver && typeof req.receiver === 'object') {
           return req.receiver._id === userId;
-        }
-
-        // Case 2: When receiver is a string ID
-        if (req.receiver && typeof req.receiver === 'string') {
-          return req.receiver === userId;
         }
 
         return false;
@@ -225,9 +219,9 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
 
       // Add to friends list if not already there
       setFriends(prev => {
-        if (!prev.some(friend => friend._id === data.user._id)) {
+        if (!prev.some(friend => friend === data.user._id)) {
           console.log('Adding new friend:', data.user.name);
-          return [...prev, data.user];
+          return [...prev, data.user._id];
         }
         return prev;
       });
@@ -240,7 +234,7 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
 
     const handleFriendRemoved = (data: any) => {
       console.log('Socket: Friend removed', data);
-      setFriends(prev => prev.filter(friend => friend._id !== data._id));
+      setFriends(prev => prev.filter(friend => friend !== data._id));
     };
 
     // Register event listeners
@@ -284,10 +278,7 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
       console.log('Friend request sent successfully:', response.data);
 
       // Add the new request to the sent requests list
-      setSentRequests(prev => [...prev, response.data.request]);
-
-      // Manually trigger a refresh to ensure everything is in sync
-      setTimeout(() => refreshFriendData(), 300);
+      setSentRequests(prev => [...prev, response.data.friendRequest]);
 
       // Show success message if userName is provided
       if (userName) {
@@ -327,8 +318,6 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
         },
       );
 
-      console.log('Friend request accepted successfully');
-
       // Find the request that was accepted
       const acceptedRequest = receivedRequests.find(req => req._id === requestId);
 
@@ -342,9 +331,10 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
 
         // Add to friends list if not already there
         const senderId = acceptedRequest.sender._id;
+        console.log('current accepted', acceptedRequest);
         setFriends(prev => {
-          if (!prev.some(friend => friend._id === senderId)) {
-            return [...prev, acceptedRequest.sender];
+          if (!prev.some(friendId => friendId === senderId)) {
+            return [...prev, acceptedRequest.sender._id];
           }
           return prev;
         });
@@ -354,9 +344,6 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
       if (userName) {
         Alert.alert('Friend Request Accepted', `You are now friends with ${userName}.`);
       }
-
-      // Manually trigger a refresh to ensure everything is in sync
-      setTimeout(() => refreshFriendData(), 300);
 
       return response.data;
     } catch (err: any) {
@@ -437,7 +424,7 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
         },
       });
 
-      console.log('Friend request canceled successfully');
+      console.log('Friend request canceled successfully:', requestId);
 
       // Remove from sent requests immediately
       setSentRequests(prev => {
@@ -479,7 +466,7 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
       console.log('Friend removed successfully');
 
       // Remove from friends list immediately
-      setFriends(prev => prev.filter(friend => friend._id !== friendId));
+      setFriends(prev => prev.filter(friend => friend !== friendId));
 
       // Show success message
       Alert.alert('Friend Removed', 'Friend has been removed from your friends list.');

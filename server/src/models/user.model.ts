@@ -203,6 +203,7 @@ userSchema.methods.sendFriendRequest = async function (
 
     await friendRequest.save();
   }
+  friendRequest = await friendRequest.populate('sender receiver', 'name email profilePicture');
 
   // Create notification
   const { default: NotificationService } = await import('../services/notification.service');
@@ -226,7 +227,7 @@ userSchema.methods.sendFriendRequest = async function (
 userSchema.methods.cancelFriendRequest = async function (requestId: string): Promise<void> {
   const request = await FriendRequest.findOne({
     _id: requestId,
-  });
+  }).populate('sender receiver', 'name email profilePicture');
 
   if (!request) {
     throw new Error('Invalid friend request');
@@ -237,7 +238,7 @@ userSchema.methods.cancelFriendRequest = async function (requestId: string): Pro
   await FriendRequest.deleteOne({ _id: requestId });
 
   const { default: SocketService } = await import('../services/socket.service');
-  SocketService.sendToUser(request.receiver.toString(), 'friend_request_canceled', request);
+  SocketService.sendToUser(request.receiver._id.toString(), 'friend_request_canceled', request);
 };
 
 userSchema.methods.acceptFriendRequest = async function (requestId: string): Promise<void> {
@@ -245,7 +246,7 @@ userSchema.methods.acceptFriendRequest = async function (requestId: string): Pro
     _id: requestId,
     receiver: this._id,
     status: FriendRequestStatus.PENDING,
-  });
+  }).populate('sender receiver', 'name email profilePicture');
 
   if (!request) {
     throw new Error('Invalid friend request');
@@ -266,7 +267,7 @@ userSchema.methods.acceptFriendRequest = async function (requestId: string): Pro
   // Create notification for the request sender
   const { default: NotificationService } = await import('../services/notification.service');
   await NotificationService.createNotification({
-    recipientId: request.sender.toString(),
+    recipientId: request.sender._id.toString(),
     senderId: this._id.toString(),
     type: EventType.FRIEND_ACCEPTED,
     message: `${this.name} accepted your friend request`,
@@ -280,20 +281,19 @@ userSchema.methods.acceptFriendRequest = async function (requestId: string): Pro
   // Create a response object with both the request and user data
   const responseData = {
     ...request.toObject(),
-    user: userData  // Include the accepting user's data
+    user: userData, // Include the accepting user's data
   };
 
   const { default: SocketService } = await import('../services/socket.service');
-  SocketService.sendToUser(request.sender.toString(), 'friend_accepted', responseData);
+  SocketService.sendToUser(request.sender._id.toString(), 'friend_accepted', responseData);
 };
-
 
 userSchema.methods.rejectFriendRequest = async function (requestId: string): Promise<void> {
   const request = await FriendRequest.findOne({
     _id: requestId,
     receiver: this._id,
     status: FriendRequestStatus.PENDING,
-  });
+  }).populate('sender receiver', 'name email profilePicture');
 
   if (!request) {
     throw new Error('Invalid friend request');
@@ -302,7 +302,7 @@ userSchema.methods.rejectFriendRequest = async function (requestId: string): Pro
   request.status = FriendRequestStatus.REJECTED;
   await request.save();
   const { default: SocketService } = await import('../services/socket.service');
-  SocketService.sendToUser(request.sender.toString(), 'friend_rejected', request);
+  SocketService.sendToUser(request.sender._id.toString(), 'friend_rejected', request);
 };
 
 userSchema.methods.removeFriend = async function (friendId: string) {

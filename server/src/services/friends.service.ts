@@ -61,7 +61,7 @@ export class FriendService {
   public static async getSentRequests(userId: string): Promise<(IFriendRequest & Document)[]> {
     const requests = await FriendRequest.find({
       sender: userId,
-    }).populate('receiver', 'name email profilePicture');
+    }).populate('receiver sender', 'name email profilePicture');
 
     if (!requests || requests.length === 0) {
       return [];
@@ -78,7 +78,7 @@ export class FriendService {
     const pendingRequests = await FriendRequest.find({
       sender: userId,
       status: FriendRequestStatus.PENDING,
-    }).populate('receiver', 'name email profilePicture');
+    }).populate('receiver sender', 'name email profilePicture');
 
     if (!pendingRequests || pendingRequests.length === 0) {
       return []; // Return an empty array instead of throwing an error
@@ -94,7 +94,7 @@ export class FriendService {
   public static async getReceivedRequests(userId: string): Promise<(IFriendRequest & Document)[]> {
     const requests = await FriendRequest.find({
       receiver: userId,
-    }).populate('sender', 'name email profilePicture');
+    }).populate('receiver sender', 'name email profilePicture');
 
     if (!requests || requests.length === 0) {
       return [];
@@ -112,7 +112,7 @@ export class FriendService {
     const pendingRequests = await FriendRequest.find({
       receiver: userId,
       status: FriendRequestStatus.PENDING,
-    }).populate('sender', 'name email profilePicture');
+    }).populate('receiver sender', 'name email profilePicture');
 
     if (!pendingRequests || pendingRequests.length === 0) {
       return []; // Return an empty array instead of throwing an error
