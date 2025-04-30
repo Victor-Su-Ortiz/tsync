@@ -231,7 +231,7 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
       setFriends(prev => {
         if (!prev.some(friend => friend === data.user._id)) {
           console.log('Adding new friend:', data.user.name);
-          return [...prev, data.user];
+          return [...prev, data.user._id];
         }
         return prev;
       });
@@ -342,7 +342,7 @@ export const FriendProvider = ({ children }: { children: React.ReactNode }) => {
         // Add to friends list if not already there
         const senderId = acceptedRequest.sender._id;
         setFriends(prev => {
-          if (!prev.some(friend => friend === senderId)) {
+          if (!prev.some(friendId => friendId === senderId)) {
             return [...prev, acceptedRequest.sender._id];
           }
           return prev;
