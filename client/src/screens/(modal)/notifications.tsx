@@ -127,12 +127,12 @@ export default function Notifications() {
   };
 
   const showEvent = async (notification: any) => {
-    if (!notification.eventId) return;
+    // if (!notification.eventId) return;
 
     try {
       // Mark notification as read
       markAsRead(notification._id);
-      router.push(`/(eventDetails)/${notification.event._id}` as RelativePathString);
+      router.push(`/(eventDetails)/${notification.relatedId._id}` as RelativePathString);
     } catch (error) {
       console.error('Error setting up event details:', error);
       Alert.alert('Error', 'Failed to open event details. Please try again.');
@@ -142,15 +142,20 @@ export default function Notifications() {
   const handleNotificationPress = async (notification: Notification) => {
     // Mark the notification as read
     markAsRead(notification._id);
+    console.log(notification);
 
     // If it's a friend request, directly show the user profile
     if (
       (notification.type === NotificationType.FRIEND_REQUEST ||
-        notification.type == NotificationType.FRIEND_ACCEPTED) &&
+        notification.type === NotificationType.FRIEND_ACCEPTED) &&
       notification.sender
     ) {
       showUserProfile(notification);
       console.log('NOTIFICATION TYPE', notification.type);
+    } else if (notification.type === NotificationType.MEETING_INVITE) {
+      showEvent(notification);
+      console.log('NOTIFICATION TYPE', notification.type);
+      console.log('NOTIFCIATON', notification);
     } else {
       console.log('DID NOT SHOW USER PROIFLE, NOTIFICATION TYPE', notification.type);
     }
