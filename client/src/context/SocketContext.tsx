@@ -81,29 +81,11 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       newSocket.onAny((event, ...args) => {
         console.log(`🔔 Socket event received: ${event}`, args);
       });
-
-      // Listen for specific friend-related events
-      // newSocket.on('friend_request', data => {
-      //   console.log('📩 Received friend request:', data);
-      //   incrementNotificationCount();
-      // });
+      
       newSocket.on('notification', data => {
         console.log('🔔 Received notification:', data);
         incrementNotificationCount();
       });
-
-      // newSocket.on('friend_request_canceled', data => {
-      //   console.log('🗑️ Friend request canceled:', data);
-      // });
-
-      // newSocket.on('friend_accepted', data => {
-      //   console.log('✅ Friend request accepted:', data);
-      //   incrementNotificationCount();
-      // });
-
-      // newSocket.on('friend_rejected', data => {
-      //   console.log('❌ Friend request rejected:', data);
-      // });
 
       // Test ping-pong for connection health check
       const pingInterval = setInterval(() => {

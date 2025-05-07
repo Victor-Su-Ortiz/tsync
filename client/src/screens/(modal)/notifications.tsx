@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { RelativePathString, router } from 'expo-router';
 import { useAuth } from '@/src/context/AuthContext';
 import { useSocket } from '@/src/context/SocketContext'; // Import the socket hook
 import { api } from '@/src/utils/api';
@@ -127,27 +127,12 @@ export default function Notifications() {
   };
 
   const showEvent = async (notification: any) => {
-    if (!notification.eventId) return;
+    // if (!notification.eventId) return;
 
     try {
       // Mark notification as read
       markAsRead(notification._id);
-
-      // Set up the event object for the profile
-      const event = {
-        id: notification.eventId._id,
-        title: notification.eventId.title,
-        date: notification.eventId.date,
-        location: notification.eventId.location,
-      };
-
-      // Set selected event
-      router.push({
-        pathname: './../events/eventDetails',
-        params: {
-          eventData: JSON.stringify(event),
-        },
-      });
+      router.push(`/(eventDetails)/${notification.relatedId._id}` as RelativePathString);
     } catch (error) {
       console.error('Error setting up event details:', error);
       Alert.alert('Error', 'Failed to open event details. Please try again.');
@@ -157,39 +142,22 @@ export default function Notifications() {
   const handleNotificationPress = async (notification: Notification) => {
     // Mark the notification as read
     markAsRead(notification._id);
+    console.log(notification);
 
     // If it's a friend request, directly show the user profile
     if (
       (notification.type === NotificationType.FRIEND_REQUEST ||
-        notification.type == NotificationType.FRIEND_ACCEPTED) &&
+        notification.type === NotificationType.FRIEND_ACCEPTED) &&
       notification.sender
     ) {
       showUserProfile(notification);
       console.log('NOTIFICATION TYPE', notification.type);
+    } else if (notification.type === NotificationType.MEETING_INVITE) {
+      showEvent(notification);
+      console.log('NOTIFICATION TYPE', notification.type);
+      console.log('NOTIFCIATON', notification);
     } else {
       console.log('DID NOT SHOW USER PROIFLE, NOTIFICATION TYPE', notification.type);
-    }
-  };
-
-  const handleFriendStatusChange = (
-    userId: string,
-    newStatus: FriendStatus,
-    requestId?: string,
-    actionTaken: boolean = false,
-  ) => {
-    console.log(`Notifications - Friend status changed for ${userId}: ${newStatus}`);
-
-    // From Claude: Good to know
-    // In UserProfile component when accept/reject is clicked
-    // onFriendStatusChange(userId, newStatus, true); // true indicates action was taken
-
-    // Only remove notifications when an explicit action was taken
-    if (actionTaken && (newStatus === 'friends' || newStatus === 'none')) {
-      setNotifications(prevNotifications =>
-        prevNotifications.filter(
-          notif => !(notif.type === NotificationType.FRIEND_REQUEST && notif.sender?.id === userId),
-        ),
-      );
     }
   };
 

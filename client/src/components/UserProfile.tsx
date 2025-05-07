@@ -56,7 +56,6 @@ const UserProfile = ({
   const [user, setUser] = useState(userData);
   const [isLoading, setIsLoading] = useState(false);
   const { status: currentStatus, requestId } = getFriendStatus(user.id);
-  console.log('Current status:', currentStatus);
 
   const handleSignOut = async () => {
     try {
@@ -117,7 +116,6 @@ const UserProfile = ({
     }
 
     const reqId = req?._id;
-    console.log('attempt to cancel friend request with id:', reqId);
 
     if (reqId == undefined) {
       return;
