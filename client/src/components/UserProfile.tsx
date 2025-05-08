@@ -1,3 +1,4 @@
+// src/components/UserProfile.tsx
 import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
@@ -9,6 +10,7 @@ import {
   ScrollView,
   ActivityIndicator,
   SafeAreaView,
+  Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/src/context/AuthContext';
@@ -17,6 +19,10 @@ import { useRouter } from 'expo-router';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import images from '@/src/constants/images';
 import { useFriends } from '../context/FriendRequestContext';
+import QRCode from 'react-native-qrcode-svg';
+import * as Sharing from 'expo-sharing';
+import * as FileSystem from 'expo-file-system';
+import ViewShot from 'react-native-view-shot';
 
 export type UserProfileProps = {
   userData: {
@@ -37,7 +43,7 @@ const UserProfile = ({
   showHeader = true,
   onBackPress,
 }: UserProfileProps) => {
-  const { authToken, logout } = useAuth();
+  const { authToken, logout, userInfo } = useAuth();
   const {
     sendFriendRequest,
     acceptFriendRequest,
@@ -55,7 +61,16 @@ const UserProfile = ({
   const router = useRouter();
   const [user, setUser] = useState(userData);
   const [isLoading, setIsLoading] = useState(false);
+  const [showQRModal, setShowQRModal] = useState(false);
   const { status: currentStatus, requestId } = getFriendStatus(user.id);
+  const qrCodeRef = React.useRef();
+
+  // Generate QR data
+  const qrData = JSON.stringify({
+    type: 'friend-request',
+    userId: isCurrentUser ? userInfo?.id : user.id,
+    name: isCurrentUser ? userInfo?.name : user.name,
+  });
 
   const handleSignOut = async () => {
     try {
@@ -73,6 +88,34 @@ const UserProfile = ({
     }
   };
 
+  const toggleQRModal = () => {
+    setShowQRModal(!showQRModal);
+  };
+
+  const handleShareQRCode = async () => {
+    try {
+      if (qrCodeRef.current) {
+        // Capture QR code view as image
+        const uri = await qrCodeRef.current.capture();
+
+        // Share the image
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(uri);
+        } else {
+          Alert.alert('Sharing not available', 'Sharing is not available on this device');
+        }
+      }
+    } catch (error) {
+      console.error('Error sharing QR code:', error);
+      Alert.alert('Error', 'Failed to share QR code');
+    }
+  };
+
+  const handleScanQRCode = () => {
+    // Navigate to QR Scanner screen
+    router.push('/qr-scanner');
+  };
+
   const handleSendFriendRequest = async () => {
     if (!user || !user.id) return;
 
@@ -80,9 +123,8 @@ const UserProfile = ({
 
     try {
       await sendFriendRequest(user.id);
-      // No need to manually set status as it will be updated in the effect hook
       Alert.alert('Friend Request Sent', `Your friend request to ${user.name} has been sent.`);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error sending friend request:', error);
       Alert.alert('Error', error.response?.data?.message || 'Failed to send friend request');
     } finally {
@@ -124,7 +166,7 @@ const UserProfile = ({
 
     try {
       await cancelFriendRequest(reqId);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error cancelling request:', error);
       Alert.alert('Error', 'Failed to cancel request');
     } finally {
@@ -142,9 +184,8 @@ const UserProfile = ({
 
     try {
       await acceptFriendRequest(requestId);
-
       Alert.alert('Friend Request Accepted', `You are now friends with ${user.name}.`);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error accepting friend request:', error);
       Alert.alert('Error', 'Failed to accept friend request');
     } finally {
@@ -163,7 +204,7 @@ const UserProfile = ({
     try {
       await rejectFriendRequest(requestId);
       Alert.alert('Friend Request Declined', `You declined your friend request from ${user.name}.`);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error declining friend request:', error);
       Alert.alert('Error', 'Failed to declining friend request');
     } finally {
@@ -188,11 +229,8 @@ const UserProfile = ({
 
   useEffect(() => {
     // Force component to update when friend status changes
-    // This effect runs whenever the friends, receivedRequests, or sentRequests arrays change
-    const { status: latestStatus, requestId: latestRequestId } = getFriendStatus(user.id);
+    const { status: latestStatus } = getFriendStatus(user.id);
 
-    console.log('friend status changes');
-    console.log(latestStatus);
     // Only force update if there was an actual change in status
     if (latestStatus !== currentStatus) {
       console.log('Friend status changed:', currentStatus, '->', latestStatus);
@@ -222,6 +260,23 @@ const UserProfile = ({
             style={styles.profileImage}
           />
           <Text style={styles.userName}>{user.name}</Text>
+
+          {/* QR Code Button */}
+          <View style={styles.qrButtonContainer}>
+            <TouchableOpacity style={styles.qrButton} onPress={toggleQRModal}>
+              <Ionicons name="qr-code" size={20} color="#fff" />
+              <Text style={styles.qrButtonText}>
+                {isCurrentUser ? 'Show My QR Code' : 'View QR Code'}
+              </Text>
+            </TouchableOpacity>
+
+            {isCurrentUser && (
+              <TouchableOpacity style={styles.scanButton} onPress={handleScanQRCode}>
+                <Ionicons name="scan" size={20} color="#fff" />
+                <Text style={styles.qrButtonText}>Scan QR Code</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
 
         {/* Friend Request Button - Only show if not current user */}
@@ -305,6 +360,53 @@ const UserProfile = ({
           </TouchableOpacity>
         )}
       </ScrollView>
+
+      {/* QR Code Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showQRModal}
+        onRequestClose={toggleQRModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <TouchableOpacity style={styles.closeButton} onPress={toggleQRModal}>
+              <Ionicons name="close" size={24} color="#333" />
+            </TouchableOpacity>
+
+            <Text style={styles.modalTitle}>
+              {isCurrentUser ? 'My Friend QR Code' : `${user.name}'s QR Code`}
+            </Text>
+
+            <ViewShot ref={qrCodeRef} style={styles.qrCodeContainer}>
+              <View style={styles.qrWrapper}>
+                <QRCode
+                  value={qrData}
+                  size={200}
+                  color="#000"
+                  backgroundColor="#fff"
+                  logo={images.defaultpfp}
+                  logoSize={50}
+                  logoBackgroundColor="#fff"
+                  logoMargin={5}
+                />
+                <Text style={styles.qrUserName}>{isCurrentUser ? userInfo?.name : user.name}</Text>
+              </View>
+            </ViewShot>
+
+            <Text style={styles.qrInstructions}>
+              Scan this QR code to quickly send a friend request
+            </Text>
+
+            {isCurrentUser && (
+              <TouchableOpacity style={styles.shareButton} onPress={handleShareQRCode}>
+                <Ionicons name="share-social" size={20} color="#fff" />
+                <Text style={styles.buttonText}>Share QR Code</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -354,7 +456,38 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 8,
+    marginBottom: 16,
+  },
+  qrButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
+  qrButton: {
+    backgroundColor: '#7e57c2',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    marginHorizontal: 5,
+  },
+  scanButton: {
+    backgroundColor: '#5c6bc0',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    marginHorizontal: 5,
+  },
+  qrButtonText: {
+    color: 'white',
+    marginLeft: 8,
+    fontSize: 14,
+    fontWeight: '500',
   },
   actionButtonContainer: {
     paddingHorizontal: 24,
@@ -416,6 +549,72 @@ const styles = StyleSheet.create({
   signOutText: {
     color: '#666',
     fontSize: 16,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '80%',
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 20,
+    alignItems: 'center',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    zIndex: 1,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  qrCodeContainer: {
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  qrWrapper: {
+    padding: 20,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.41,
+    elevation: 2,
+  },
+  qrUserName: {
+    marginTop: 12,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  qrInstructions: {
+    textAlign: 'center',
+    color: '#666',
+    marginBottom: 20,
+  },
+  shareButton: {
+    backgroundColor: '#00cc99',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    marginTop: 10,
   },
 });
 
