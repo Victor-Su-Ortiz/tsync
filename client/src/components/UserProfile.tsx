@@ -15,13 +15,12 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/src/context/AuthContext';
 import { FriendStatus } from '@/src/utils/enums';
-import { useRouter } from 'expo-router';
+import { RelativePathString, useRouter } from 'expo-router';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import images from '@/src/constants/images';
 import { useFriends } from '../context/FriendRequestContext';
 import QRCode from 'react-native-qrcode-svg';
 import * as Sharing from 'expo-sharing';
-import * as FileSystem from 'expo-file-system';
 import ViewShot from 'react-native-view-shot';
 
 export type UserProfileProps = {
@@ -113,7 +112,7 @@ const UserProfile = ({
 
   const handleScanQRCode = () => {
     // Navigate to QR Scanner screen
-    router.push('/qr-scanner');
+    router.push('/qr-scanner' as RelativePathString);
   };
 
   const handleSendFriendRequest = async () => {
