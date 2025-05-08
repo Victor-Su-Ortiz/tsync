@@ -1,5 +1,5 @@
 // src/components/UserProfile.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   StyleSheet,
   Text,
@@ -21,6 +21,7 @@ import images from '@/src/constants/images';
 import { useFriends } from '../context/FriendRequestContext';
 import QRCode from 'react-native-qrcode-svg';
 import * as Sharing from 'expo-sharing';
+import * as FileSystem from 'expo-file-system';
 import ViewShot from 'react-native-view-shot';
 
 export type UserProfileProps = {
@@ -62,7 +63,7 @@ const UserProfile = ({
   const [isLoading, setIsLoading] = useState(false);
   const [showQRModal, setShowQRModal] = useState(false);
   const { status: currentStatus, requestId } = getFriendStatus(user.id);
-  const qrCodeRef = React.useRef();
+  const qrCodeRef = useRef<ViewShot>(null);
 
   // Generate QR data
   const qrData = JSON.stringify({
@@ -95,7 +96,7 @@ const UserProfile = ({
     try {
       if (qrCodeRef.current) {
         // Capture QR code view as image
-        const uri = await qrCodeRef.current.capture();
+        const uri = await qrCodeRef.current.capture!();
 
         // Share the image
         if (await Sharing.isAvailableAsync()) {
@@ -125,7 +126,7 @@ const UserProfile = ({
       Alert.alert('Friend Request Sent', `Your friend request to ${user.name} has been sent.`);
     } catch (error) {
       console.error('Error sending friend request:', error);
-      Alert.alert('Error', error.response?.data?.message || 'Failed to send friend request');
+      Alert.alert('Error', 'Failed to send friend request');
     } finally {
       setIsLoading(false);
     }
