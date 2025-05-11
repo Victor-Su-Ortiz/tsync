@@ -21,7 +21,6 @@ import images from '@/src/constants/images';
 import { useFriends } from '../context/FriendRequestContext';
 import QRCode from 'react-native-qrcode-svg';
 import * as Sharing from 'expo-sharing';
-import * as FileSystem from 'expo-file-system';
 import ViewShot from 'react-native-view-shot';
 
 export type UserProfileProps = {
@@ -97,7 +96,6 @@ const UserProfile = ({
       if (qrCodeRef.current) {
         // Capture QR code view as image
         const uri = await qrCodeRef.current.capture!();
-
         // Share the image
         if (await Sharing.isAvailableAsync()) {
           await Sharing.shareAsync(uri);

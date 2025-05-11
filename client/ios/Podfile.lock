@@ -235,6 +235,10 @@ PODS:
     - ExpoModulesCore
   - ExpoCalendar (14.0.6):
     - ExpoModulesCore
+  - ExpoCamera (16.1.6):
+    - ExpoModulesCore
+    - ZXingObjC/OneD
+    - ZXingObjC/PDF417
   - ExpoCrypto (14.0.2):
     - ExpoModulesCore
   - ExpoFileSystem (18.0.9):
@@ -251,7 +255,7 @@ PODS:
     - ExpoModulesCore
   - ExpoLocation (18.0.7):
     - ExpoModulesCore
-  - ExpoModulesCore (2.2.0):
+  - ExpoModulesCore (2.2.3):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -275,6 +279,8 @@ PODS:
     - ReactCommon/turbomodule/core
     - Yoga
   - ExpoSecureStore (14.0.1):
+    - ExpoModulesCore
+  - ExpoSharing (13.0.1):
     - ExpoModulesCore
   - ExpoSplashScreen (0.29.21):
     - ExpoModulesCore
@@ -1630,6 +1636,27 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
+  - react-native-view-shot (4.0.3):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.01.01.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
   - react-native-webview (13.12.5):
     - DoubleConversion
     - glog
@@ -2158,8 +2185,56 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
+  - RNSVG (15.8.0):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.01.01.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - RNSVG/common (= 15.8.0)
+    - Yoga
+  - RNSVG/common (15.8.0):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.01.01.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
   - SocketRocket (0.7.1)
   - Yoga (0.0.0)
+  - ZXingObjC/Core (3.6.9)
+  - ZXingObjC/OneD (3.6.9):
+    - ZXingObjC/Core
+  - ZXingObjC/PDF417 (3.6.9):
+    - ZXingObjC/Core
 
 DEPENDENCIES:
   - boost (from `../node_modules/react-native/third-party-podspecs/boost.podspec`)
@@ -2178,6 +2253,7 @@ DEPENDENCIES:
   - ExpoAsset (from `../node_modules/expo-asset/ios`)
   - ExpoBlur (from `../node_modules/expo-blur/ios`)
   - ExpoCalendar (from `../node_modules/expo-calendar/ios`)
+  - ExpoCamera (from `../node_modules/expo-camera/ios`)
   - ExpoCrypto (from `../node_modules/expo-crypto/ios`)
   - ExpoFileSystem (from `../node_modules/expo-file-system/ios`)
   - ExpoFont (from `../node_modules/expo-font/ios`)
@@ -2188,6 +2264,7 @@ DEPENDENCIES:
   - ExpoLocation (from `../node_modules/expo-location/ios`)
   - ExpoModulesCore (from `../node_modules/expo-modules-core`)
   - ExpoSecureStore (from `../node_modules/expo-secure-store/ios`)
+  - ExpoSharing (from `../node_modules/expo-sharing/ios`)
   - ExpoSplashScreen (from `../node_modules/expo-splash-screen/ios`)
   - ExpoSymbols (from `../node_modules/expo-symbols/ios`)
   - ExpoSystemUI (from `../node_modules/expo-system-ui/ios`)
@@ -2231,6 +2308,7 @@ DEPENDENCIES:
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
   - React-microtasksnativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
+  - react-native-view-shot (from `../node_modules/react-native-view-shot`)
   - react-native-webview (from `../node_modules/react-native-webview`)
   - React-nativeconfig (from `../node_modules/react-native/ReactCommon`)
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
@@ -2267,6 +2345,7 @@ DEPENDENCIES:
   - RNPermissions (from `../node_modules/react-native-permissions`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
+  - RNSVG (from `../node_modules/react-native-svg`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
 SPEC REPOS:
@@ -2277,6 +2356,7 @@ SPEC REPOS:
     - GTMSessionFetcher
     - ReachabilitySwift
     - SocketRocket
+    - ZXingObjC
 
 EXTERNAL SOURCES:
   boost:
@@ -2311,6 +2391,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-blur/ios"
   ExpoCalendar:
     :path: "../node_modules/expo-calendar/ios"
+  ExpoCamera:
+    :path: "../node_modules/expo-camera/ios"
   ExpoCrypto:
     :path: "../node_modules/expo-crypto/ios"
   ExpoFileSystem:
@@ -2331,6 +2413,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-modules-core"
   ExpoSecureStore:
     :path: "../node_modules/expo-secure-store/ios"
+  ExpoSharing:
+    :path: "../node_modules/expo-sharing/ios"
   ExpoSplashScreen:
     :path: "../node_modules/expo-splash-screen/ios"
   ExpoSymbols:
@@ -2414,6 +2498,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/microtasks"
   react-native-safe-area-context:
     :path: "../node_modules/react-native-safe-area-context"
+  react-native-view-shot:
+    :path: "../node_modules/react-native-view-shot"
   react-native-webview:
     :path: "../node_modules/react-native-webview"
   React-nativeconfig:
@@ -2486,6 +2572,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-reanimated"
   RNScreens:
     :path: "../node_modules/react-native-screens"
+  RNSVG:
+    :path: "../node_modules/react-native-svg"
   Yoga:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
@@ -2507,6 +2595,7 @@ SPEC CHECKSUMS:
   ExpoAsset: 715ce37a36951fee71c32773b3be50f2285e2fbe
   ExpoBlur: 392c1207f71d0ecf22371621c1fbd44ba84d9742
   ExpoCalendar: 12208702ad2461776a5a59b6e51e37ef23f9efac
+  ExpoCamera: 316809537daad6a5bd2c04b98e0589304beb5551
   ExpoCrypto: e97e864c8d7b9ce4a000bca45dddb93544a1b2b4
   ExpoFileSystem: 65eee7cfa2a032fa06657d18e475de429f43e920
   ExpoFont: 38656978c2a4022fb7e0c43e4968d66340f5e2f3
@@ -2515,8 +2604,9 @@ SPEC CHECKSUMS:
   ExpoKeepAwake: 62ff49bbc3bff90d8ee28329190f9ba371bf88e7
   ExpoLinking: 8d12bee174ba0cdf31239706578e29e74a417402
   ExpoLocation: ab3b9fc6d87d05a13e7a254f2c42609031fe18b7
-  ExpoModulesCore: 231638400651045f797b1da72feccbd86f96dbf5
+  ExpoModulesCore: 98297c2cc7977c43740a2e52d850d94ac8dbf176
   ExpoSecureStore: 9a3665d7161dd1031be386e278bffd623658f316
+  ExpoSharing: 849a5ce9985c22598c16ec027e32969be8062e8e
   ExpoSplashScreen: c64f3b577e1cb0b6a2f47d01c528ad7d80d9ae6a
   ExpoSymbols: f3002db15156cd4e505c77b6ea1df5c984db9965
   ExpoSystemUI: 36f50ee42da3e814bffd01ee38edcf3c7cc0015d
@@ -2562,6 +2652,7 @@ SPEC CHECKSUMS:
   React-Mapbuffer: 89885d1518433a462fe64b68bf5e097997380090
   React-microtasksnativemodule: 36341e09dcd1df535503e6ed2ddf88f10da56d52
   react-native-safe-area-context: 0f16e24dc808e9f0ced17f2bdcec692b2376fb68
+  react-native-view-shot: 60117a0ac87a504a39ee9f079e632011916e7724
   react-native-webview: 2ae666ce72cfd3c38d8750c2009f5caa621d709f
   React-nativeconfig: 539ff4de6ce3b694e8e751080568c281c84903ce
   React-NativeModulesApple: 702246817c286d057e23fe4b1302019796e62521
@@ -2598,8 +2689,10 @@ SPEC CHECKSUMS:
   RNPermissions: 49934a11e2a642d256fc8cc8d2cb790bed23d3b7
   RNReanimated: a2692304a6568bc656c04c8ffea812887d37436e
   RNScreens: 351f431ef2a042a1887d4d90e1c1024b8ae9d123
+  RNSVG: 030717ff82ea8f2117347c2fcf52a2d1eafba9ba
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
   Yoga: be6f55a028e86c83ae066f018e9b5d24ffc45436
+  ZXingObjC: 8898711ab495761b2dbbdec76d90164a6d7e14c5
 
 PODFILE CHECKSUM: 59401ff81776227145983b1f263b1a4c9a63375b
 
