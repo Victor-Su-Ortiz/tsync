@@ -1,5 +1,5 @@
-// QRScannerScreen.tsx
-import React, { useState, useEffect, useRef } from 'react';
+// src/app/qr-scanner.tsx
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -8,129 +8,175 @@ import {
   Alert,
   ActivityIndicator,
   SafeAreaView,
-  StatusBar,
 } from 'react-native';
-import { Camera, CameraType } from 'expo-camera';
+import { BarCodeScannedCallback } from 'expo-barcode-scanner';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { RelativePathString, useRouter } from 'expo-router';
 import { useAuth } from '@/src/context/AuthContext';
 import { useFriends } from '@/src/context/FriendRequestContext';
+import { FriendStatus } from '@/src/utils/enums';
+import { CameraView, Camera } from 'expo-camera';
 
-const QRScannerScreen = () => {
-  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
-  const [scanned, setScanned] = useState(false);
-  // Use string values for flashMode instead of enum
-  const [flashMode, setFlashMode] = useState('off');
-  const [loading, setLoading] = useState(false);
-  const cameraRef = useRef(null);
+type QRFriendData = {
+  type: string;
+  userId: string;
+  name: string;
+};
+
+export default function QRScannerScreen() {
   const router = useRouter();
   const { userInfo } = useAuth();
-  const { sendFriendRequest } = useFriends();
+  const { sendFriendRequest, getFriendStatus } = useFriends();
 
-  // Request camera permissions
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [scanned, setScanned] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [scanResult, setScanResult] = useState<{
+    success: boolean;
+    message: string;
+    userData?: { id: string; name: string };
+  } | null>(null);
+
   useEffect(() => {
-    const getCameraPermissions = async () => {
+    (async () => {
       const { status } = await Camera.requestCameraPermissionsAsync();
       setHasPermission(status === 'granted');
-    };
-
-    getCameraPermissions();
+    })();
   }, []);
 
-  // Toggle flash mode
-  const toggleFlash = () => {
-    setFlashMode(flashMode === 'off' ? 'torch' : 'off');
-  };
-
-  // Handle QR code scanning
-  const handleBarCodeScanned = async ({ type, data }) => {
-    if (scanned || loading) return;
-
-    setScanned(true);
-    setLoading(true);
-
+  const handleBarCodeScanned: BarCodeScannedCallback = async ({ type, data }) => {
     try {
-      console.log('Scanned QR code data:', data);
+      setScanned(true);
 
-      // Try to parse the QR code data
-      const parsedData = JSON.parse(data);
-
-      // Check if it's a friend request QR code
-      if (parsedData?.type === 'friend-request' && parsedData?.userId) {
-        // Make sure we're not trying to add ourselves
-        if (parsedData.userId === userInfo?.id) {
-          Alert.alert('Cannot add yourself', 'You cannot send a friend request to yourself.');
-          return;
-        }
-
-        // Handle the friend request
-        await handleFriendRequest(parsedData);
-      } else {
-        // Not a valid friend request QR code
-        Alert.alert('Invalid QR Code', 'This QR code is not a valid friend request QR code.');
+      // Parse the QR code data
+      let qrData: QRFriendData;
+      try {
+        qrData = JSON.parse(data);
+      } catch (error) {
+        console.error('Invalid QR code format:', error);
+        setScanResult({
+          success: false,
+          message: 'Invalid QR code format. Please scan a valid Friend QR code.',
+        });
+        return;
       }
+
+      // Validate QR code is a friend request
+      if (qrData.type !== 'friend-request' || !qrData.userId || !qrData.name) {
+        setScanResult({
+          success: false,
+          message: 'This QR code is not a valid Friend QR code.',
+        });
+        return;
+      }
+
+      // Prevent adding yourself
+      if (qrData.userId === userInfo?.id) {
+        setScanResult({
+          success: false,
+          message: 'You cannot add yourself as a friend.',
+        });
+        return;
+      }
+
+      // Check if already friends or has pending request
+      const { status: friendStatus } = getFriendStatus(qrData.userId);
+
+      if (friendStatus === FriendStatus.FRIENDS) {
+        setScanResult({
+          success: false,
+          message: `You are already friends with ${qrData.name}.`,
+          userData: { id: qrData.userId, name: qrData.name },
+        });
+        return;
+      }
+
+      if (friendStatus === FriendStatus.PENDING) {
+        setScanResult({
+          success: false,
+          message: `You already have a pending request to ${qrData.name}.`,
+          userData: { id: qrData.userId, name: qrData.name },
+        });
+        return;
+      }
+
+      if (friendStatus === FriendStatus.INCOMING_REQUEST) {
+        setScanResult({
+          success: false,
+          message: `${qrData.name} already sent you a friend request. Check your notifications to accept it.`,
+          userData: { id: qrData.userId, name: qrData.name },
+        });
+        return;
+      }
+
+      // Send friend request
+      setIsLoading(true);
+      await sendFriendRequest(qrData.userId);
+
+      setScanResult({
+        success: true,
+        message: `Friend request sent to ${qrData.name}!`,
+        userData: { id: qrData.userId, name: qrData.name },
+      });
     } catch (error) {
       console.error('Error processing QR code:', error);
-      Alert.alert(
-        'Error Processing QR Code',
-        'The scanned QR code could not be processed. Please try again.',
-      );
+      setScanResult({
+        success: false,
+        message: 'Failed to process friend request. Please try again.',
+      });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  // Process the friend request from QR data
-  const handleFriendRequest = async qrData => {
-    try {
-      await sendFriendRequest(qrData.userId);
-      Alert.alert(
-        'Friend Request Sent',
-        `Your friend request to ${qrData.name || 'user'} has been sent.`,
-        [
-          {
-            text: 'OK',
-            onPress: () => router.back(),
-          },
-        ],
-      );
-    } catch (error) {
-      console.error('Error sending friend request:', error);
-      Alert.alert('Error', 'Failed to send friend request. Please try again.', [
-        {
-          text: 'Try Again',
-          onPress: () => setScanned(false),
-        },
-        {
-          text: 'Cancel',
-          onPress: () => router.back(),
-          style: 'cancel',
-        },
-      ]);
+  const handleScanAgain = () => {
+    setScanned(false);
+    setScanResult(null);
+  };
+
+  const handleViewProfile = () => {
+    if (scanResult?.userData) {
+      // Navigate to the user profile
+      router.push({
+        pathname: '/profile/[id]' as RelativePathString,
+        params: { id: scanResult.userData.id },
+      });
     }
   };
 
-  // Handle permission denied
-  if (hasPermission === false) {
+  const handleBack = () => {
+    router.back();
+  };
+
+  if (hasPermission === null) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.permissionContainer}>
-          <Text style={styles.permissionText}>We need camera permissions to scan QR codes.</Text>
-          <TouchableOpacity style={styles.permissionButton} onPress={() => router.back()}>
-            <Text style={styles.permissionButtonText}>Go Back</Text>
-          </TouchableOpacity>
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color="#00cc99" />
+          <Text style={styles.text}>Requesting camera permission...</Text>
         </View>
       </SafeAreaView>
     );
   }
 
-  // While waiting for permissions
-  if (hasPermission === null) {
+  if (hasPermission === false) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#00cc99" />
-          <Text style={styles.loadingText}>Requesting camera permission...</Text>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+            <Ionicons name="arrow-back" size={24} color="#333" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>QR Scanner</Text>
+          <View style={{ width: 50 }} />
+        </View>
+
+        <View style={styles.centered}>
+          <Ionicons name="camera-outline" size={60} color="#ff3b30" />
+          <Text style={styles.title}>Camera Permission Denied</Text>
+          <Text style={styles.text}>
+            We need camera access to scan QR codes. Please enable camera permissions in your device
+            settings.
+          </Text>
         </View>
       </SafeAreaView>
     );
@@ -138,167 +184,164 @@ const QRScannerScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#000" />
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+          <Ionicons name="arrow-back" size={24} color="#333" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>QR Scanner</Text>
+        <View style={{ width: 50 }} />
+      </View>
 
-      {/* Camera Component */}
-      <Camera
-        ref={cameraRef}
-        style={styles.camera}
-        type={CameraType.back}
-        // Pass the flashMode as a property of Camera.Constants.FlashMode
-        flashMode={Camera.Constants.FlashMode[flashMode]}
-        onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
-        barCodeScannerSettings={{
-          barCodeTypes: ['qr'],
-        }}
-      >
-        {/* Overlay Content */}
-        <View style={styles.overlay}>
-          {/* Header */}
-          <View style={styles.header}>
-            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-              <Ionicons name="arrow-back" size={24} color="white" />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Scan QR Code</Text>
-            <TouchableOpacity style={styles.flashButton} onPress={toggleFlash}>
-              <Ionicons
-                name={flashMode === 'off' ? 'flash-off' : 'flash'}
-                size={24}
-                color="white"
-              />
-            </TouchableOpacity>
-          </View>
-
-          {/* Scanner Target */}
-          <View style={styles.scannerContainer}>
-            <View style={styles.scannerFrame}>
-              {loading && (
-                <View style={styles.loadingOverlay}>
-                  <ActivityIndicator size="large" color="#00cc99" />
-                  <Text style={styles.loadingText}>Processing...</Text>
-                </View>
-              )}
+      <View style={styles.scannerContainer}>
+        {!scanned ? (
+          <>
+            <CameraView
+              onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+              style={styles.scanner}
+            />
+            <View style={styles.overlay}>
+              <View style={styles.overlayRect} />
+              <Text style={styles.scanText}>Scan a Friend QR Code</Text>
             </View>
+          </>
+        ) : (
+          <View style={styles.resultContainer}>
+            {isLoading ? (
+              <ActivityIndicator size="large" color="#00cc99" />
+            ) : (
+              <>
+                <Ionicons
+                  name={scanResult?.success ? 'checkmark-circle' : 'close-circle'}
+                  size={70}
+                  color={scanResult?.success ? '#00cc99' : '#ff3b30'}
+                />
+                <Text style={styles.title}>{scanResult?.success ? 'Success!' : 'Scan Failed'}</Text>
+                <Text style={styles.resultText}>{scanResult?.message}</Text>
 
-            <Text style={styles.scannerText}>Position the QR code within the frame to scan</Text>
+                <View style={styles.buttonContainer}>
+                  <TouchableOpacity style={styles.button} onPress={handleScanAgain}>
+                    <Ionicons name="scan" size={20} color="#fff" />
+                    <Text style={styles.buttonText}>Scan Again</Text>
+                  </TouchableOpacity>
+
+                  {scanResult?.userData && (
+                    <TouchableOpacity
+                      style={[styles.button, { backgroundColor: '#4a90e2' }]}
+                      onPress={handleViewProfile}
+                    >
+                      <Ionicons name="person" size={20} color="#fff" />
+                      <Text style={styles.buttonText}>View Profile</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </>
+            )}
           </View>
-
-          {/* Rescan Button (if already scanned) */}
-          {scanned && !loading && (
-            <TouchableOpacity style={styles.rescanButton} onPress={() => setScanned(false)}>
-              <Text style={styles.rescanButtonText}>Tap to Scan Again</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      </Camera>
+        )}
+      </View>
     </SafeAreaView>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'black',
-  },
-  camera: {
-    flex: 1,
-  },
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    padding: 16,
+    backgroundColor: 'white',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+    backgroundColor: 'white',
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
   },
   backButton: {
     padding: 8,
   },
-  headerTitle: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  flashButton: {
-    padding: 8,
-  },
-  scannerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  scannerFrame: {
-    width: 250,
-    height: 250,
-    borderWidth: 2,
-    borderColor: '#00cc99',
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  scannerText: {
-    color: 'white',
-    textAlign: 'center',
-    fontSize: 14,
-    marginTop: 8,
-  },
-  rescanButton: {
-    backgroundColor: '#00cc99',
-    padding: 16,
-    borderRadius: 30,
-    marginBottom: 32,
-    alignItems: 'center',
-  },
-  rescanButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    borderRadius: 16,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    color: 'white',
-    marginTop: 12,
-    fontSize: 16,
-  },
-  permissionContainer: {
+  centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
-  permissionText: {
-    color: 'white',
-    fontSize: 16,
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginVertical: 16,
     textAlign: 'center',
-    marginBottom: 20,
   },
-  permissionButton: {
-    backgroundColor: '#00cc99',
-    padding: 16,
-    borderRadius: 30,
+  text: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginVertical: 8,
+  },
+  scannerContainer: {
+    flex: 1,
+    position: 'relative',
+  },
+  scanner: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
     alignItems: 'center',
-    width: '80%',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
-  permissionButtonText: {
+  overlayRect: {
+    width: 250,
+    height: 250,
+    borderWidth: 2,
+    borderColor: '#00cc99',
+    borderRadius: 16,
+    backgroundColor: 'transparent',
+  },
+  scanText: {
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+    marginTop: 24,
+  },
+  resultContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    padding: 20,
+  },
+  resultText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginVertical: 16,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 20,
+  },
+  button: {
+    backgroundColor: '#00cc99',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    marginHorizontal: 8,
+  },
+  buttonText: {
+    color: 'white',
+    marginLeft: 8,
+    fontSize: 16,
+    fontWeight: '500',
   },
 });
-
-export default QRScannerScreen;
