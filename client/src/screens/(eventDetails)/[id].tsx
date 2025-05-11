@@ -90,6 +90,7 @@ const EventDetails = () => {
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncingCalendar, setSyncingCalendar] = useState(false);
+  const [status, setStatus] = useState('pending');
 
   // Fetch event details
   useEffect(() => {
@@ -185,8 +186,18 @@ const EventDetails = () => {
     }
   };
 
-  const handleUpdateStatus = (status: 'accepted' | 'declined' | 'tentative') => {
+  const handleUpdateStatus = async (status: 'accepted' | 'declined' | 'tentative') => {
     // In a real implementation, you would call your API to update the attendance status
+    const res = await api.patch(
+      `/${id}/attendees/status`,
+      { status },
+      {
+        headers: {
+          Authorizatin: `Bearer ${authToken}`,
+        },
+      },
+    );
+    setStatus(status);
     Alert.alert('Status Updated', `You have ${status} this event.`);
   };
 

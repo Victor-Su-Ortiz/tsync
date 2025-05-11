@@ -58,7 +58,8 @@
         {
           "calendarPermission": "The app needs to access your calendar."
         }
-      ]
+      ],
+      "expo-barcode-scanner"
     ],
     "experiments": {
       "typedRoutes": true,
