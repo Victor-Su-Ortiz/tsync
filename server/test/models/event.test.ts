@@ -2,20 +2,11 @@ import { Document, Types } from 'mongoose';
 import Event from '../../src/models/event.model';
 import { IEvent, IEventModel, IEventMethods } from '../../src/types/event.types';
 import { describe, it, afterEach, expect, beforeEach, beforeAll, afterAll } from '@jest/globals';
-import { connect, disconnect, clear } from '../test-utils/test-database';
 
 describe('Event Model Tests', () => {
   let eventDocument: Document<unknown, any, IEvent> & IEvent & IEventMethods;
   let userId: Types.ObjectId;
   let creatorId: Types.ObjectId;
-
-  beforeAll(async () => {
-    await connect();
-  });
-
-  afterAll(async () => {
-    await disconnect();
-  });
 
   afterEach(async () => {
     await Event.deleteMany({});
