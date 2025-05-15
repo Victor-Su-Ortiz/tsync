@@ -189,11 +189,8 @@ EventSchema.statics.findEventsForUser = async function (userId: string) {
 
 EventSchema.statics.findEventsByDateRange = async function (start: Date, end: Date) {
   return this.find({
-    'eventDates.date': {
-      $gte: start,
-      $lte: end,
-    },
-  }).sort({ 'eventDates.date': 1 });
+    $and: [{ 'eventDates.startDate': { $lte: end } }, { 'eventDates.endDate': { $gte: start } }],
+  }).sort({ 'eventDates.startDate': 1 });
 };
 
 // Create and export the Event model
