@@ -13,11 +13,6 @@ jest.mock('../src/controllers/auth.controller');
 jest.mock('../src/middleware/validation.middleware', () => ({
   validateRequest: jest.fn(() => (_req: Request, _res: Response, next: NextFunction) => next()),
 }));
-// jest.mock('../src/validations/auth.validation', () => ({
-//   authValidation: {
-//     register: jest.fn()
-//   }
-// }));
 
 beforeAll(async () => {
   // Load test environment variables

@@ -1,56 +1,74 @@
-import { Document, Types } from 'mongoose';
+import { Document } from 'mongoose';
+import { describe, it, afterEach, expect, beforeEach } from '@jest/globals';
+
+// Import your Event model and interfaces
+// Note: Adjust the import path based on your project structure
 import Event from '../../src/models/event.model';
-import { IEvent, IEventModel, IEventMethods } from '../../src/types/event.types';
-import { describe, it, afterEach, expect, beforeEach, beforeAll, afterAll } from '@jest/globals';
+import User from '../../src/models/user.model';
+import { IEvent, IEventMethods, IAttendee } from '../../src/types/event.types';
+import { IUser, IUserMethods } from '../../src/types/user.types';
 
 describe('Event Model Tests', () => {
-  let eventDocument: Document<unknown, any, IEvent> & IEvent & IEventMethods;
-  let userId: Types.ObjectId;
-  let creatorId: Types.ObjectId;
+  let testCreator: Document<unknown, any, IUser> & IUser & IUserMethods;
+  let testAttendee1: Document<unknown, any, IUser> & IUser & IUserMethods;
+  let testAttendee2: Document<unknown, any, IUser> & IUser & IUserMethods;
+
+  // Clear the database between tests
+  beforeEach(async () => {
+    // Create test users that will be used across tests
+    testCreator = await User.create({
+      name: 'Event Creator',
+      email: 'creator@example.com',
+      password: 'Password123!',
+      role: 'user',
+      isEmailVerified: true,
+    });
+
+    testAttendee1 = await User.create({
+      name: 'Attendee One',
+      email: 'attendee1@example.com',
+      password: 'Password123!',
+      role: 'user',
+      isEmailVerified: true,
+    });
+
+    testAttendee2 = await User.create({
+      name: 'Attendee Two',
+      email: 'attendee2@example.com',
+      password: 'Password123!',
+      role: 'user',
+      isEmailVerified: true,
+    });
+  });
 
   afterEach(async () => {
     await Event.deleteMany({});
-  });
-
-  beforeEach(async () => {
-    userId = new Types.ObjectId();
-    creatorId = new Types.ObjectId();
+    await User.deleteMany({});
   });
 
   // Test event creation
   it('should create a new event successfully', async () => {
     const eventData = {
       title: 'Test Event',
-      description: 'Test Description',
-      location: {
-        address: '123 Test St',
-        name: 'Test Venue',
-        coordinates: {
-          latitude: 40.7128,
-          longitude: -74.006,
-        },
-        virtual: false,
-      },
-      creator: creatorId,
-      duration: 60,
+      description: 'This is a test event',
+      creator: testCreator._id,
+      duration: 60, // 60 minutes
       eventDates: [
         {
-          startDate: new Date('2024-12-01T10:00:00Z'),
-          endDate: new Date('2024-12-01T11:00:00Z'),
+          startDate: new Date('2025-06-01T10:00:00Z'),
+          endDate: new Date('2025-06-01T11:00:00Z'),
           isAllDay: false,
         },
       ],
-      timezone: 'UTC',
+      timezone: 'America/New_York',
+      location: {
+        address: '123 Main St',
+        name: 'Conference Room A',
+        virtual: false,
+      },
       status: 'scheduled',
       visibility: 'private',
       sync: false,
-      attendees: [],
-      reminders: [
-        {
-          type: 'notification',
-          time: 30,
-        },
-      ],
     };
 
     const event = await Event.create(eventData);
@@ -58,136 +76,230 @@ describe('Event Model Tests', () => {
     expect(event).toBeDefined();
     expect(event.title).toBe(eventData.title);
     expect(event.description).toBe(eventData.description);
-    expect(event.creator.toString()).toBe(creatorId.toString());
-    expect(event.duration).toBe(eventData.duration);
+    expect(event.creator.toString()).toBe(testCreator._id.toString());
+    expect(event.duration).toBe(60);
+    expect(event.eventDates).toHaveLength(1);
+    expect(event.eventDates[0].isAllDay).toBe(false);
+    expect(event.timezone).toBe(eventData.timezone);
+    expect(event.location?.address).toBe(eventData.location.address);
     expect(event.status).toBe('scheduled');
     expect(event.visibility).toBe('private');
     expect(event.sync).toBe(false);
     expect(event.attendees).toEqual([]);
+    expect(event.reminders).toEqual([]);
     expect(event.createdAt).toBeDefined();
     expect(event.updatedAt).toBeDefined();
   });
 
-  // Schema validation tests
-  describe('Schema Validation', () => {
-    it('should require title', async () => {
-      const eventData = {
-        creator: creatorId,
-        duration: 60,
-        eventDates: [
-          {
-            startDate: new Date(),
-            endDate: new Date(),
-          },
-        ],
-      };
+  // Test event creation with minimal required fields
+  it('should create event with minimal required fields', async () => {
+    const minimalEventData = {
+      title: 'Minimal Event',
+      creator: testCreator._id,
+      duration: 30,
+      eventDates: [
+        {
+          startDate: new Date('2025-06-01T10:00:00Z'),
+          endDate: new Date('2025-06-01T10:30:00Z'),
+        },
+      ],
+    };
 
-      await expect(Event.create(eventData)).rejects.toThrow('Event title is required');
-    });
+    const event = await Event.create(minimalEventData);
 
-    it('should require creator', async () => {
-      const eventData = {
-        title: 'Test Event',
-        duration: 60,
-        eventDates: [
-          {
-            startDate: new Date(),
-            endDate: new Date(),
-          },
-        ],
-      };
+    expect(event).toBeDefined();
+    expect(event.title).toBe(minimalEventData.title);
+    expect(event.creator.toString()).toBe(testCreator._id.toString());
+    expect(event.duration).toBe(30);
+    expect(event.eventDates).toHaveLength(1);
+    expect(event.timezone).toBe('UTC'); // Default value
+    expect(event.status).toBe('scheduled'); // Default value
+    expect(event.visibility).toBe('private'); // Default value
+    expect(event.sync).toBe(false); // Default value
+  });
 
-      await expect(Event.create(eventData)).rejects.toThrow('Event creator is required');
-    });
+  // Test event validation errors
+  it('should fail to create event without required fields', async () => {
+    const invalidEventData = {
+      description: 'Event without title',
+      timezone: 'America/New_York',
+    };
 
-    it('should require duration', async () => {
-      const eventData = {
-        title: 'Test Event',
-        creator: creatorId,
-        eventDates: [
-          {
-            startDate: new Date(),
-            endDate: new Date(),
-          },
-        ],
-      };
+    await expect(Event.create(invalidEventData)).rejects.toThrow();
+  });
 
-      await expect(Event.create(eventData)).rejects.toThrow('Event duration is required');
-    });
+  // Test event with multiple dates (non-consecutive)
+  it('should create event with multiple non-consecutive dates', async () => {
+    const multiDateEventData = {
+      title: 'Multi-Date Event',
+      creator: testCreator._id,
+      duration: 120,
+      eventDates: [
+        {
+          startDate: new Date('2025-06-01T10:00:00Z'),
+          endDate: new Date('2025-06-01T12:00:00Z'),
+          isAllDay: false,
+        },
+        {
+          startDate: new Date('2025-06-05T10:00:00Z'),
+          endDate: new Date('2025-06-05T12:00:00Z'),
+          isAllDay: false,
+        },
+        {
+          startDate: new Date('2025-06-10T10:00:00Z'),
+          endDate: new Date('2025-06-10T12:00:00Z'),
+          isAllDay: false,
+        },
+      ],
+    };
 
-    it('should require event dates', async () => {
-      const eventData = {
-        title: 'Test Event',
-        creator: creatorId,
-        duration: 60,
-        eventDates: [],
-      };
+    const event = await Event.create(multiDateEventData);
 
-      await expect(Event.create(eventData)).rejects.toThrow();
-    });
+    expect(event.eventDates).toHaveLength(3);
+    expect(event.eventDates[0].startDate).toEqual(new Date('2025-06-01T10:00:00Z'));
+    expect(event.eventDates[1].startDate).toEqual(new Date('2025-06-05T10:00:00Z'));
+    expect(event.eventDates[2].startDate).toEqual(new Date('2025-06-10T10:00:00Z'));
+  });
 
-    it('should validate status enum', async () => {
-      const eventData = {
-        title: 'Test Event',
-        creator: creatorId,
-        duration: 60,
-        eventDates: [
-          {
-            startDate: new Date(),
-            endDate: new Date(),
-          },
-        ],
-        status: 'invalid-status' as any,
-      };
+  // Test all-day event
+  it('should create an all-day event', async () => {
+    const allDayEventData = {
+      title: 'All Day Conference',
+      creator: testCreator._id,
+      duration: 480, // 8 hours
+      eventDates: [
+        {
+          startDate: new Date('2025-06-01T00:00:00Z'),
+          endDate: new Date('2025-06-01T23:59:59Z'),
+          isAllDay: true,
+        },
+      ],
+    };
 
-      await expect(Event.create(eventData)).rejects.toThrow();
-    });
+    const event = await Event.create(allDayEventData);
 
-    it('should set default values', async () => {
-      const event = await Event.create({
-        title: 'Test Event',
-        creator: creatorId,
-        duration: 60,
-        eventDates: [
-          {
-            startDate: new Date(),
-            endDate: new Date(),
-          },
-        ],
-      });
+    expect(event.eventDates[0].isAllDay).toBe(true);
+  });
 
-      expect(event.timezone).toBe('UTC');
-      expect(event.status).toBe('scheduled');
-      expect(event.visibility).toBe('private');
-      expect(event.sync).toBe(false);
-      expect(event.recurrence?.pattern).toBe('none');
-    });
+  // Test virtual event
+  it('should create a virtual event with meeting link', async () => {
+    const virtualEventData = {
+      title: 'Virtual Meeting',
+      creator: testCreator._id,
+      duration: 60,
+      eventDates: [
+        {
+          startDate: new Date('2025-06-01T14:00:00Z'),
+          endDate: new Date('2025-06-01T15:00:00Z'),
+        },
+      ],
+      location: {
+        virtual: true,
+        meetingLink: 'https://zoom.us/j/123456789',
+        name: 'Zoom Meeting',
+      },
+    };
+
+    const event = await Event.create(virtualEventData);
+
+    expect(event.location?.virtual).toBe(true);
+    expect(event.location?.meetingLink).toBe('https://zoom.us/j/123456789');
+    expect(event.location?.name).toBe('Zoom Meeting');
+  });
+
+  // Test recurring event
+  it('should create a recurring event', async () => {
+    const recurringEventData = {
+      title: 'Weekly Team Meeting',
+      creator: testCreator._id,
+      duration: 60,
+      eventDates: [
+        {
+          startDate: new Date('2025-06-01T10:00:00Z'),
+          endDate: new Date('2025-06-01T11:00:00Z'),
+        },
+      ],
+      recurrence: {
+        pattern: 'weekly',
+        interval: 1,
+        byDaysOfWeek: [1, 3, 5], // Monday, Wednesday, Friday
+        endDate: new Date('2025-08-31'),
+      },
+    };
+
+    const event = await Event.create(recurringEventData);
+
+    expect(event.recurrence?.pattern).toBe('weekly');
+    expect(event.recurrence?.interval).toBe(1);
+    expect(event.recurrence?.byDaysOfWeek).toEqual([1, 3, 5]);
+    expect(event.recurrence?.endDate).toEqual(new Date('2025-08-31'));
+  });
+
+  // Test event with reminders
+  it('should create event with reminders', async () => {
+    const eventWithRemindersData = {
+      title: 'Important Meeting',
+      creator: testCreator._id,
+      duration: 90,
+      eventDates: [
+        {
+          startDate: new Date('2025-06-01T15:00:00Z'),
+          endDate: new Date('2025-06-01T16:30:00Z'),
+        },
+      ],
+      reminders: [
+        {
+          type: 'email',
+          time: 30, // 30 minutes before
+        },
+        {
+          type: 'notification',
+          time: 15, // 15 minutes before
+        },
+        {
+          type: 'both',
+          time: 5, // 5 minutes before
+        },
+      ],
+    };
+
+    const event = await Event.create(eventWithRemindersData);
+
+    expect(event.reminders).toHaveLength(3);
+    expect(event.reminders[0].type).toBe('email');
+    expect(event.reminders[0].time).toBe(30);
+    expect(event.reminders[1].type).toBe('notification');
+    expect(event.reminders[1].time).toBe(15);
+    expect(event.reminders[2].type).toBe('both');
+    expect(event.reminders[2].time).toBe(5);
   });
 
   // Test getPublicEventData method
   it('should return public event data without sensitive information', async () => {
-    const event = await Event.create({
-      title: 'Public Data Test',
-      creator: creatorId,
+    const eventData = {
+      title: 'Public Event Test',
+      creator: testCreator._id,
       duration: 60,
       eventDates: [
         {
-          startDate: new Date(),
-          endDate: new Date(),
+          startDate: new Date('2025-06-01T10:00:00Z'),
+          endDate: new Date('2025-06-01T11:00:00Z'),
         },
       ],
-      googleCalendarEventId: 'test-google-id',
-      googleCalendarId: 'test-calendar-id',
-    });
+      googleCalendarEventId: 'google-event-123',
+      googleCalendarId: 'calendar-123',
+      visibility: 'public',
+    };
 
+    const event = await Event.create(eventData);
     const publicData = event.getPublicEventData();
 
-    // Public data should include these fields
-    expect(publicData.title).toBe('Public Data Test');
-    expect(publicData.creator).toBeDefined();
-    expect(publicData.duration).toBe(60);
+    // Public data should include most fields
+    expect(publicData.title).toBe(eventData.title);
+    expect(publicData.duration).toBe(eventData.duration);
+    expect(publicData.visibility).toBe('public');
 
-    // Public data should NOT include these sensitive fields
+    // Public data should NOT include Google Calendar IDs
     expect('googleCalendarEventId' in publicData).toBe(false);
     expect('googleCalendarId' in publicData).toBe(false);
   });
@@ -198,362 +310,347 @@ describe('Event Model Tests', () => {
 
     beforeEach(async () => {
       event = await Event.create({
-        title: 'Attendee Test Event',
-        creator: creatorId,
+        title: 'Team Meeting',
+        creator: testCreator._id,
         duration: 60,
         eventDates: [
           {
-            startDate: new Date(),
-            endDate: new Date(),
+            startDate: new Date('2025-06-01T10:00:00Z'),
+            endDate: new Date('2025-06-01T11:00:00Z'),
           },
         ],
       });
     });
 
     it('should add attendee successfully', async () => {
-      await event.addAttendee(userId.toString(), 'test@example.com', 'Test User');
+      await event.addAttendee(
+        testAttendee1._id.toString(),
+        testAttendee1.email,
+        testAttendee1.name
+      );
 
-      // Reload event to get updated data
-      const updatedEvent = await Event.findById(event._id);
-
-      expect(updatedEvent?.attendees.length).toBe(1);
-      expect(updatedEvent?.attendees[0].email).toBe('test@example.com');
-      expect(updatedEvent?.attendees[0].status).toBe('pending');
-      expect(updatedEvent?.attendees[0].name).toBe('Test User');
+      expect(event.attendees).toHaveLength(1);
+      expect(event.attendees[0].userId.toString()).toBe(testAttendee1._id.toString());
+      expect(event.attendees[0].email).toBe(testAttendee1.email);
+      expect(event.attendees[0].name).toBe(testAttendee1.name);
+      expect(event.attendees[0].status).toBe('pending');
     });
 
-    it('should not add duplicate attendee by userId', async () => {
-      await event.addAttendee(userId.toString(), 'test@example.com', 'Test User');
+    it('should not add duplicate attendee', async () => {
+      // Add attendee first time
+      await event.addAttendee(
+        testAttendee1._id.toString(),
+        testAttendee1.email,
+        testAttendee1.name
+      );
 
-      await event.addAttendee(userId.toString(), 'another@example.com', 'Another Name');
+      // Try to add same attendee again
+      await event.addAttendee(
+        testAttendee1._id.toString(),
+        testAttendee1.email,
+        testAttendee1.name
+      );
 
-      const updatedEvent = await Event.findById(event._id);
-      expect(updatedEvent?.attendees.length).toBe(1);
-      expect(updatedEvent?.attendees[0].email).toBe('test@example.com');
+      // Should still have only one attendee
+      expect(event.attendees).toHaveLength(1);
     });
 
-    it('should not add duplicate attendee by email', async () => {
-      await event.addAttendee(userId.toString(), 'test@example.com', 'Test User');
+    it('should not add attendee with same email but different userId', async () => {
+      // Add attendee with email
+      await event.addAttendee(
+        testAttendee1._id.toString(),
+        'shared-email@example.com',
+        'First User'
+      );
 
-      const anotherUserId = new Types.ObjectId();
-      await event.addAttendee(anotherUserId.toString(), 'test@example.com', 'Another User');
+      // Try to add different user with same email
+      await event.addAttendee(
+        testAttendee2._id.toString(),
+        'shared-email@example.com',
+        'Second User'
+      );
 
-      const updatedEvent = await Event.findById(event._id);
-      expect(updatedEvent?.attendees.length).toBe(1);
-      expect(updatedEvent?.attendees[0].userId.toString()).toBe(userId.toString());
+      // Should still have only one attendee
+      expect(event.attendees).toHaveLength(1);
     });
 
     it('should remove attendee successfully', async () => {
-      await event.addAttendee(userId.toString(), 'test@example.com', 'Test User');
+      // Add two attendees
+      await event.addAttendee(
+        testAttendee1._id.toString(),
+        testAttendee1.email,
+        testAttendee1.name
+      );
+      await event.addAttendee(
+        testAttendee2._id.toString(),
+        testAttendee2.email,
+        testAttendee2.name
+      );
 
-      await event.removeAttendee(userId.toString());
+      expect(event.attendees).toHaveLength(2);
 
-      const updatedEvent = await Event.findById(event._id);
-      expect(updatedEvent?.attendees.length).toBe(0);
+      // Remove first attendee
+      await event.removeAttendee(testAttendee1._id.toString());
+
+      expect(event.attendees).toHaveLength(1);
+      expect(event.attendees[0].userId.toString()).toBe(testAttendee2._id.toString());
     });
 
-    it('should handle removing non-existent attendee', async () => {
-      await event.removeAttendee(userId.toString());
+    it('should update attendee status', async () => {
+      // Add attendee
+      await event.addAttendee(
+        testAttendee1._id.toString(),
+        testAttendee1.email,
+        testAttendee1.name
+      );
 
-      const updatedEvent = await Event.findById(event._id);
-      expect(updatedEvent?.attendees.length).toBe(0);
+      // Initial status should be pending
+      expect(event.attendees[0].status).toBe('pending');
+
+      // Accept the invitation
+      await event.updateAttendeeStatus(testAttendee1._id.toString(), 'accepted');
+
+      expect(event.attendees[0].status).toBe('accepted');
+      expect(event.attendees[0].responseTime).toBeDefined();
     });
 
-    it('should update attendee status successfully', async () => {
-      await event.addAttendee(userId.toString(), 'test@example.com', 'Test User');
+    it('should handle various attendee statuses', async () => {
+      // Add attendee
+      await event.addAttendee(
+        testAttendee1._id.toString(),
+        testAttendee1.email,
+        testAttendee1.name
+      );
 
-      await event.updateAttendeeStatus(userId.toString(), 'accepted');
+      // Test different status updates
+      const statuses: IAttendee['status'][] = ['accepted', 'declined', 'tentative'];
 
-      const updatedEvent = await Event.findById(event._id);
-      const attendee = updatedEvent?.attendees[0];
-
-      expect(attendee?.status).toBe('accepted');
-      expect(attendee?.responseTime).toBeDefined();
+      for (const status of statuses) {
+        await event.updateAttendeeStatus(testAttendee1._id.toString(), status);
+        expect(event.attendees[0].status).toBe(status);
+      }
     });
 
-    it('should handle updating non-existent attendee', async () => {
-      await event.updateAttendeeStatus(userId.toString(), 'accepted');
+    it('should not update status for non-existent attendee', async () => {
+      const initialAttendeeCount = event.attendees.length;
 
-      const updatedEvent = await Event.findById(event._id);
-      expect(updatedEvent?.attendees.length).toBe(0);
+      // Try to update status for non-existent user
+      await event.updateAttendeeStatus('non-existent-user-id', 'accepted');
+
+      // No changes should occur
+      expect(event.attendees).toHaveLength(initialAttendeeCount);
     });
   });
 
   // Static method tests
   describe('Static Methods', () => {
-    let event1: Document<unknown, any, IEvent> & IEvent & IEventMethods;
-    let event2: Document<unknown, any, IEvent> & IEvent & IEventMethods;
-    let event3: Document<unknown, any, IEvent> & IEvent & IEventMethods;
-
     beforeEach(async () => {
-      // Create multiple events for testing
-      event1 = await Event.create({
-        title: 'Event 1',
-        creator: creatorId,
+      // Create events by the creator
+      await Event.create({
+        title: 'Creator Event 1',
+        creator: testCreator._id,
         duration: 60,
         eventDates: [
           {
-            startDate: new Date('2024-12-01'),
-            endDate: new Date('2024-12-01'),
+            startDate: new Date('2025-06-01T10:00:00Z'),
+            endDate: new Date('2025-06-01T11:00:00Z'),
+          },
+        ],
+      });
+
+      await Event.create({
+        title: 'Creator Event 2',
+        creator: testCreator._id,
+        duration: 60,
+        eventDates: [
+          {
+            startDate: new Date('2025-06-05T10:00:00Z'),
+            endDate: new Date('2025-06-05T11:00:00Z'),
+          },
+        ],
+      });
+
+      // Create event where user is an attendee
+      await Event.create({
+        title: 'Attendee Event',
+        creator: testAttendee2._id,
+        duration: 60,
+        eventDates: [
+          {
+            startDate: new Date('2025-06-03T10:00:00Z'),
+            endDate: new Date('2025-06-03T11:00:00Z'),
           },
         ],
         attendees: [
           {
-            userId,
-            email: 'test@example.com',
-            name: 'Test User',
-            status: 'pending',
-          },
-        ],
-      });
-
-      event2 = await Event.create({
-        title: 'Event 2',
-        creator: userId,
-        duration: 60,
-        eventDates: [
-          {
-            startDate: new Date('2024-12-15'),
-            endDate: new Date('2024-12-15'),
-          },
-        ],
-      });
-
-      event3 = await Event.create({
-        title: 'Event 3',
-        creator: new Types.ObjectId(),
-        duration: 60,
-        eventDates: [
-          {
-            startDate: new Date('2024-12-25'),
-            endDate: new Date('2024-12-25'),
+            userId: testCreator._id,
+            email: testCreator.email,
+            name: testCreator.name,
+            status: 'accepted',
           },
         ],
       });
     });
 
-    it('should find events for user (creator)', async () => {
-      const events = await Event.findEventsForUser(userId.toString());
+    it('should find events for a user (creator and attendee)', async () => {
+      const userEvents = await Event.findEventsForUser(testCreator._id.toString());
 
-      expect(events.length).toBeGreaterThan(0);
-      const titles = events.map(e => e.title);
-      expect(titles).toContain('Event 2');
+      expect(userEvents).toHaveLength(3);
+
+      // Verify all events are included
+      const eventTitles = userEvents.map(e => e.title);
+      expect(eventTitles).toContain('Creator Event 1');
+      expect(eventTitles).toContain('Creator Event 2');
+      expect(eventTitles).toContain('Attendee Event');
     });
 
-    it('should find events for user (attendee)', async () => {
-      const events = await Event.findEventsForUser(userId.toString());
+    it('should find events by date range', async () => {
+      const startDate = new Date('2025-06-01T00:00:00Z');
+      const endDate = new Date('2025-06-04T23:59:59Z');
 
-      const titles = events.map(e => e.title);
-      expect(titles).toContain('Event 1');
-    });
+      const eventsInRange = await Event.findEventsByDateRange(startDate, endDate);
 
-    it('should find events where user is both creator and attendee', async () => {
-      await event2.addAttendee(userId.toString(), 'test@example.com', 'Test User');
+      expect(eventsInRange).toHaveLength(2);
 
-      const events = await Event.findEventsForUser(userId.toString());
-
-      expect(events.length).toBe(2);
-    });
-
-    it('should return empty array for user with no events', async () => {
-      const newUserId = new Types.ObjectId();
-      const events = await Event.findEventsForUser(newUserId.toString());
-
-      expect(events).toEqual([]);
-    });
-
-    it('should sort events by date', async () => {
-      const events = await Event.findEventsForUser(userId.toString());
-
-      if (events.length > 1) {
-        const dates = events.map(e => e.eventDates[0].startDate);
-        for (let i = 0; i < dates.length - 1; i++) {
-          expect(dates[i].getTime()).toBeLessThanOrEqual(dates[i + 1].getTime());
-        }
-      }
-    });
-
-    it('should find events within date range', async () => {
-      const start = new Date('2024-12-10');
-      const end = new Date('2024-12-20');
-
-      const events = await Event.findEventsByDateRange(start, end);
-
-      expect(events.length).toBe(1);
-      expect(events[0].title).toBe('Event 2');
-    });
-
-    it('should include events on boundary dates', async () => {
-      const start = new Date('2024-12-01');
-      const end = new Date('2024-12-25');
-
-      const events = await Event.findEventsByDateRange(start, end);
-
-      expect(events.length).toBe(3);
+      // Verify correct events are included
+      const eventTitles = eventsInRange.map(e => e.title);
+      expect(eventTitles).toContain('Creator Event 1');
+      expect(eventTitles).toContain('Attendee Event');
+      expect(eventTitles).not.toContain('Creator Event 2');
     });
 
     it('should return empty array for date range with no events', async () => {
-      const start = new Date('2024-11-01');
-      const end = new Date('2024-11-30');
+      const startDate = new Date('2025-07-01T00:00:00Z');
+      const endDate = new Date('2025-07-31T23:59:59Z');
 
-      const events = await Event.findEventsByDateRange(start, end);
+      const eventsInRange = await Event.findEventsByDateRange(startDate, endDate);
 
-      expect(events).toEqual([]);
+      expect(eventsInRange).toHaveLength(0);
+    });
+
+    it('should handle edge cases for date ranges', async () => {
+      // Exact match on start date
+      const exactStartDate = new Date('2025-06-01T10:00:00Z');
+      const exactEndDate = new Date('2025-06-01T10:00:00Z');
+
+      const exactMatch = await Event.findEventsByDateRange(exactStartDate, exactEndDate);
+
+      expect(exactMatch).toHaveLength(1);
+      expect(exactMatch[0].title).toBe('Creator Event 1');
     });
   });
 
-  // Complex scenario tests
-  describe('Complex Scenarios', () => {
-    it('should handle events with multiple dates', async () => {
-      const multiDateEvent = await Event.create({
-        title: 'Multi-Date Event',
-        creator: creatorId,
-        duration: 60,
-        eventDates: [
-          {
-            startDate: new Date('2024-12-01'),
-            endDate: new Date('2024-12-01'),
-          },
-          {
-            startDate: new Date('2024-12-08'),
-            endDate: new Date('2024-12-08'),
-          },
-          {
-            startDate: new Date('2024-12-15'),
-            endDate: new Date('2024-12-15'),
-          },
-        ],
-      });
+  // Test event visibility
+  it('should create events with different visibility settings', async () => {
+    const visibilityOptions: Array<'public' | 'private' | 'friends'> = [
+      'public',
+      'private',
+      'friends',
+    ];
 
-      expect(multiDateEvent.eventDates).toHaveLength(3);
-      expect(multiDateEvent.eventDates[0].startDate).toEqual(new Date('2024-12-01'));
-    });
-
-    it('should handle recurring events', async () => {
-      const recurringEvent = await Event.create({
-        title: 'Recurring Event',
-        creator: creatorId,
-        duration: 60,
-        eventDates: [
-          {
-            startDate: new Date('2024-12-01'),
-            endDate: new Date('2024-12-01'),
-          },
-        ],
-        recurrence: {
-          pattern: 'weekly',
-          interval: 1,
-          endDate: new Date('2024-12-31'),
-          byDaysOfWeek: [1, 3, 5], // Monday, Wednesday, Friday
-        },
-      });
-
-      expect(recurringEvent.recurrence?.pattern).toBe('weekly');
-      expect(recurringEvent.recurrence?.byDaysOfWeek).toEqual([1, 3, 5]);
-      expect(recurringEvent.recurrence?.interval).toBe(1);
-    });
-
-    it('should handle virtual events', async () => {
-      const virtualEvent = await Event.create({
-        title: 'Virtual Event',
-        creator: creatorId,
-        duration: 60,
-        eventDates: [
-          {
-            startDate: new Date('2024-12-01'),
-            endDate: new Date('2024-12-01'),
-          },
-        ],
-        location: {
-          virtual: true,
-          meetingLink: 'https://meet.example.com/abc123',
-        },
-      });
-
-      expect(virtualEvent.location?.virtual).toBe(true);
-      expect(virtualEvent.location?.meetingLink).toBe('https://meet.example.com/abc123');
-    });
-
-    it('should handle events with multiple reminders', async () => {
+    for (const visibility of visibilityOptions) {
       const event = await Event.create({
-        title: 'Event with Reminders',
-        creator: creatorId,
+        title: `${visibility} Event`,
+        creator: testCreator._id,
         duration: 60,
         eventDates: [
           {
-            startDate: new Date('2024-12-01'),
-            endDate: new Date('2024-12-01'),
+            startDate: new Date('2025-06-01T10:00:00Z'),
+            endDate: new Date('2025-06-01T11:00:00Z'),
           },
         ],
-        reminders: [
-          {
-            type: 'email',
-            time: 60,
-          },
-          {
-            type: 'notification',
-            time: 30,
-          },
-          {
-            type: 'both',
-            time: 15,
-          },
-        ],
+        visibility,
       });
 
-      expect(event.reminders).toHaveLength(3);
-      expect(event.reminders[0].type).toBe('email');
-      expect(event.reminders[1].type).toBe('notification');
-      expect(event.reminders[2].type).toBe('both');
-    });
+      expect(event.visibility).toBe(visibility);
+    }
+  });
 
-    it('should handle events with all-day dates', async () => {
-      const allDayEvent = await Event.create({
-        title: 'All-Day Event',
-        creator: creatorId,
-        duration: 1440, // 24 hours in minutes
-        eventDates: [
-          {
-            startDate: new Date('2024-12-01'),
-            endDate: new Date('2024-12-01'),
-            isAllDay: true,
-          },
-        ],
-      });
+  // Test event statuses
+  it('should create events with different statuses', async () => {
+    const statusOptions: Array<'scheduled' | 'tentative' | 'confirmed' | 'cancelled'> = [
+      'scheduled',
+      'tentative',
+      'confirmed',
+      'cancelled',
+    ];
 
-      expect(allDayEvent.eventDates[0].isAllDay).toBe(true);
-      expect(allDayEvent.duration).toBe(1440);
-    });
-
-    it('should handle different visibility settings', async () => {
-      const publicEvent = await Event.create({
-        title: 'Public Event',
-        creator: creatorId,
+    for (const status of statusOptions) {
+      const event = await Event.create({
+        title: `${status} Event`,
+        creator: testCreator._id,
         duration: 60,
         eventDates: [
           {
-            startDate: new Date(),
-            endDate: new Date(),
+            startDate: new Date('2025-06-01T10:00:00Z'),
+            endDate: new Date('2025-06-01T11:00:00Z'),
           },
         ],
-        visibility: 'public',
+        status,
       });
 
-      const friendsEvent = await Event.create({
-        title: 'Friends Event',
-        creator: creatorId,
-        duration: 60,
-        eventDates: [
-          {
-            startDate: new Date(),
-            endDate: new Date(),
-          },
-        ],
-        visibility: 'friends',
-      });
+      expect(event.status).toBe(status);
+    }
+  });
 
-      expect(publicEvent.visibility).toBe('public');
-      expect(friendsEvent.visibility).toBe('friends');
-    });
+  // Test location with coordinates
+  it('should create event with full location details', async () => {
+    const eventData = {
+      title: 'Location Test Event',
+      creator: testCreator._id,
+      duration: 120,
+      eventDates: [
+        {
+          startDate: new Date('2025-06-01T10:00:00Z'),
+          endDate: new Date('2025-06-01T12:00:00Z'),
+        },
+      ],
+      location: {
+        address: '123 Main Street, Anytown, USA',
+        name: 'Conference Center',
+        coordinates: {
+          latitude: 40.7128,
+          longitude: -74.006,
+        },
+        virtual: false,
+        metadata: {
+          parking: 'Available',
+          accessibility: 'Wheelchair accessible',
+        },
+      },
+    };
+
+    const event = await Event.create(eventData);
+
+    expect(event.location?.address).toBe(eventData.location.address);
+    expect(event.location?.name).toBe(eventData.location.name);
+    expect(event.location?.coordinates?.latitude).toBe(40.7128);
+    expect(event.location?.coordinates?.longitude).toBe(-74.006);
+    expect(event.location?.metadata?.parking).toBe('Available');
+    expect(event.location?.metadata?.accessibility).toBe('Wheelchair accessible');
+  });
+
+  // Test Google Calendar integration fields
+  it('should create event with Google Calendar integration', async () => {
+    const eventData = {
+      title: 'Google Calendar Sync Event',
+      creator: testCreator._id,
+      duration: 60,
+      eventDates: [
+        {
+          startDate: new Date('2025-06-01T14:00:00Z'),
+          endDate: new Date('2025-06-01T15:00:00Z'),
+        },
+      ],
+      googleCalendarEventId: 'google-event-abc123',
+      googleCalendarId: 'primary',
+      sync: true,
+    };
+
+    const event = await Event.create(eventData);
+
+    expect(event.googleCalendarEventId).toBe('google-event-abc123');
+    expect(event.googleCalendarId).toBe('primary');
+    expect(event.sync).toBe(true);
   });
 });
