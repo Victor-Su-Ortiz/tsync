@@ -9,7 +9,7 @@ import {
   LoginInput,
   TokenPayload,
   AuthResponse,
-} from '../types/services/auth.service.types';
+} from '../types/services-types/auth.service.types';
 
 import { GoogleService } from './google.services';
 

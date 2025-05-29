@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { AuthService } from '../services/auth.service';
-import { IAuthService } from '../types/services/auth.service.types';
+import { IAuthService } from '../types/services-types/auth.service.types';
 import User from '../models/user.model';
 // import { AuthRequest } from "../middleware/auth.middleware";
 
@@ -25,10 +24,10 @@ export class AuthController {
   }
 
   // Login user
-  static async login(req: Request, res: Response, next: NextFunction) {
+  async login(req: Request, res: Response, next: NextFunction) {
     try {
       const { email, password } = req.body;
-      const result = await AuthService.login({ email, password });
+      const result = await this.AuthService.login({ email, password });
       res.status(200).json(result);
     } catch (error) {
       next(error);
@@ -36,7 +35,7 @@ export class AuthController {
   }
 
   //   Google authentication
-  static async googleAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async googleAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { idToken, accessToken, serverAuthCode } = req.body;
       if (!idToken) {
@@ -44,7 +43,7 @@ export class AuthController {
         return;
       }
 
-      const authResponse = await AuthService.googleAuth(idToken, accessToken, serverAuthCode);
+      const authResponse = await this.AuthService.googleAuth(idToken, accessToken, serverAuthCode);
       console.log('✅ Google Auth Success:', authResponse);
 
       res.status(200).json(authResponse);
@@ -55,10 +54,10 @@ export class AuthController {
   }
 
   // Verify email
-  static async verifyEmail(req: Request, res: Response, next: NextFunction) {
+  async verifyEmail(req: Request, res: Response, next: NextFunction) {
     try {
       const { token } = req.params;
-      const result = await AuthService.verifyEmail(token);
+      const result = await this.AuthService.verifyEmail(token);
       res.status(200).json(result);
     } catch (error) {
       next(error);
@@ -66,10 +65,10 @@ export class AuthController {
   }
 
   // Request password reset
-  static async requestPasswordReset(req: Request, res: Response, next: NextFunction) {
+  async requestPasswordReset(req: Request, res: Response, next: NextFunction) {
     try {
       const { email } = req.body;
-      const result = await AuthService.requestPasswordReset(email);
+      const result = await this.AuthService.requestPasswordReset(email);
       res.status(200).json(result);
     } catch (error) {
       next(error);
@@ -77,11 +76,11 @@ export class AuthController {
   }
 
   // Reset password
-  static async resetPassword(req: Request, res: Response, next: NextFunction) {
+  async resetPassword(req: Request, res: Response, next: NextFunction) {
     try {
       const { token } = req.params;
       const { password } = req.body;
-      const result = await AuthService.resetPassword(token, password);
+      const result = await this.AuthService.resetPassword(token, password);
       res.status(200).json(result);
     } catch (error) {
       next(error);
@@ -99,10 +98,10 @@ export class AuthController {
   }
 
   // Validate token
-  static async validateToken(req: Request, res: Response, next: NextFunction) {
+  async validateToken(req: Request, res: Response, next: NextFunction) {
     try {
       const { token } = req.body;
-      const result = await AuthService.validateToken(token);
+      const result = await this.AuthService.validateToken(token);
       res.status(200).json(result);
     } catch (error) {
       next(error);
