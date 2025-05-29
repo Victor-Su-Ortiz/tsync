@@ -1,30 +1,33 @@
 export interface IAuthService {
-    login(email: string, password: string): Promise<{ user: any; token: string }>;
-    register(userData: RegisterUserData): Promise<{ user: any; token: string }>;
-    logout(token: string): Promise<void>;
-    verifyToken(token: string): Promise<any>;
-    refreshToken(refreshToken: string): Promise<{ token: string }>;
-    forgotPassword(email: string): Promise<void>;
-    resetPassword(token: string, newPassword: string): Promise<void>;
+  register(userData: RegisterUserInput): Promise<AuthResponse>;
+  login(loginData: LoginInput): Promise<AuthResponse>;
+  googleAuth(idToken: string, accessToken: string, code: string): Promise<AuthResponse>;
+  verifyEmail(token: string): Promise<{ message: string }>;
+  requestPasswordReset(email: string): Promise<{ message: string }>;
+  resetPassword(token: string, newPassword: string): Promise<{ message: string }>;
+  validateToken(token: string): Promise<{ valid: boolean; user?: any }>;
+  changePassword(userId: string, currentPassword: string, newPassword: string): Promise<{ message: string }>;
 }
 
-export interface RegisterUserData {
-    email: string;
-    password: string;
-    name: string;
+// Types
+export interface RegisterUserInput {
+  name: string;
+  email: string;
+  password: string;
 }
 
-export interface LoginCredentials {
-    email: string;
-    password: string;
+export interface LoginInput {
+  email: string;
+  password: string;
 }
 
-export interface AuthTokens {
-    accessToken: string;
-    refreshToken: string;
+export interface TokenPayload {
+  userId: string;
+  email: string;
+  role: string;
 }
 
 export interface AuthResponse {
-    user: any;
-    tokens: AuthTokens;
+  user: any;
+  token: string;
 }

@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { AuthService } from '../services/auth.service';
+import { IAuthService } from '../types/services/auth.service.types';
 import User from '../models/user.model';
 // import { AuthRequest } from "../middleware/auth.middleware";
 
@@ -9,8 +10,8 @@ export class AuthController {
    * It provides methods for user registration, login, Google authentication,
    * email verification, password reset, and fetching the current user.
    */
-  AuthService: typeof AuthService;
-  constructor(authService: typeof AuthService) {
+  AuthService: IAuthService;
+  constructor(authService: IAuthService) {
     this.AuthService = authService;
   }
   // Register new user
