@@ -9,12 +9,14 @@ export class AuthController {
    * It provides methods for user registration, login, Google authentication,
    * email verification, password reset, and fetching the current user.
    */
-  constructor() {
+  AuthService: typeof AuthService;
+  constructor(authService: typeof AuthService) {
+    this.AuthService = authService;
   }
   // Register new user
-  static async register(req: Request, res: Response, next: NextFunction) {
+  async register(req: Request, res: Response, next: NextFunction) {
     try {
-      const result = await AuthService.register(req.body);
+      const result = await this.AuthService.register(req.body);
       res.status(201).json(result);
     } catch (error) {
       next(error);
