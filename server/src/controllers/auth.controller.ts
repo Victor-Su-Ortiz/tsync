@@ -4,6 +4,13 @@ import User from '../models/user.model';
 // import { AuthRequest } from "../middleware/auth.middleware";
 
 export class AuthController {
+  /**
+   * AuthController handles authentication-related requests.
+   * It provides methods for user registration, login, Google authentication,
+   * email verification, password reset, and fetching the current user.
+   */
+  constructor() {
+  }
   // Register new user
   static async register(req: Request, res: Response, next: NextFunction) {
     try {
