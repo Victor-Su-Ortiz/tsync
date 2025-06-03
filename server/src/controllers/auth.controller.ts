@@ -14,17 +14,17 @@ export class AuthController {
     this.AuthService = authService;
   }
   // Register new user
-  async register(req: Request, res: Response, next: NextFunction) {
+  register = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const result = await this.AuthService.register(req.body);
       res.status(201).json(result);
     } catch (error) {
       next(error);
     }
-  }
+  };
 
   // Login user
-  async login(req: Request, res: Response, next: NextFunction) {
+  login = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { email, password } = req.body;
       const result = await this.AuthService.login({ email, password });
@@ -32,10 +32,10 @@ export class AuthController {
     } catch (error) {
       next(error);
     }
-  }
+  };
 
   //   Google authentication
-  async googleAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
+  googleAuth = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { idToken, accessToken, serverAuthCode } = req.body;
       if (!idToken) {
@@ -51,10 +51,10 @@ export class AuthController {
       console.error('❌ Google Auth Failed:', error);
       next(error); // ✅ Pass error to Express error handler
     }
-  }
+  };
 
   // Verify email
-  async verifyEmail(req: Request, res: Response, next: NextFunction) {
+  verifyEmail = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { token } = req.params;
       const result = await this.AuthService.verifyEmail(token);
@@ -62,10 +62,10 @@ export class AuthController {
     } catch (error) {
       next(error);
     }
-  }
+  };
 
   // Request password reset
-  async requestPasswordReset(req: Request, res: Response, next: NextFunction) {
+  requestPasswordReset = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { email } = req.body;
       const result = await this.AuthService.requestPasswordReset(email);
@@ -73,10 +73,10 @@ export class AuthController {
     } catch (error) {
       next(error);
     }
-  }
+  };
 
   // Reset password
-  async resetPassword(req: Request, res: Response, next: NextFunction) {
+  resetPassword = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { token } = req.params;
       const { password } = req.body;
@@ -85,7 +85,7 @@ export class AuthController {
     } catch (error) {
       next(error);
     }
-  }
+  };
 
   // Get current user
   static async getCurrentUser(req: Request, res: Response, next: NextFunction) {
@@ -98,7 +98,7 @@ export class AuthController {
   }
 
   // Validate token
-  async validateToken(req: Request, res: Response, next: NextFunction) {
+  validateToken = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { token } = req.body;
       const result = await this.AuthService.validateToken(token);
@@ -106,5 +106,5 @@ export class AuthController {
     } catch (error) {
       next(error);
     }
-  }
+  };
 }
