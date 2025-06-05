@@ -27,11 +27,11 @@ router.patch(
   UserController.updateProfilePicture
 );
 
-router.patch(
-  '/change-password',
-  validateRequest(userValidation.changePassword),
-  UserController.changePassword
-);
+// router.patch(
+//   '/change-password',
+//   validateRequest(userValidation.changePassword),
+//   UserController.changePassword
+// );
 
 // Admin routes - require admin role
 router.use(restrictTo('admin'));

@@ -3,33 +3,17 @@ import jwt, { Secret, SignOptions } from 'jsonwebtoken';
 import crypto from 'crypto';
 import { sendEmail } from '../utils/email';
 import { AuthenticationError, ValidationError, NotFoundError } from '../utils/errors';
-// import GoogleAuthService from './google-auth.service';
+import {
+  IAuthService,
+  RegisterUserInput,
+  LoginInput,
+  TokenPayload,
+  AuthResponse,
+} from '../types/services-types/auth.service.types';
+
 import { GoogleService } from './google.services';
 
-// Types
-export interface RegisterUserInput {
-  name: string;
-  email: string;
-  password: string;
-}
-
-export interface LoginInput {
-  email: string;
-  password: string;
-}
-
-export interface TokenPayload {
-  userId: string;
-  email: string;
-  role: string;
-}
-
-export interface AuthResponse {
-  user: any;
-  token: string;
-}
-
-export class AuthService {
+export class AuthService implements IAuthService {
   /**
    * Generate JWT Token
    */
@@ -50,7 +34,7 @@ export class AuthService {
   /**
    * Register new user
    */
-  public static async register(userData: RegisterUserInput): Promise<AuthResponse> {
+  public async register(userData: RegisterUserInput): Promise<AuthResponse> {
     // Existing implementation...
     const { email } = userData;
 
@@ -83,7 +67,7 @@ export class AuthService {
     }
 
     // Generate token
-    const token = this.generateToken(user);
+    const token = AuthService.generateToken(user);
 
     return {
       user: user.getPublicProfile(),
@@ -94,7 +78,7 @@ export class AuthService {
   /**
    * Login user
    */
-  public static async login(loginData: LoginInput): Promise<AuthResponse> {
+  public async login(loginData: LoginInput): Promise<AuthResponse> {
     // Existing implementation...
     const { email, password } = loginData;
 
@@ -115,7 +99,7 @@ export class AuthService {
     await user.save();
 
     // Generate token
-    const token = this.generateToken(user);
+    const token = AuthService.generateToken(user);
 
     return {
       user: user.getPublicProfile(),
@@ -126,7 +110,7 @@ export class AuthService {
   /**
    * Google OAuth Authentication
    */
-  public static async googleAuth(
+  public async googleAuth(
     idToken: string,
     accessToken: string,
     code: string
@@ -196,7 +180,7 @@ export class AuthService {
       }
 
       // Generate JWT token
-      const token = this.generateToken(user);
+      const token = AuthService.generateToken(user);
 
       return {
         user: user.getPublicProfile(),
@@ -211,7 +195,7 @@ export class AuthService {
   /**
    * Verify Email
    */
-  public static async verifyEmail(token: string): Promise<{ message: string }> {
+  public async verifyEmail(token: string): Promise<{ message: string }> {
     // Hash token for comparison
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
@@ -235,7 +219,7 @@ export class AuthService {
   /**
    * Request Password Reset
    */
-  public static async requestPasswordReset(email: string): Promise<{ message: string }> {
+  public async requestPasswordReset(email: string): Promise<{ message: string }> {
     const user = await User.findOne({ email });
     if (!user) {
       throw new NotFoundError('No user found with this email');
@@ -277,10 +261,7 @@ export class AuthService {
   /**
    * Reset Password
    */
-  public static async resetPassword(
-    token: string,
-    newPassword: string
-  ): Promise<{ message: string }> {
+  public async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
     // Hash token for comparison
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
@@ -306,7 +287,7 @@ export class AuthService {
   /**
    * Validate Token
    */
-  public static async validateToken(token: string): Promise<{ valid: boolean; user?: any }> {
+  public async validateToken(token: string): Promise<{ valid: boolean; user?: any }> {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET!) as TokenPayload;
       const user = await User.findById(decoded.userId);
@@ -327,7 +308,7 @@ export class AuthService {
   /**
    * Change Password
    */
-  public static async changePassword(
+  public async changePassword(
     userId: string,
     currentPassword: string,
     newPassword: string
