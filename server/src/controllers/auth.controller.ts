@@ -9,14 +9,14 @@ export class AuthController {
    * It provides methods for user registration, login, Google authentication,
    * email verification, password reset, and fetching the current user.
    */
-  AuthService: IAuthService;
+  authService: IAuthService;
   constructor(authService: IAuthService) {
-    this.AuthService = authService;
+    this.authService = authService;
   }
   // Register new user
   register = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const result = await this.AuthService.register(req.body);
+      const result = await this.authService.register(req.body);
       res.status(201).json(result);
     } catch (error) {
       next(error);
@@ -27,7 +27,7 @@ export class AuthController {
   login = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { email, password } = req.body;
-      const result = await this.AuthService.login({ email, password });
+      const result = await this.authService.login({ email, password });
       res.status(200).json(result);
     } catch (error) {
       next(error);
@@ -43,7 +43,7 @@ export class AuthController {
         return;
       }
 
-      const authResponse = await this.AuthService.googleAuth(idToken, accessToken, serverAuthCode);
+      const authResponse = await this.authService.googleAuth(idToken, accessToken, serverAuthCode);
       console.log('✅ Google Auth Success:', authResponse);
 
       res.status(200).json(authResponse);
@@ -57,7 +57,7 @@ export class AuthController {
   verifyEmail = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { token } = req.params;
-      const result = await this.AuthService.verifyEmail(token);
+      const result = await this.authService.verifyEmail(token);
       res.status(200).json(result);
     } catch (error) {
       next(error);
@@ -68,7 +68,7 @@ export class AuthController {
   requestPasswordReset = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { email } = req.body;
-      const result = await this.AuthService.requestPasswordReset(email);
+      const result = await this.authService.requestPasswordReset(email);
       res.status(200).json(result);
     } catch (error) {
       next(error);
@@ -80,7 +80,7 @@ export class AuthController {
     try {
       const { token } = req.params;
       const { password } = req.body;
-      const result = await this.AuthService.resetPassword(token, password);
+      const result = await this.authService.resetPassword(token, password);
       res.status(200).json(result);
     } catch (error) {
       next(error);
@@ -101,7 +101,7 @@ export class AuthController {
   validateToken = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { token } = req.body;
-      const result = await this.AuthService.validateToken(token);
+      const result = await this.authService.validateToken(token);
       res.status(200).json(result);
     } catch (error) {
       next(error);

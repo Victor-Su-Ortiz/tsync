@@ -1,7 +1,16 @@
 import { Request, Response, NextFunction } from 'express';
+import { IEventService } from '../types/services-types/event.service.types';
 import eventService from '../services/event.service';
 
 export class EventController {
+  /**
+   * EventController handles event-related requests.
+   * It provides methods for creating, retrieving, updating, deleting events,
+   * managing attendees, and syncing with Google Calendar.
+   */
+  eventService: IEventService;
+  constructor(eventService: IEventService) {
+    this.eventService = eventService;
   /**
    * Create a new event
    * @route POST /api/events
