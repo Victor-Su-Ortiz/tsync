@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import User from '../models/user.model';
-import { UserService } from '../services/user.service';
+import UserService from '../services/user.service';
 import { cloudUpload, deleteFromCloud } from '../utils/cloudStorage';
 import { NotFoundError, ForbiddenError, BadRequestError } from '../utils/errors';
 

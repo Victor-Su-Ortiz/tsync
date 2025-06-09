@@ -12,7 +12,7 @@ export class SocketService {
   // Map to store active user connections: userId -> socketId
   private userSockets: Map<string, Set<string>> = new Map();
 
-  private constructor() { }
+  private constructor() {}
 
   public static getInstance(): SocketService {
     if (!SocketService.instance) {

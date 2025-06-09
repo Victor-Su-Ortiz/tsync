@@ -2,7 +2,7 @@ import { IEvent } from '../event.types';
 import { IAttendee } from '../event.types';
 
 export interface IEventService {
-  createEvent(eventData: Partial<IEvent>): Promise<IEvent>;
+  createEvent(eventData: Partial<IEvent>, userId: string): Promise<IEvent>;
   getEventById(eventId: string, userId: string): Promise<IEvent>;
   updateEvent(eventId: string, eventData: Partial<IEvent>, userId: string): Promise<IEvent>;
   deleteEvent(eventId: string, userId: string): Promise<void>;
@@ -14,7 +14,7 @@ export interface IEventService {
     userId: string
   ): Promise<IEvent>;
   getUpcomingEvents(userId: string, limit: number): Promise<IEvent[]>;
-  syncWithGoogleCalendar(eventId: string, userId: string): Promise<void>;
+  syncWithGoogleCalendar(eventId: string, userId: string): Promise<IEvent>;
 }
 
 export interface IAddAttendee {

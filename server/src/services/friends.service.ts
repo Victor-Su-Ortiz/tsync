@@ -226,3 +226,5 @@ export class FriendService {
     };
   }
 }
+
+export default FriendService;
