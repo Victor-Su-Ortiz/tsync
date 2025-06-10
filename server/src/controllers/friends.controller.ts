@@ -2,15 +2,15 @@ import { Request, Response, NextFunction } from 'express';
 import { IFriendService } from '../types/services-types/friend.service.types';
 
 export class FriendController {
-  /**
-   * Check if a friend request exists between users
-   * returns a boolean indicating if a request exists and its status
-   */
   friendService: IFriendService;
   constructor(friendService: IFriendService) {
     this.friendService = friendService;
   }
 
+  /**
+   * Check if a friend request exists between users
+   * returns a boolean indicating if a request exists and its status
+   */
   checkFriendRequest = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { userId } = req.params;
@@ -126,6 +126,9 @@ export class FriendController {
     }
   };
 
+  /**
+   * Cancel a friend request
+   */
   cancelRequest = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { requestId } = req.params;
