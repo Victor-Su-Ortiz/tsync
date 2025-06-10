@@ -1,5 +1,5 @@
-import { IEvent } from '../event.types';
-import { IAttendee } from '../event.types';
+import { IEvent } from '../models/event.types';
+import { IAttendee } from '../models/event.types';
 
 export interface IEventService {
   createEvent(eventData: Partial<IEvent>, userId: string): Promise<IEvent>;

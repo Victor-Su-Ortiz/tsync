@@ -1,5 +1,5 @@
 import { Types } from 'mongoose';
-import { FriendRequestStatus } from '../utils/enums';
+import { FriendRequestStatus } from '../../utils/enums';
 
 export interface IFriendRequest extends Document {
   sender: Types.ObjectId;

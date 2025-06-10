@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { IEventService } from '../types/services-types/event.service.types';
+import { IEventService } from '../types/services/event.service.types';
 
 export class EventController {
   /**

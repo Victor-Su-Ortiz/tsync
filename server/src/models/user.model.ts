@@ -1,8 +1,8 @@
 // src/models/User.ts
 import mongoose, { Types, Schema, Document } from 'mongoose';
 import bcrypt from 'bcryptjs';
-import { IUser, IUserMethods, IUserModel, PublicUser } from '../types/user.types';
-import { IFriendRequest } from '../types/friendRequest.types';
+import { IUser, IUserMethods, IUserModel, PublicUser } from '../types/models/user.types';
+import { IFriendRequest } from '../types/models/friendRequest.types';
 import FriendRequest from './friendRequest.model'; // Import the FriendRequest model
 import { FriendRequestStatus, EventType } from '../utils/enums';
 import Notification from './notification.model';

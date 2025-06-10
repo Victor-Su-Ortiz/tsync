@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { IAuthService } from '../types/services-types/auth.service.types';
+import { IAuthService } from '../types/services/auth.service.types';
 import User from '../models/user.model';
 // import { AuthRequest } from "../middleware/auth.middleware";
 

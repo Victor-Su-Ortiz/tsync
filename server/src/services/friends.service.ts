@@ -2,10 +2,10 @@ import User from '../models/user.model';
 import FriendRequest from '../models/friendRequest.model';
 import { Types, Document } from 'mongoose';
 import { NotFoundError, ValidationError, BadRequestError } from '../utils/errors';
-import { PublicUser } from '../types/user.types';
-import { IFriendRequest } from '../types/friendRequest.types';
+import { PublicUser } from '../types/models/user.types';
+import { IFriendRequest } from '../types/models/friendRequest.types';
 import { FriendRequestStatus } from '../utils/enums';
-import { IFriendService } from '../types/services-types/friend.service.types';
+import { IFriendService } from '../types/services/friend.service.types';
 
 export class FriendService implements IFriendService {
   /**
