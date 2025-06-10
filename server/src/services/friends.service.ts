@@ -5,15 +5,16 @@ import { NotFoundError, ValidationError, BadRequestError } from '../utils/errors
 import { PublicUser } from '../types/user.types';
 import { IFriendRequest } from '../types/friendRequest.types';
 import { FriendRequestStatus } from '../utils/enums';
+import { IFriendService } from '../types/services-types/friend.service.types';
 
-export class FriendService {
+export class FriendService implements IFriendService {
   /**
    * Check if a friend request already exists between users
    * @param senderId ID of the user who sent the request
    * @param receiverId ID of the user who received the request
    * @returns Boolean indicating if a request exists and its status
    */
-  public static async checkFriendRequestExists(
+  public async checkFriendRequestExists(
     senderId: string,
     receiverId: string
   ): Promise<{ exists: boolean; status?: string; receiver?: string; sender?: string }> {
@@ -46,7 +47,7 @@ export class FriendService {
   /**
    * Get all friends of a user
    */
-  public static async getFriends(userId: string): Promise<PublicUser[]> {
+  public async getFriends(userId: string): Promise<PublicUser[]> {
     const user = await User.findById(userId).populate('friends', 'name email profilePicture');
 
     if (!user) {
@@ -58,7 +59,7 @@ export class FriendService {
   /**
    * Get all sent friend requests
    */
-  public static async getSentRequests(userId: string): Promise<(IFriendRequest & Document)[]> {
+  public async getSentRequests(userId: string): Promise<(IFriendRequest & Document)[]> {
     const requests = await FriendRequest.find({
       sender: userId,
     }).populate('receiver sender', 'name email profilePicture');
@@ -72,9 +73,7 @@ export class FriendService {
   /**
    * Get all sent requests that are pending
    */
-  public static async getSentPendingRequests(
-    userId: string
-  ): Promise<(IFriendRequest & Document)[]> {
+  public async getSentPendingRequests(userId: string): Promise<(IFriendRequest & Document)[]> {
     const pendingRequests = await FriendRequest.find({
       sender: userId,
       status: FriendRequestStatus.PENDING,
@@ -91,7 +90,7 @@ export class FriendService {
   /**
    * Get all incoming requests
    * */
-  public static async getReceivedRequests(userId: string): Promise<(IFriendRequest & Document)[]> {
+  public async getReceivedRequests(userId: string): Promise<(IFriendRequest & Document)[]> {
     const requests = await FriendRequest.find({
       receiver: userId,
     }).populate('receiver sender', 'name email profilePicture');
@@ -106,9 +105,7 @@ export class FriendService {
   /**
    * Get all incoming requests that are pending
    */
-  public static async getReceivedPendingRequests(
-    userId: string
-  ): Promise<(IFriendRequest & Document)[]> {
+  public async getReceivedPendingRequests(userId: string): Promise<(IFriendRequest & Document)[]> {
     const pendingRequests = await FriendRequest.find({
       receiver: userId,
       status: FriendRequestStatus.PENDING,
@@ -125,7 +122,7 @@ export class FriendService {
   /**
    * Send a friend request to another user
    */
-  public static async sendRequest(
+  public async sendRequest(
     senderId: string,
     receiverId: string
   ): Promise<{ success: boolean; message: string; friendRequest: IFriendRequest }> {
@@ -144,7 +141,7 @@ export class FriendService {
   /**
    * Accept a friend request
    */
-  public static async acceptRequest(
+  public async acceptRequest(
     userId: string,
     requestId: string
   ): Promise<{ success: boolean; message: string }> {
@@ -162,7 +159,7 @@ export class FriendService {
     };
   }
 
-  public static async cancelRequest(
+  public async cancelRequest(
     userId: string,
     requestId: string
   ): Promise<{ success: boolean; message: string }> {
@@ -182,7 +179,7 @@ export class FriendService {
   /**
    * Reject a friend request
    */
-  public static async rejectRequest(
+  public async rejectRequest(
     userId: string,
     requestId: string
   ): Promise<{ success: boolean; message: string }> {
@@ -203,7 +200,7 @@ export class FriendService {
   /**
    * Remove a friend
    */
-  public static async removeFriend(
+  public async removeFriend(
     userId: string,
     friendId: string
   ): Promise<{ success: boolean; message: string }> {
@@ -226,3 +223,5 @@ export class FriendService {
     };
   }
 }
+
+export default FriendService;

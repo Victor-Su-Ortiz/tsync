@@ -3,7 +3,7 @@ import { AuthController } from '../controllers/auth.controller';
 import { protect } from '../middleware/auth.middleware';
 import { validateRequest } from '../middleware/validation.middleware';
 import { authValidation } from '../validations/auth.validation';
-import { AuthService } from '../services/auth.service';
+import AuthService from '../services/auth.service';
 
 const router = express.Router();
 

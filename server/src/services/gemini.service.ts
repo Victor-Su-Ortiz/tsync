@@ -1,6 +1,6 @@
 // src/services/gemini.service.ts
 import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
-import { CalendarService } from './google-calendar.service';
+import CalendarService from './google-calendar.service';
 import Event from '../models/event.model';
 import { IEvent } from '../types/event.types';
 import { NotFoundError, ValidationError } from '../utils/errors';

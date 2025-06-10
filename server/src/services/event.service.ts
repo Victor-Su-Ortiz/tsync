@@ -4,8 +4,9 @@ import Event from '../models/event.model';
 import User from '../models/user.model';
 import { AppError } from '../utils/errors';
 import { EventType } from '../utils/enums';
+import { IEventService } from '../types/services-types/event.service.types';
 
-class EventService {
+export class EventService implements IEventService {
   /**
    * Create a new event
    */
@@ -251,7 +252,7 @@ class EventService {
    * Sync with Google Calendar
    * This is a placeholder for the actual Google Calendar integration
    */
-  public async syncWithGoogleCalendar(eventId: string, userId: string): Promise<IEvent> {
+  syncWithGoogleCalendar = async (eventId: string, userId: string): Promise<IEvent> => {
     try {
       const event = await Event.findById(eventId);
 
@@ -280,7 +281,7 @@ class EventService {
     } catch (error) {
       throw error;
     }
-  }
+  };
 }
 
-export default new EventService();
+export default EventService;
