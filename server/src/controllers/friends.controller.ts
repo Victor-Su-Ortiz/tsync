@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { IFriendService } from '../types/services-types/friend.service.types';
+import { IFriendService } from '../types/services/friend.service.types';
 
 export class FriendController {
   friendService: IFriendService;

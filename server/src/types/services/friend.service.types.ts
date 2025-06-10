@@ -1,5 +1,5 @@
-import { IFriendRequest } from '../../types/friendRequest.types';
-import { PublicUser } from '../../types/user.types';
+import { IFriendRequest } from '../models/friendRequest.types';
+import { PublicUser } from '../models/user.types';
 
 export interface IFriendService {
   checkFriendRequestExists(

@@ -1,10 +1,10 @@
 import { Types } from 'mongoose';
-import { IEvent, IAttendee } from '../types/event.types';
+import { IEvent, IAttendee } from '../types/models/event.types';
 import Event from '../models/event.model';
 import User from '../models/user.model';
 import { AppError } from '../utils/errors';
 import { EventType } from '../utils/enums';
-import { IEventService } from '../types/services-types/event.service.types';
+import { IEventService } from '../types/services/event.service.types';
 
 export class EventService implements IEventService {
   /**
