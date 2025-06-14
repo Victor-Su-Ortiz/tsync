@@ -4,6 +4,8 @@ import NotificationService from '../services/notification.service';
 import { ValidationError } from '../utils/errors';
 
 export class NotificationController {
+
+  
   /**
    * Get user's notifications
    */
