@@ -1,15 +1,18 @@
 // src/controllers/notification.controller.ts
 import { Request, Response, NextFunction } from 'express';
-import NotificationService from '../services/notification.service';
 import { ValidationError } from '../utils/errors';
+import { INotificationService } from '../types/services/notification.service.types';
 
 export class NotificationController {
+  notificationService: INotificationService;
+  constructor(notificationService: INotificationService) {
+    this.notificationService = notificationService;
+  }
 
-  
   /**
    * Get user's notifications
    */
-  static async getUserNotifications(req: Request, res: Response, next: NextFunction) {
+  getUserNotifications = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { page, limit, unreadOnly } = req.query;
 
@@ -19,7 +22,7 @@ export class NotificationController {
         unreadOnly: unreadOnly === 'true',
       };
 
-      const result = await NotificationService.getUserNotifications(
+      const result = await this.notificationService.getUserNotifications(
         req.userId!.toString(),
         options
       );
@@ -28,12 +31,12 @@ export class NotificationController {
     } catch (error) {
       next(error);
     }
-  }
+  };
 
   /**
    * Mark notifications as read
    */
-  static async markAsRead(req: Request, res: Response, next: NextFunction) {
+  markAsRead = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { notificationIds } = req.body;
 
@@ -42,27 +45,7 @@ export class NotificationController {
         throw new ValidationError('notificationIds must be an array');
       }
 
-      const result = await NotificationService.markAsRead(req.userId!.toString(), notificationIds);
-
-      res.status(200).json(result);
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  /**
-   * Delete notifications
-   */
-  static async deleteNotifications(req: Request, res: Response, next: NextFunction) {
-    try {
-      const { notificationIds } = req.body;
-
-      // Validate notificationIds
-      if (!Array.isArray(notificationIds) || notificationIds.length === 0) {
-        throw new ValidationError('notificationIds must be a non-empty array');
-      }
-
-      const result = await NotificationService.deleteNotifications(
+      const result = await this.notificationService.markAsRead(
         req.userId!.toString(),
         notificationIds
       );
@@ -71,7 +54,30 @@ export class NotificationController {
     } catch (error) {
       next(error);
     }
-  }
+  };
+
+  /**
+   * Delete notifications
+   */
+  deleteNotifications = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { notificationIds } = req.body;
+
+      // Validate notificationIds
+      if (!Array.isArray(notificationIds) || notificationIds.length === 0) {
+        throw new ValidationError('notificationIds must be a non-empty array');
+      }
+
+      const result = await this.notificationService.deleteNotifications(
+        req.userId!.toString(),
+        notificationIds
+      );
+
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export default NotificationController;
