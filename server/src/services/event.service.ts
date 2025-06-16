@@ -37,9 +37,10 @@ export class EventService implements IEventService {
       await event.save();
 
       const { default: NotificationService } = await import('./notification.service');
+      const notificationService = new NotificationService();
       for (const attendee of event.attendees) {
         if (attendee.userId.toString() === userId) continue;
-        await NotificationService.createNotification({
+        await notificationService.createNotification({
           recipientId: attendee.userId.toString(),
           senderId: userId,
           type: EventType.MEETING_INVITE,

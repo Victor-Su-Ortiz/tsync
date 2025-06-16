@@ -207,7 +207,8 @@ userSchema.methods.sendFriendRequest = async function (
 
   // Create notification
   const { default: NotificationService } = await import('../services/notification.service');
-  await NotificationService.createNotification({
+  const notificationService = new NotificationService();
+  await notificationService.createNotification({
     recipientId: friendId,
     senderId: this._id.toString(),
     type: EventType.FRIEND_REQUEST,
@@ -266,7 +267,8 @@ userSchema.methods.acceptFriendRequest = async function (requestId: string): Pro
 
   // Create notification for the request sender
   const { default: NotificationService } = await import('../services/notification.service');
-  await NotificationService.createNotification({
+  const notificationService = new NotificationService();
+  await notificationService.createNotification({
     recipientId: request.sender._id.toString(),
     senderId: this._id.toString(),
     type: EventType.FRIEND_ACCEPTED,
