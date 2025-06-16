@@ -1,6 +1,6 @@
 // src/routes/calendar.routes.ts
 import express from 'express';
-import { CalendarController } from '../controllers/calendar.controller';
+import { GoogleCalendarController } from '../controllers/google-calendar.controller';
 import { protect } from '../middleware/auth.middleware';
 import { validateRequest } from '../middleware/validation.middleware';
 import { calendarValidation } from '../validations/calendar.validation';
@@ -11,7 +11,7 @@ const router = express.Router();
 router.use(protect);
 
 // Google Calendar connection routes
-router.get('/status', CalendarController.getCalendarStatus);
+router.get('/status', GoogleCalendarController.getCalendarStatus);
 // router.delete('/disconnect', CalendarController.disconnectCalendar);
 // router.patch(
 //   '/toggle-sync',
@@ -24,7 +24,7 @@ router.get('/status', CalendarController.getCalendarStatus);
 router.post(
   '/events',
   validateRequest(calendarValidation.createEvent),
-  CalendarController.createEvent
+  GoogleCalendarController.createEvent
 );
 
 // Meeting scheduling routes

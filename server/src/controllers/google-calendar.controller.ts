@@ -3,7 +3,7 @@ import { Request, Response, NextFunction } from 'express';
 import CalendarService from '../services/google-calendar.service';
 // import { AuthService } from '../services/auth.service';
 
-export class CalendarController {
+export class GoogleCalendarController {
   /**
    * Get Google Calendar auth URL
    */
