@@ -4,8 +4,11 @@ import { GoogleCalendarController } from '../controllers/google-calendar.control
 import { protect } from '../middleware/auth.middleware';
 import { validateRequest } from '../middleware/validation.middleware';
 import { calendarValidation } from '../validations/calendar.validation';
+import GoogleCalendarService from '../services/google-calendar.service';
 
 const router = express.Router();
+
+const googleCalendarController = new GoogleCalendarController(new GoogleCalendarService());
 
 // All routes require authentication
 router.use(protect);
@@ -24,7 +27,7 @@ router.get('/status', GoogleCalendarController.getCalendarStatus);
 router.post(
   '/events',
   validateRequest(calendarValidation.createEvent),
-  GoogleCalendarController.createEvent
+  googleCalendarController.createEvent
 );
 
 // Meeting scheduling routes
