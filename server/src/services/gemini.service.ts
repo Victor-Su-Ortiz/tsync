@@ -27,7 +27,7 @@ export class GeminiService implements IGeminiService {
       this.generativeAI = new GoogleGenerativeAI(apiKey);
       // List available models
       this.geminiModel = this.generativeAI.getGenerativeModel({
-        model: 'gemini-2.5-pro-exp-03-25',
+        model: 'gemini-2.5-flash-preview-05-20',
       });
     }
 
