@@ -1,13 +1,18 @@
 // src/services/gemini.service.ts
 import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
-import CalendarService from './google-calendar.service';
 import Event from '../models/event.model';
 import { IEvent } from '../types/models/event.types';
 import { NotFoundError, ValidationError } from '../utils/errors';
+import { IGoogleCalendarService } from '../types/services/google-calendar.service.types';
+import { IGeminiService } from '../types/services/gemini.service.types';
 
-export class GeminiService {
+export class GeminiService implements IGeminiService {
   private static generativeAI: GoogleGenerativeAI;
   private static geminiModel: GenerativeModel;
+  googleCalendarService: IGoogleCalendarService;
+  constructor(googleCalendarService: IGoogleCalendarService) {
+    this.googleCalendarService = googleCalendarService;
+  }
 
   /**
    * Initialize the Gemini AI client
@@ -62,10 +67,13 @@ export class GeminiService {
   /**
    * Suggest meeting times using Gemini AI
    */
-  public static async suggestMeetingTimes(eventId: string) {
+  public async suggestMeetingTimes(eventId: string): Promise<{
+    suggestedTimes: any;
+    reasoningText: string;
+  }> {
     try {
       // Initialize Gemini client
-      const geminiModel = this.initializeGeminiClient();
+      const geminiModel = GeminiService.initializeGeminiClient();
 
       // Get event details
       const event = await Event.findById(eventId)
@@ -80,7 +88,7 @@ export class GeminiService {
       const freeBusyPromises = event.attendees.flatMap(participant =>
         event.eventDates.map(async eventDate => {
           if (eventDate && eventDate.startTime && eventDate.endTime) {
-            return await CalendarService.getUserFreeBusy(
+            return await this.googleCalendarService.getUserFreeBusy(
               participant.userId.toString(),
               eventDate.startTime,
               eventDate.endTime
@@ -94,17 +102,20 @@ export class GeminiService {
       const freeBusyResults = await Promise.all(freeBusyPromises);
 
       // Format the calendar data for the Gemini prompt
-      const formattedCalendarData = this.formatCalendarData(freeBusyResults, event.attendees);
+      const formattedCalendarData = GeminiService.formatCalendarData(
+        freeBusyResults,
+        event.attendees
+      );
 
       // Create prompt for Gemini
-      const prompt = this.createSchedulingPrompt(event, formattedCalendarData);
+      const prompt = GeminiService.createSchedulingPrompt(event, formattedCalendarData);
       // Call Gemini AI
       const result = await geminiModel.generateContent(prompt);
       const response = result.response;
       const text = response.text();
 
       // Parse Gemini's response to extract suggested meeting times
-      const suggestion = this.parseSuggestedTimes(text, event);
+      const suggestion = GeminiService.parseSuggestedTimes(text, event);
 
       return {
         suggestedTimes: suggestion.suggestedTimes,
@@ -286,7 +297,7 @@ IMPORTANT CONSTRAINTS:
   /**
    * Schedule a meeting using Gemini's suggestions
    */
-  public static async scheduleWithGemini(eventId: string, organizerId: string) {
+  public async scheduleWithGemini(eventId: string, organizerId: string): Promise<any> {
     try {
       // Get event details
       const event = await Event.findById(eventId);
@@ -315,7 +326,7 @@ IMPORTANT CONSTRAINTS:
       const selectedTime = suggestedTimes[0].start;
 
       // Schedule the event in Google Calendar
-      const scheduledEvent = await CalendarService.createEvent(
+      const scheduledEvent = await this.googleCalendarService.createEvent(
         organizerId,
         eventId,
         selectedTime,

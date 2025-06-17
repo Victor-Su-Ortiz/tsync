@@ -1,9 +1,12 @@
 // src/controllers/calendar.controller.ts
 import { Request, Response, NextFunction } from 'express';
-import CalendarService from '../services/google-calendar.service';
-// import { AuthService } from '../services/auth.service';
+import { IGoogleCalendarService } from '../types/services/google-calendar.service.types';
 
-export class CalendarController {
+export class GoogleCalendarController {
+  googleCalendarService: IGoogleCalendarService;
+  constructor(googleCalendarService: IGoogleCalendarService) {
+    this.googleCalendarService = googleCalendarService;
+  }
   /**
    * Get Google Calendar auth URL
    */
@@ -64,12 +67,12 @@ export class CalendarController {
   /**
    * Create a calendar event
    */
-  static async createEvent(req: Request, res: Response, next: NextFunction) {
+  createEvent = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.userId;
       const { eventData, selectedTime, duration } = req.body;
 
-      const event = await CalendarService.createEvent(
+      const event = await this.googleCalendarService.createEvent(
         userId!.toString(),
         eventData,
         selectedTime,
@@ -80,7 +83,7 @@ export class CalendarController {
     } catch (error) {
       next(error);
     }
-  }
+  };
 
   /**
    * Find available meeting slots between users
