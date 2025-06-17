@@ -1,16 +1,20 @@
 // src/controllers/gemini.controller.ts
 import { Request, Response, NextFunction } from 'express';
-import { GeminiService } from '../services/gemini.service';
 import Event from '../models/event.model';
 import { ValidationError, NotFoundError, ForbiddenError } from '../utils/errors';
 import mongoose from 'mongoose';
 import socketService from '../services/socket.service';
+import { IGeminiService } from '../types/services/gemini.service.types';
 
 export class GeminiController {
+  geminiService: IGeminiService;
+  constructor(geminiService: IGeminiService) {
+    this.geminiService = geminiService;
+  }
   /**
    * Get AI-suggested meeting times for an event
    */
-  static async getSuggestedTimes(req: Request, res: Response, next: NextFunction) {
+  getSuggestedTimes = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { eventId } = req.params;
 
@@ -36,7 +40,7 @@ export class GeminiController {
       }
 
       // Get AI suggestions
-      const suggestions = await GeminiService.suggestMeetingTimes(eventId);
+      const suggestions = await this.geminiService.suggestMeetingTimes(eventId);
 
       res.status(200).json({
         success: true,
@@ -45,12 +49,12 @@ export class GeminiController {
     } catch (error) {
       next(error);
     }
-  }
+  };
 
   /**
    * Schedule a meeting using Gemini AI (auto-scheduling)
    */
-  static async scheduleWithGemini(req: Request, res: Response, next: NextFunction) {
+  scheduleWithGemini = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { eventId } = req.params;
 
@@ -72,7 +76,7 @@ export class GeminiController {
       }
 
       // Schedule with Gemini
-      const result = await GeminiService.scheduleWithGemini(eventId, userId!.toString());
+      const result = await this.geminiService.scheduleWithGemini(eventId, userId!.toString());
 
       // If successful, notify participants
       if (result.success) {
@@ -105,7 +109,7 @@ export class GeminiController {
     } catch (error) {
       next(error);
     }
-  }
+  };
 }
 
 export default GeminiController;

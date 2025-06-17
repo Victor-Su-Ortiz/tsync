@@ -1,12 +1,12 @@
 // src/services/gemini.service.ts
 import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
-import CalendarService from './google-calendar.service';
 import Event from '../models/event.model';
 import { IEvent } from '../types/models/event.types';
 import { NotFoundError, ValidationError } from '../utils/errors';
 import { IGoogleCalendarService } from '../types/services/google-calendar.service.types';
+import { IGeminiService } from '../types/services/gemini.service.types';
 
-export class GeminiService {
+export class GeminiService implements IGeminiService {
   private static generativeAI: GoogleGenerativeAI;
   private static geminiModel: GenerativeModel;
   googleCalendarService: IGoogleCalendarService;
@@ -67,7 +67,10 @@ export class GeminiService {
   /**
    * Suggest meeting times using Gemini AI
    */
-  public async suggestMeetingTimes(eventId: string) {
+  public async suggestMeetingTimes(eventId: string): Promise<{
+    suggestedTimes: any;
+    reasoningText: string;
+  }> {
     try {
       // Initialize Gemini client
       const geminiModel = GeminiService.initializeGeminiClient();
@@ -294,7 +297,7 @@ IMPORTANT CONSTRAINTS:
   /**
    * Schedule a meeting using Gemini's suggestions
    */
-  public async scheduleWithGemini(eventId: string, organizerId: string) {
+  public async scheduleWithGemini(eventId: string, organizerId: string): Promise<any> {
     try {
       // Get event details
       const event = await Event.findById(eventId);
