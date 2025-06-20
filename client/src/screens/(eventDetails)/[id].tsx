@@ -90,6 +90,7 @@ const EventDetails = () => {
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncingCalendar, setSyncingCalendar] = useState(false);
+  const [status, setStatus] = useState('pending');
 
   // Fetch event details
   useEffect(() => {
@@ -148,7 +149,6 @@ const EventDetails = () => {
   };
 
   const handleAddToCalendar = async () => {
-    // In a real implementation, you would integrate with the calendar API
     // Alert.alert('Coming Soon', 'Calendar integration will be available soon!');
     setSyncingCalendar(true);
     try {
@@ -185,8 +185,18 @@ const EventDetails = () => {
     }
   };
 
-  const handleUpdateStatus = (status: 'accepted' | 'declined' | 'tentative') => {
+  const handleUpdateStatus = async (status: 'accepted' | 'declined' | 'tentative') => {
     // In a real implementation, you would call your API to update the attendance status
+    const res = await api.patch(
+      `/${id}/attendees/status`,
+      { status },
+      {
+        headers: {
+          Authorizatin: `Bearer ${authToken}`,
+        },
+      },
+    );
+    setStatus(status);
     Alert.alert('Status Updated', `You have ${status} this event.`);
   };
 
@@ -464,49 +474,25 @@ const EventDetails = () => {
         )}
 
         <View style={styles.actionButtons}>
-          <TouchableOpacity
-            style={[styles.button, event.sync ? styles.syncedButton : null]}
-            onPress={handleAddToCalendar}
-            disabled={syncingCalendar}
-          >
-            {syncingCalendar ? (
-              <View style={styles.syncLoadingContainer}>
-                <ActivityIndicator size="small" color="#fff" />
-                <Text style={styles.buttonText}>Syncing...</Text>
-              </View>
-            ) : (
-              <>
-                <Ionicons name="calendar" size={20} color="#fff" />
-                <Text style={styles.buttonText}>
-                  {event.sync ? 'Synced to Calendar' : 'Sync to Calendar'}
-                </Text>
-              </>
-            )}
-          </TouchableOpacity>
-
-          {event.status !== 'cancelled' && !isCreator && (
+          {isCreator && (
             <TouchableOpacity
-              style={[
-                styles.button,
-                attendanceStatus === 'accepted'
-                  ? styles.acceptedButton
-                  : attendanceStatus === 'tentative'
-                    ? styles.tentativeButton
-                    : attendanceStatus === 'declined'
-                      ? styles.declinedButton
-                      : styles.pendingButton,
-              ]}
+              style={[styles.button, event.sync ? styles.syncedButton : null]}
+              onPress={handleAddToCalendar}
+              disabled={syncingCalendar}
             >
-              <Ionicons name="checkmark-circle" size={20} color="#fff" />
-              <Text style={styles.buttonText}>
-                {attendanceStatus === 'accepted'
-                  ? 'Accepted'
-                  : attendanceStatus === 'tentative'
-                    ? 'Maybe'
-                    : attendanceStatus === 'declined'
-                      ? 'Declined'
-                      : 'Pending'}
-              </Text>
+              {syncingCalendar ? (
+                <View style={styles.syncLoadingContainer}>
+                  <ActivityIndicator size="small" color="#fff" />
+                  <Text style={styles.buttonText}>Syncing...</Text>
+                </View>
+              ) : (
+                <>
+                  <Ionicons name="calendar" size={20} color="#fff" />
+                  <Text style={styles.buttonText}>
+                    {event.sync ? 'Synced to Calendar' : 'Sync to Calendar'}
+                  </Text>
+                </>
+              )}
             </TouchableOpacity>
           )}
 

@@ -58,7 +58,6 @@ const FriendsDropdown = ({ selectedFriends, setSelectedFriends }) => {
         headers: { Authorization: `Bearer ${authToken}` },
       });
       const { success, friends } = response.data;
-      console.log(friends);
 
       // Based on your controller, response should have a structure with success and data fields
       if (!response || !success || !Array.isArray(friends)) {

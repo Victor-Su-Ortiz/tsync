@@ -1,11 +1,12 @@
 import { Types } from 'mongoose';
-import { IEvent, IAttendee } from '../types/event.types';
+import { IEvent, IAttendee } from '../types/models/event.types';
 import Event from '../models/event.model';
 import User from '../models/user.model';
 import { AppError } from '../utils/errors';
 import { EventType } from '../utils/enums';
+import { IEventService } from '../types/services/event.service.types';
 
-class EventService {
+export class EventService implements IEventService {
   /**
    * Create a new event
    */
@@ -36,9 +37,10 @@ class EventService {
       await event.save();
 
       const { default: NotificationService } = await import('./notification.service');
+      const notificationService = new NotificationService();
       for (const attendee of event.attendees) {
         if (attendee.userId.toString() === userId) continue;
-        await NotificationService.createNotification({
+        await notificationService.createNotification({
           recipientId: attendee.userId.toString(),
           senderId: userId,
           type: EventType.MEETING_INVITE,
@@ -251,7 +253,7 @@ class EventService {
    * Sync with Google Calendar
    * This is a placeholder for the actual Google Calendar integration
    */
-  public async syncWithGoogleCalendar(eventId: string, userId: string): Promise<IEvent> {
+  syncWithGoogleCalendar = async (eventId: string, userId: string): Promise<IEvent> => {
     try {
       const event = await Event.findById(eventId);
 
@@ -280,7 +282,7 @@ class EventService {
     } catch (error) {
       throw error;
     }
-  }
+  };
 }
 
-export default new EventService();
+export default EventService;

@@ -3,8 +3,11 @@ import { EventController } from '../controllers/event.controller';
 import { protect } from '../middleware/auth.middleware';
 import { validateRequest } from '../middleware/validation.middleware';
 import { eventValidation } from '../validations/event.validation';
+import { EventService } from '../services/event.service';
 
 const router = Router();
+
+const eventController = new EventController(new EventService());
 
 // Protect all routes
 router.use(protect);
@@ -12,33 +15,33 @@ router.use(protect);
 // Event routes
 router
   .route('/')
-  .get(EventController.getUserEvents)
-  .post(validateRequest(eventValidation.createEvent), EventController.createEvent);
+  .get(eventController.getUserEvents)
+  .post(validateRequest(eventValidation.createEvent), eventController.createEvent);
 
 // Upcoming events
-router.get('/upcoming', EventController.getUpcomingEvents);
+router.get('/upcoming', eventController.getUpcomingEvents);
 
 // Single event routes
 router
   .route('/:id')
-  .get(EventController.getEvent)
-  .patch(validateRequest(eventValidation.updateEvent), EventController.updateEvent)
-  .delete(EventController.deleteEvent);
+  .get(eventController.getEvent)
+  .patch(validateRequest(eventValidation.updateEvent), eventController.updateEvent)
+  .delete(eventController.deleteEvent);
 
 // Attendee management
 router.post(
   '/:id/attendees',
   validateRequest(eventValidation.addAttendee),
-  EventController.addAttendee
+  eventController.addAttendee
 );
 
 router.patch(
   '/:id/attendees/status',
   validateRequest(eventValidation.updateAttendeeStatus),
-  EventController.updateAttendeeStatus
+  eventController.updateAttendeeStatus
 );
 
 // Google Calendar integration
-router.post('/:id/sync-google', EventController.syncWithGoogleCalendar);
+router.post('/:id/sync-google', eventController.syncWithGoogleCalendar);
 
 export default router;

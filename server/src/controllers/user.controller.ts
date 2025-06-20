@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import User from '../models/user.model';
-import { AuthService } from '../services/auth.service';
-import { UserService } from '../services/user.service';
+import UserService from '../services/user.service';
 import { cloudUpload, deleteFromCloud } from '../utils/cloudStorage';
 import { NotFoundError, ForbiddenError, BadRequestError } from '../utils/errors';
 
@@ -167,24 +166,24 @@ export class UserController {
   /**
    * Change user password
    */
-  static async changePassword(req: Request, res: Response, next: NextFunction) {
-    try {
-      const { currentPassword, newPassword } = req.body;
+  // static async changePassword(req: Request, res: Response, next: NextFunction) {
+  //   try {
+  //     const { currentPassword, newPassword } = req.body;
 
-      const result = await AuthService.changePassword(
-        req.userId!.toString(),
-        currentPassword,
-        newPassword
-      );
+  //     const result = await AuthService.changePassword(
+  //       req.userId!.toString(),
+  //       currentPassword,
+  //       newPassword
+  //     );
 
-      res.status(200).json({
-        success: true,
-        message: result.message,
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
+  //     res.status(200).json({
+  //       success: true,
+  //       message: result.message,
+  //     });
+  //   } catch (error) {
+  //     next(error);
+  //   }
+  // }
 
   /**
    * Admin: Get all users

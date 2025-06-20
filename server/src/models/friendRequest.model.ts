@@ -1,5 +1,5 @@
 import mongoose, { Schema, Types, Model } from 'mongoose';
-import { IFriendRequest } from '../types/friendRequest.types';
+import { IFriendRequest } from '../types/models/friendRequest.types';
 import { FriendRequestStatus } from '../utils/enums';
 
 const friendRequestSchema = new Schema<IFriendRequest>(

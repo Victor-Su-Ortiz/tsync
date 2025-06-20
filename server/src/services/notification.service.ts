@@ -1,22 +1,16 @@
 import Notification from '../models/notification.model';
 import socketService from './socket.service';
 import { Types } from 'mongoose';
-import { EventType } from '../utils/enums';
+import {
+  CreateNotificationDto,
+  INotificationService,
+} from '../types/services/notification.service.types';
 
-export interface CreateNotificationDto {
-  recipientId: string;
-  senderId: string;
-  type: EventType;
-  message: string;
-  relatedId?: string;
-  onModel?: 'User' | 'FriendRequest' | 'Event';
-}
-
-export class NotificationService {
+export class NotificationService implements INotificationService {
   /**
    * Create a new notification and send it in real-time if recipient is online
    */
-  public static async createNotification(notificationData: CreateNotificationDto): Promise<any> {
+  public async createNotification(notificationData: CreateNotificationDto): Promise<any> {
     try {
       // Convert string IDs to ObjectIds
       const data = {
@@ -52,7 +46,7 @@ export class NotificationService {
   /**
    * Get notifications for a user
    */
-  public static async getUserNotifications(
+  public async getUserNotifications(
     userId: string,
     options: {
       page?: number;
@@ -97,7 +91,7 @@ export class NotificationService {
   /**
    * Mark notifications as read
    */
-  public static async markAsRead(
+  public async markAsRead(
     userId: string,
     notificationIds?: string[]
   ): Promise<{ success: boolean; unreadCount: number }> {
@@ -118,7 +112,7 @@ export class NotificationService {
   /**
    * Delete notifications
    */
-  public static async deleteNotifications(
+  public async deleteNotifications(
     userId: string,
     notificationIds: string[]
   ): Promise<{ success: boolean }> {

@@ -48,6 +48,7 @@ export interface IEvent extends Document {
   description?: string;
   location?: {
     address?: string;
+    name?: string;
     coordinates?: {
       latitude: number;
       longitude: number;

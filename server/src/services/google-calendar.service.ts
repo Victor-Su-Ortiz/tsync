@@ -3,9 +3,12 @@ import { google, calendar_v3 } from 'googleapis';
 import User from '../models/user.model';
 import { NotFoundError, AuthenticationError } from '../utils/errors';
 import Event from '../models/event.model';
-// import { GoogleService } from './google.services';
+import {
+  FreeBusyResponse,
+  IGoogleCalendarService,
+} from '../types/services/google-calendar.service.types';
 
-export class CalendarService {
+export class GoogleCalendarService implements IGoogleCalendarService {
   /**
    * Create OAuth2 client for Google API
    */
@@ -28,7 +31,7 @@ export class CalendarService {
   /**
    * Get calendar client for a user
    */
-  private static async getCalendarClient(userId: string): Promise<calendar_v3.Calendar> {
+  private async getCalendarClient(userId: string): Promise<calendar_v3.Calendar> {
     const user = await User.findById(userId).select('+googleRefreshToken');
 
     if (!user) {
@@ -56,7 +59,11 @@ export class CalendarService {
   /**
    * Get user's free/busy information
    */
-  public static async getUserFreeBusy(userId: string, timeMin: Date, timeMax: Date) {
+  public async getUserFreeBusy(
+    userId: string,
+    timeMin: Date,
+    timeMax: Date
+  ): Promise<FreeBusyResponse> {
     const calendar = await this.getCalendarClient(userId);
 
     try {
@@ -252,12 +259,17 @@ export class CalendarService {
   /**
    * Create calendar event and invite participants
    */
-  public static async createEvent(
+  public async createEvent(
     organizerId: string,
     eventId: string,
     selectedTime: Date,
     duration: number
-  ) {
+  ): Promise<{
+    success: boolean;
+    googleEventId: string | null | undefined;
+    eventDetails: calendar_v3.Schema$Event;
+    htmlLink: string | null | undefined;
+  }> {
     const calendar = await this.getCalendarClient(organizerId);
 
     try {
@@ -302,6 +314,7 @@ export class CalendarService {
         requestBody: {
           summary: event.title,
           description: event.description,
+          location: event.location?.address,
           start: {
             dateTime: selectedTime.toISOString(),
             timeZone: 'UTC', // You might want to make this configurable
@@ -312,6 +325,7 @@ export class CalendarService {
           },
           attendees,
           // Additional settings
+
           guestsCanModify: false,
           guestsCanInviteOthers: false,
           guestsCanSeeOtherGuests: true,
@@ -346,7 +360,7 @@ export class CalendarService {
   /**
    * Connect Google Calendar (save refresh token)
    */
-  public static async connectGoogleCalendar(userId: string, refreshToken: string) {
+  public async connectGoogleCalendar(userId: string, refreshToken: string) {
     try {
       const user = await User.findById(userId);
 
@@ -410,4 +424,4 @@ export class CalendarService {
   // }
 }
 
-export default CalendarService;
+export default GoogleCalendarService;
